@@ -1,3 +1,9 @@
+/**
+ * CalculationReport — @react-pdf/renderer document.
+ * Replicates CA-PR-1050.0101 single-page engineering calculation form.
+ * Layout (top→bottom): title/project/client block, revision grid, input/sections, sketch
+ */
+
 import {
   Document,
   Circle,
@@ -46,22 +52,30 @@ export interface CalculationReportProps {
   revisions: RevisionRecord[]
 }
 
-const NAVY = '#1f3864'
-const BLACK = '#000000'
-const ROW_ALT = '#E7EFF6'
-const ROW_WHITE = '#ffffff'
-const SECTION_HEADER_BG = '#D9E1F2'
-const DOCUMENT_CODE = 'CA-PR-1050-0101'
+// ─── Design tokens ───────────────────────────────────────────────────────────
 
+const NAVY      = '#1f3864'
+const BLACK     = '#000000'
+const VALUE_BG  = '#dbeafe'
+const ROW_ALT   = '#E7EFF6'
+const WHITE     = '#ffffff'
+const GUIDE     = '#374151'
+const MUTED     = '#6b7280'
+const BW        = 0.5   // light row border
+const HB        = 1     // heavy section border
+const DOCUMENT_CODE = 'CA-PR-1050-0101'
 const DISCLAIMER =
   'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const S = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
-    fontSize: 8.5,
+    fontSize: 7,
     padding: 0,
-    color: '#0f172a',
+    color: BLACK,
+    lineHeight: 1.3,
   },
   pageOuterFrame: {
     position: 'absolute',
@@ -78,10 +92,138 @@ const S = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
     marginLeft: 18,
-    borderWidth: 1,
+    borderWidth: HB,
     borderColor: BLACK,
-    padding: 22,
+    flexDirection: 'column',
   },
+  // ── Top header bar (document title + doc code)
+  topHeader: {
+    minHeight: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: HB,
+    borderBottomColor: BLACK,
+    position: 'relative',
+  },
+  topHeaderTitle: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+  },
+  topHeaderCode: {
+    position: 'absolute',
+    right: 6,
+    top: 4,
+    fontSize: 5,
+    color: MUTED,
+    fontFamily: 'Helvetica-Bold',
+  },
+  // ── Type row (mode indicator with blue background)
+  typeRow: {
+    flexDirection: 'row',
+    minHeight: 14,
+    borderBottomWidth: HB,
+    borderBottomColor: BLACK,
+  },
+  typeLabel: {
+    width: 34,
+    fontSize: 6,
+    fontFamily: 'Helvetica-Bold',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRightWidth: BW,
+    borderRightColor: BLACK,
+    color: GUIDE,
+  },
+  typeValue: {
+    flex: 1,
+    backgroundColor: VALUE_BG,
+    textAlign: 'center',
+    fontSize: 5.8,
+    fontFamily: 'Helvetica-Bold',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  // ── Body: left (inputs/results) + right (sketch)
+  bodyRow: {
+    flex: 1,
+    flexDirection: 'row',
+    borderBottomWidth: HB,
+    borderBottomColor: BLACK,
+  },
+  leftCol: {
+    flex: 3,
+    borderRightWidth: HB,
+    borderRightColor: BLACK,
+  },
+  rightCol: {
+    flex: 2,
+  },
+  // ── Section header
+  sectionHeader: {
+    backgroundColor: NAVY,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  sectionHeaderText: {
+    color: WHITE,
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
+  },
+  // ── Data row
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: BW,
+    borderBottomColor: '#d1d5db',
+    minHeight: 10,
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  rowLabel: {
+    flex: 2.9,
+    fontSize: 6,
+    color: GUIDE,
+  },
+  rowValueBox: {
+    flex: 1.55,
+    minHeight: 8,
+    borderWidth: BW,
+    borderColor: '#93c5fd',
+    backgroundColor: VALUE_BG,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  rowValueText: {
+    fontSize: 6,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+  },
+  rowUnit: {
+    flex: 0.7,
+    fontSize: 6,
+    color: MUTED,
+    textAlign: 'right',
+    paddingLeft: 2,
+  },
+  // ── Sketch section
+  sketchSection: {
+    flex: 1,
+    minHeight: 150,
+    borderBottomWidth: HB,
+    borderBottomColor: BLACK,
+  },
+  sketchBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sketchCaption: {
+    fontSize: 5.5,
+    color: MUTED,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  // ── Disclaimer strip
   disclaimerWrap: {
     position: 'absolute',
     left: 7,
@@ -90,7 +232,6 @@ const S = StyleSheet.create({
     width: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
   },
   disclaimerText: {
     width: 800,
@@ -99,637 +240,287 @@ const S = StyleSheet.create({
     textAlign: 'center',
     transform: 'rotate(-90deg)',
   },
-  header: {
-    borderBottomWidth: 2,
-    borderBottomColor: NAVY,
-    paddingBottom: 10,
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 17,
-    fontFamily: 'Helvetica-Bold',
-    color: NAVY,
-  },
-  subtitle: {
-    marginTop: 3,
-    fontSize: 9,
-    color: '#64748b',
-  },
-  section: {
-    marginTop: 11,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-  },
-  sectionHeader: {
-    backgroundColor: NAVY,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  sectionHeaderText: {
-    color: '#ffffff',
-    fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
-  },
-  table: {
-    width: '100%',
-  },
-  row: {
-    flexDirection: 'row',
-    minHeight: 22,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
-  firstRow: {
-    borderTopWidth: 0,
-  },
-  rowAlt: {
-    backgroundColor: ROW_ALT,
-  },
-  rowWhite: {
-    backgroundColor: ROW_WHITE,
-  },
-  cell: {
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-    borderRightWidth: 1,
-    borderRightColor: '#e2e8f0',
-    justifyContent: 'center',
-  },
-  cellLast: {
-    borderRightWidth: 0,
-  },
-  labelCell: {
-    width: '32%',
-    color: '#475569',
-    fontFamily: 'Helvetica-Bold',
-  },
-  valueCell: {
-    width: '68%',
-    color: '#0f172a',
-  },
-  halfLabelCell: {
-    width: '23%',
-    color: '#475569',
-    fontFamily: 'Helvetica-Bold',
-  },
-  halfValueCell: {
-    width: '27%',
-  },
-  groupRow: {
-    backgroundColor: SECTION_HEADER_BG,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderTopWidth: 1,
-    borderTopColor: '#cbd5e1',
-  },
-  groupText: {
-    color: NAVY,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8.5,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    backgroundColor: SECTION_HEADER_BG,
-    minHeight: 22,
-  },
-  headerCell: {
-    paddingHorizontal: 5,
-    paddingVertical: 5,
-    borderRightWidth: 1,
-    borderRightColor: '#cbd5e1',
-    color: NAVY,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-  },
-  numericCell: {
-    textAlign: 'right',
-  },
-  note: {
-    marginTop: 8,
-    color: '#64748b',
-    fontSize: 7.5,
-    lineHeight: 1.35,
-  },
+  // ── Footer
   footer: {
     position: 'absolute',
-    bottom: 16,
-    left: 40,
-    right: 30,
+    bottom: 6,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    color: '#64748b',
-    fontSize: 7,
+    borderTopWidth: BW,
+    borderTopColor: '#d1d5db',
+    paddingTop: 3,
   },
-  footerDocCode: {
-    color: '#21436D',
-    fontSize: 6.5,
-    fontFamily: 'Helvetica-Bold',
-  },
+  footerText: { fontSize: 6, color: MUTED },
 })
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmt(value: number | null | undefined, decimals = 4): string {
+  if (value == null || !isFinite(value)) return '—'
+  return value.toFixed(decimals)
+}
+
 function present(value: unknown): string {
-  if (typeof value === 'string') {
-    return value.trim() || '—'
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? String(value) : '—'
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No'
-  }
+  if (typeof value === 'string') return value.trim() || '—'
+  if (typeof value === 'number') return isFinite(value) ? String(value) : '—'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   return '—'
 }
 
-function formatNumber(value: unknown, digits = 2): string {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '—'
-  if (value === 0) return '0'
-  const abs = Math.abs(value)
-  if (abs < 0.001) return value.toExponential(2)
-  const fixed = value.toFixed(digits)
-  return fixed.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
+function joinPersonDate(person: string | undefined, date: string | undefined): string {
+  return [person?.trim(), date?.trim()].filter(Boolean).join('  ')
 }
 
-function valueWithUnit(value: unknown, unit: string, digits = 2): string {
-  const formatted = formatNumber(value, digits)
-  return formatted === '—' ? formatted : `${formatted} ${unit}`
-}
+// ─── Primitive components ────────────────────────────────────────────────────
 
-function latestRevision(revisions: RevisionRecord[]): RevisionRecord | undefined {
-  return revisions.at(-1) ?? revisions[0]
-}
-
-function valueOf(input: ReportInput, key: string): unknown {
-  return (input as unknown as Record<string, unknown>)[key]
-}
-
-function isPipeResult(result: ReportResult): result is PipeCalculationResult {
-  return 'surfaceArea' in result && 'outletTemp' in result
-}
-
-function isHorizontalTankResult(result: ReportResult): result is HorizontalTankResult {
-  return 'dryHead' in result && 'wetHead' in result
-}
-
-function isVerticalTankResult(result: ReportResult): result is CalculationResult {
-  return 'roof' in result && 'floor' in result
-}
-
-type ReportMode = 'vertical' | 'pipe' | 'horizontal'
-
-function detectMode(input: ReportInput, result: ReportResult): ReportMode {
-  const explicitMode = valueOf(input, 'mode')
-  if (explicitMode === 'pipe') return 'pipe'
-  if (explicitMode === 'horizontal') return 'horizontal'
-  if (explicitMode === 'vertical' || explicitMode === 'tank' || explicitMode === 'storage-tank') return 'vertical'
-
-  if (isPipeResult(result)) return 'pipe'
-  if (isHorizontalTankResult(result)) return 'horizontal'
-  return 'vertical'
-}
-
-type KeyValueRow = { label: string; value: string }
-type InputGroup = { title: string; rows: KeyValueRow[] }
-
-function compactRows(rows: KeyValueRow[]): KeyValueRow[] {
-  return rows.filter((row) => row.value !== '—')
-}
-
-function buildInputGroups(input: ReportInput, mode: ReportMode): InputGroup[] {
-  if (mode === 'pipe') {
-    return [
-      {
-        title: 'Geometry',
-        rows: compactRows([
-          { label: 'Pipe / duct type', value: present(valueOf(input, 'pipeType')) },
-          { label: 'Orientation', value: present(valueOf(input, 'pipeOrientation')) },
-          { label: 'Pipe length', value: valueWithUnit(valueOf(input, 'pipeLength'), 'm', 2) },
-          { label: 'Inside diameter', value: valueWithUnit(valueOf(input, 'insideDiameter'), 'mm', 2) },
-          { label: 'Outside diameter', value: valueWithUnit(valueOf(input, 'outsideDiameter'), 'mm', 2) },
-          { label: 'Side A', value: valueWithUnit(valueOf(input, 'sideA'), 'mm', 2) },
-          { label: 'Side B', value: valueWithUnit(valueOf(input, 'sideB'), 'mm', 2) },
-        ]),
-      },
-      {
-        title: 'Operating Conditions',
-        rows: compactRows([
-          { label: 'Flow rate', value: valueWithUnit(valueOf(input, 'flowRate'), 'kg/h', 2) },
-          { label: 'Inlet temperature', value: valueWithUnit(valueOf(input, 'inletTemp'), '°C', 2) },
-          { label: 'Ambient temperature', value: valueWithUnit(valueOf(input, 'ambientTemp'), '°C', 2) },
-          { label: 'Wind speed', value: valueWithUnit(valueOf(input, 'windSpeed'), 'm/s', 2) },
-          { label: 'Pressure', value: valueWithUnit(valueOf(input, 'pressure'), 'barg', 2) },
-        ]),
-      },
-      {
-        title: 'Construction & Fluid Properties',
-        rows: compactRows([
-          { label: 'Wall thickness', value: valueWithUnit(valueOf(input, 'wallThickness'), 'mm', 2) },
-          { label: 'Wall conductivity', value: valueWithUnit(valueOf(input, 'wallConductivity'), 'W/m·K', 3) },
-          { label: 'Insulation thickness', value: valueWithUnit(valueOf(input, 'insulationThickness'), 'mm', 2) },
-          { label: 'Insulation conductivity', value: valueWithUnit(valueOf(input, 'insulationConductivity'), 'W/m·K', 4) },
-          { label: 'Fluid density', value: valueWithUnit(valueOf(input, 'fluidDensity'), 'kg/m³', 2) },
-          { label: 'Fluid specific heat', value: valueWithUnit(valueOf(input, 'fluidSpecificHeat'), 'J/kg·K', 2) },
-          { label: 'Fluid viscosity', value: valueWithUnit(valueOf(input, 'fluidViscosity'), 'Pa·s', 6) },
-          { label: 'Fluid thermal conductivity', value: valueWithUnit(valueOf(input, 'fluidThermalConductivity'), 'W/m·K', 4) },
-          { label: 'Surface emissivity', value: formatNumber(valueOf(input, 'surfaceEmissivity'), 3) },
-          { label: 'Wind enhancement', value: formatNumber(valueOf(input, 'windEnhancement'), 3) },
-        ]),
-      },
-    ]
-  }
-
-  if (mode === 'horizontal') {
-    return [
-      {
-        title: 'Geometry',
-        rows: compactRows([
-          { label: 'Inside diameter', value: valueWithUnit(valueOf(input, 'insideDiameter'), 'mm', 2) },
-          { label: 'Tank length', value: valueWithUnit(valueOf(input, 'tankLength'), 'mm', 2) },
-          { label: 'Head type', value: present(valueOf(input, 'headType')) },
-          { label: 'Head depth', value: valueWithUnit(valueOf(input, 'headDepth'), 'mm', 2) },
-          { label: 'Flange width', value: valueWithUnit(valueOf(input, 'flangeWidth'), 'mm', 2) },
-          { label: 'Liquid level', value: valueWithUnit(valueOf(input, 'liquidLevel'), 'mm', 2) },
-        ]),
-      },
-      {
-        title: 'Operating Conditions',
-        rows: compactRows([
-          { label: 'Fluid temperature', value: valueWithUnit(valueOf(input, 'fluidTemp'), '°C', 2) },
-          { label: 'Vapor temperature', value: valueWithUnit(valueOf(input, 'vaporTemp'), '°C', 2) },
-          { label: 'Ambient temperature', value: valueWithUnit(valueOf(input, 'ambientTemp'), '°C', 2) },
-          { label: 'Wind speed', value: valueWithUnit(valueOf(input, 'windSpeed'), 'm/s', 2) },
-          { label: 'Ground temperature', value: valueWithUnit(valueOf(input, 'groundTemp'), '°C', 2) },
-        ]),
-      },
-      {
-        title: 'Construction & Properties',
-        rows: compactRows([
-          { label: 'Wall thickness', value: valueWithUnit(valueOf(input, 'wallThickness'), 'mm', 2) },
-          { label: 'Wall conductivity', value: valueWithUnit(valueOf(input, 'wallConductivity'), 'W/m·K', 3) },
-          { label: 'Insulation thickness', value: valueWithUnit(valueOf(input, 'insulationThickness'), 'mm', 2) },
-          { label: 'Insulation conductivity', value: valueWithUnit(valueOf(input, 'insulationConductivity'), 'W/m·K', 4) },
-          { label: 'Fluid density', value: valueWithUnit(valueOf(input, 'fluidDensity'), 'kg/m³', 2) },
-          { label: 'Fluid specific heat', value: valueWithUnit(valueOf(input, 'fluidSpecificHeat'), 'J/kg·K', 2) },
-          { label: 'Fluid viscosity', value: valueWithUnit(valueOf(input, 'fluidViscosity'), 'Pa·s', 6) },
-          { label: 'Fluid thermal conductivity', value: valueWithUnit(valueOf(input, 'fluidThermalConductivity'), 'W/m·K', 4) },
-          { label: 'Fluid expansion coefficient', value: valueWithUnit(valueOf(input, 'fluidExpansionCoeff'), '1/K', 6) },
-          { label: 'Surface emissivity', value: formatNumber(valueOf(input, 'surfaceEmissivity'), 3) },
-          { label: 'Wind enhancement', value: formatNumber(valueOf(input, 'windEnhancement'), 3) },
-        ]),
-      },
-    ]
-  }
-
-  return [
-    {
-      title: 'Geometry',
-      rows: compactRows([
-        { label: 'Tank diameter', value: valueWithUnit(valueOf(input, 'tankDiameter'), 'mm', 2) },
-        { label: 'Tank height', value: valueWithUnit(valueOf(input, 'tankHeight'), 'mm', 2) },
-        { label: 'Liquid level', value: valueWithUnit(valueOf(input, 'liquidLevel'), 'mm', 2) },
-        { label: 'Roof type', value: present(valueOf(input, 'tankRoofType')) },
-        { label: 'Roof height', value: valueWithUnit(valueOf(input, 'roofHeight'), 'mm', 2) },
-      ]),
-    },
-    {
-      title: 'Operating Conditions',
-      rows: compactRows([
-        { label: 'Fluid temperature', value: valueWithUnit(valueOf(input, 'fluidTemp'), '°C', 2) },
-        { label: 'Vapor temperature', value: valueWithUnit(valueOf(input, 'vaporTemp'), '°C', 2) },
-        { label: 'Ambient temperature', value: valueWithUnit(valueOf(input, 'ambientTemp'), '°C', 2) },
-        { label: 'Wind speed', value: valueWithUnit(valueOf(input, 'windSpeed'), 'm/s', 2) },
-        { label: 'Ground temperature', value: valueWithUnit(valueOf(input, 'groundTemp'), '°C', 2) },
-      ]),
-    },
-    {
-      title: 'Construction & Properties',
-      rows: compactRows([
-        { label: 'Wall thickness', value: valueWithUnit(valueOf(input, 'wallThickness'), 'mm', 2) },
-        { label: 'Wall conductivity', value: valueWithUnit(valueOf(input, 'wallConductivity'), 'W/m·K', 3) },
-        { label: 'Insulation thickness', value: valueWithUnit(valueOf(input, 'insulationThickness'), 'mm', 2) },
-        { label: 'Insulation conductivity', value: valueWithUnit(valueOf(input, 'insulationConductivity'), 'W/m·K', 4) },
-        { label: 'Fluid density', value: valueWithUnit(valueOf(input, 'fluidDensity'), 'kg/m³', 2) },
-        { label: 'Fluid specific heat', value: valueWithUnit(valueOf(input, 'fluidSpecificHeat'), 'J/kg·K', 2) },
-        { label: 'Fluid viscosity', value: valueWithUnit(valueOf(input, 'fluidViscosity'), 'Pa·s', 6) },
-        { label: 'Fluid thermal conductivity', value: valueWithUnit(valueOf(input, 'fluidThermalConductivity'), 'W/m·K', 4) },
-        { label: 'Fluid expansion coefficient', value: valueWithUnit(valueOf(input, 'fluidExpansionCoeff'), '1/K', 6) },
-        { label: 'Surface emissivity', value: formatNumber(valueOf(input, 'surfaceEmissivity'), 3) },
-        { label: 'Roof emissivity', value: formatNumber(valueOf(input, 'roofEmissivity'), 3) },
-        { label: 'Wind enhancement', value: formatNumber(valueOf(input, 'windEnhancement'), 3) },
-      ]),
-    },
-  ]
+function DataRow({
+  label,
+  value,
+  unit,
+  highlight,
+}: {
+  label: string
+  value?: string | null
+  unit?: string
+  highlight?: boolean
+}) {
+  return (
+    <View style={S.row}>
+      <Text style={S.rowLabel}>{label}</Text>
+      <View style={highlight ? S.rowValueBox : [S.rowValueBox, { backgroundColor: WHITE }]}>
+        <Text style={S.rowValueText}>{value ?? '—'}</Text>
+      </View>
+      <Text style={S.rowUnit}>{unit ?? ''}</Text>
+    </View>
+  )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <View style={S.section}>
+    <View>
       <View style={S.sectionHeader}>
         <Text style={S.sectionHeaderText}>{title}</Text>
       </View>
-      {children}
+      <View>{children}</View>
     </View>
   )
 }
 
-function FramedPage({ children, pageNumber }: { children: React.ReactNode; pageNumber: number }) {
-  return (
-    <Page size="A4" style={S.page}>
-      <View style={S.pageOuterFrame} fixed />
-      <View style={S.disclaimerWrap} fixed>
-        <Text style={S.disclaimerText}>{DISCLAIMER}</Text>
-      </View>
-      <View style={S.outerBorder}>{children}</View>
-      <View style={S.footer} fixed>
-        <Text style={S.footerDocCode}>{DOCUMENT_CODE}</Text>
-        <Text>Heat Transfer Calculation Report · Page {pageNumber}</Text>
-      </View>
-    </Page>
-  )
-}
+// ─── Title block ─────────────────────────────────────────────────────────────
 
-function ReportHeader({ mode, tag }: { mode: ReportMode; tag: string }) {
-  const subtitle = mode === 'pipe'
-    ? 'Pipe / duct heat-loss calculation'
-    : mode === 'horizontal'
-      ? 'Horizontal tank heat-loss calculation'
-      : 'Vertical storage tank heat-loss calculation'
+function TitleBlock({
+  metadata,
+  revisions,
+}: {
+  metadata: CalculationMetadata
+  revisions: RevisionRecord[]
+}) {
+  const rows: (RevisionRecord | null)[] = [
+    ...revisions.slice(0, 3),
+    ...Array(Math.max(0, 3 - revisions.length)).fill(null),
+  ]
+
+  const trS = {
+    flexDirection: 'row' as const,
+    borderBottomWidth: BW,
+    borderBottomColor: BLACK,
+    minHeight: 14,
+  }
+  const tlCellS = {
+    width: 48,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRightWidth: BW,
+    borderRightColor: BLACK,
+  }
+  const tlTextS = {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold' as const,
+    color: GUIDE,
+  }
+  const tvCellS = {
+    flex: 1,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  }
+  const tvTextS = { fontSize: 7 }
+
+  const revHeaderRowS = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    borderBottomWidth: BW,
+    borderBottomColor: BLACK,
+    minHeight: 12,
+  }
+  const revDataRowS = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    minHeight: 10,
+  }
+  const revHeaderCellS = {
+    flex: 1,
+    minHeight: 12,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+    borderRightWidth: BW,
+    borderRightColor: BLACK,
+    backgroundColor: '#f3f4f6',
+  }
+  const revDataCellS = {
+    flex: 1,
+    minHeight: 10,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+    borderRightWidth: BW,
+    borderRightColor: BLACK,
+  }
 
   return (
-    <View style={S.header}>
-      <Text style={S.title}>Heat Transfer Calculation Report</Text>
-      <Text style={S.subtitle}>{subtitle} · Tag: {present(tag)}</Text>
-    </View>
-  )
-}
-
-function KeyValueTable({ rows }: { rows: KeyValueRow[] }) {
-  return (
-    <View style={S.table}>
-      {rows.map((row, index) => (
-        <View
-          key={`${row.label}-${index}`}
-          style={[S.row, index === 0 ? S.firstRow : {}, index % 2 === 0 ? S.rowWhite : S.rowAlt]}
-        >
-          <View style={[S.cell, S.labelCell]}><Text>{row.label}</Text></View>
-          <View style={[S.cell, S.valueCell, S.cellLast]}><Text>{row.value}</Text></View>
+    <View style={{ borderTopWidth: HB, borderTopColor: BLACK }}>
+      {/* Row: TITLE / PROJECT / CLIENT (left) | revision columns (right) */}
+      <View style={{ flexDirection: 'row', borderBottomWidth: HB, borderBottomColor: BLACK }}>
+        <View style={{ flex: 3, borderRightWidth: HB, borderRightColor: BLACK }}>
+          <View style={trS}>
+            <View style={tlCellS}>
+              <Text style={tlTextS}>TITLE</Text>
+            </View>
+            <View style={tvCellS}>
+              <Text style={tvTextS}>{metadata.title || ''}</Text>
+            </View>
+          </View>
+          <View style={trS}>
+            <View style={tlCellS}>
+              <Text style={tlTextS}>PROJECT</Text>
+            </View>
+            <View style={tvCellS}>
+              <Text style={tvTextS}>{metadata.projectName || ''}</Text>
+            </View>
+          </View>
+          <View style={{ ...trS, borderBottomWidth: 0 }}>
+            <View style={tlCellS}>
+              <Text style={tlTextS}>CLIENT</Text>
+            </View>
+            <View style={tvCellS}>
+              <Text style={tvTextS}>{metadata.client || ''}</Text>
+            </View>
+          </View>
         </View>
-      ))}
-    </View>
-  )
-}
-
-function TwoColumnInputTable({ groups }: { groups: InputGroup[] }) {
-  return (
-    <View style={S.table}>
-      {groups.map((group) => (
-        <View key={group.title}>
-          <View style={S.groupRow}><Text style={S.groupText}>{group.title}</Text></View>
-          {Array.from({ length: Math.ceil(group.rows.length / 2) }, (_, rowIndex) => {
-            const left = group.rows[rowIndex * 2]
-            const right = group.rows[rowIndex * 2 + 1]
-            return (
-              <View
-                key={`${group.title}-${rowIndex}`}
-                style={[S.row, rowIndex % 2 === 0 ? S.rowWhite : S.rowAlt]}
-              >
-                <View style={[S.cell, S.halfLabelCell]}><Text>{left?.label ?? ''}</Text></View>
-                <View style={[S.cell, S.halfValueCell]}><Text>{left?.value ?? ''}</Text></View>
-                <View style={[S.cell, S.halfLabelCell]}><Text>{right?.label ?? ''}</Text></View>
-                <View style={[S.cell, S.halfValueCell, S.cellLast]}><Text>{right?.value ?? ''}</Text></View>
+        <View style={{ flex: 2 }}>
+          <View style={revHeaderRowS}>
+            <View style={revHeaderCellS}>
+              <Text style={{ fontSize: 6, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>REV.</Text>
+            </View>
+            <View style={revHeaderCellS}>
+              <Text style={{ fontSize: 6, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>BY / DATE</Text>
+            </View>
+            <View style={revHeaderCellS}>
+              <Text style={{ fontSize: 6, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>CHKD / DATE</Text>
+            </View>
+            <View style={{ ...revHeaderCellS, borderRightWidth: 0 }}>
+              <Text style={{ fontSize: 6, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>APPD / DATE</Text>
+            </View>
+          </View>
+          {rows.map((rev, i) => (
+            <View
+              key={i}
+              style={{
+                ...revDataRowS,
+                borderBottomWidth: i < rows.length - 1 ? BW : 0,
+                borderBottomColor: '#e5e7eb',
+              }}
+            >
+              <View style={revDataCellS}>
+                <Text style={{ fontSize: 6, textAlign: 'center' }}>{rev?.rev ?? ''}</Text>
               </View>
-            )
-          })}
+              <View style={revDataCellS}>
+                <Text style={{ fontSize: 6, textAlign: 'center' }}>
+                  {rev ? joinPersonDate(rev.by, rev.byDate) : ''}
+                </Text>
+              </View>
+              <View style={revDataCellS}>
+                <Text style={{ fontSize: 6, textAlign: 'center' }}>
+                  {rev ? joinPersonDate(rev.checkedBy, rev.checkedDate) : ''}
+                </Text>
+              </View>
+              <View style={{ ...revDataCellS, borderRightWidth: 0 }}>
+                <Text style={{ fontSize: 6, textAlign: 'center' }}>
+                  {rev ? joinPersonDate(rev.approvedBy, rev.approvedDate) : ''}
+                </Text>
+              </View>
+            </View>
+          ))}
         </View>
-      ))}
-    </View>
-  )
-}
+      </View>
 
-function ResultHeader({ columns }: { columns: { label: string; width: string; numeric?: boolean }[] }) {
-  return (
-    <View style={S.headerRow}>
-      {columns.map((column, index) => (
-        <Text
-          key={column.label}
-          style={[
-            S.headerCell,
-            { width: column.width },
-            index === columns.length - 1 ? S.cellLast : {},
-            column.numeric ? S.numericCell : {},
-          ]}
-        >
-          {column.label}
-        </Text>
-      ))}
-    </View>
-  )
-}
-
-function SurfaceResultsTable({ rows }: { rows: { name: string; surface: PerSurfaceResult | HorizontalTankSurfaceSnap }[] }) {
-  const columns = [
-    { label: 'Surface', width: '22%' },
-    { label: 'U (W/m²·K)', width: '16%', numeric: true },
-    { label: 'Q (W)', width: '16%', numeric: true },
-    { label: 'T_wall in/out (°C)', width: '26%', numeric: true },
-    { label: 'Area (m²)', width: '20%', numeric: true },
-  ]
-
-  return (
-    <View style={S.table}>
-      <ResultHeader columns={columns} />
-      {rows.map((row, index) => (
-        <View key={row.name} style={[S.row, index % 2 === 0 ? S.rowWhite : S.rowAlt]}>
-          <View style={[S.cell, { width: '22%' }]}><Text>{row.name}</Text></View>
-          <View style={[S.cell, { width: '16%' }]}><Text style={S.numericCell}>{formatNumber(row.surface.uOverall, 3)}</Text></View>
-          <View style={[S.cell, { width: '16%' }]}><Text style={S.numericCell}>{formatNumber(row.surface.heatLoss, 2)}</Text></View>
-          <View style={[S.cell, { width: '26%' }]}><Text style={S.numericCell}>{formatNumber(row.surface.twInside, 2)} / {formatNumber(row.surface.twOutside, 2)}</Text></View>
-          <View style={[S.cell, { width: '20%' }, S.cellLast]}><Text style={S.numericCell}>{formatNumber(row.surface.area, 3)}</Text></View>
+      {/* GCME brand strip */}
+      <View style={{ flexDirection: 'row' }}>
+        <View style={{ flex: 3, flexDirection: 'row', borderRightWidth: HB, borderRightColor: BLACK }}>
+          <View style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRightWidth: BW, borderRightColor: BLACK, backgroundColor: '#e5e7eb', padding: 4 }}>
+            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>GCME</Text>
+          </View>
+          <View style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 4, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 6.5, fontFamily: 'Helvetica-Bold' }}>GC MAINTENANCE &amp; ENGINEERING COMPANY LIMITED</Text>
+          </View>
         </View>
-      ))}
-    </View>
-  )
-}
-
-function PipeResultsTable({ result }: { result: PipeCalculationResult }) {
-  const rows: KeyValueRow[] = [
-    { label: 'Q heat loss', value: valueWithUnit(result.heatLoss, 'W', 2) },
-    { label: 'Outlet temperature', value: valueWithUnit(result.outletTemp, '°C', 2) },
-    { label: 'U overall', value: valueWithUnit(result.uOverall, 'W/m²·K', 3) },
-    { label: 'Re_internal', value: formatNumber(result.reynoldsInternal, 0) },
-    { label: 'Surface area', value: valueWithUnit(result.surfaceArea, 'm²', 3) },
-    { label: 'h_internal', value: valueWithUnit(result.internalHTC, 'W/m²·K', 3) },
-    { label: 'h_external', value: valueWithUnit(result.externalHTC, 'W/m²·K', 3) },
-    { label: 'Radiation HTC', value: valueWithUnit(result.radiationHTC, 'W/m²·K', 3) },
-    { label: 'Prandtl', value: formatNumber(result.prandtl, 3) },
-    { label: 'T_wall in / out', value: `${formatNumber(result.twInside, 2)} / ${formatNumber(result.twOutside, 2)} °C` },
-  ]
-
-  return <KeyValueTable rows={rows} />
-}
-
-function ResultsSummary({ mode, result }: { mode: ReportMode; result: ReportResult }) {
-  if (mode === 'pipe' && isPipeResult(result)) {
-    return <PipeResultsTable result={result} />
-  }
-
-  if (mode === 'horizontal' && isHorizontalTankResult(result)) {
-    return (
-      <>
-        <SurfaceResultsTable
-          rows={[
-            { name: 'Dry Wall', surface: result.dryWall },
-            { name: 'Wet Wall', surface: result.wetWall },
-            { name: 'Dry Head', surface: result.dryHead },
-            { name: 'Wet Head', surface: result.wetHead },
-          ]}
-        />
-        <Text style={S.note}>Total heat loss: {valueWithUnit(result.totalHeatLoss, 'W', 2)} · Total area: {valueWithUnit(result.totalArea, 'm²', 3)}</Text>
-      </>
-    )
-  }
-
-  if (isVerticalTankResult(result)) {
-    return (
-      <>
-        <SurfaceResultsTable
-          rows={[
-            { name: 'Dry Wall', surface: result.dryWall },
-            { name: 'Wet Wall', surface: result.wetWall },
-            { name: 'Roof', surface: result.roof },
-            { name: 'Floor', surface: result.floor },
-          ]}
-        />
-        <Text style={S.note}>Total heat loss: {valueWithUnit(result.totalHeatLoss, 'W', 2)} · Total area: {valueWithUnit(result.totalArea, 'm²', 3)}</Text>
-      </>
-    )
-  }
-
-  return <KeyValueTable rows={[{ label: 'Status', value: present(result.status) }]} />
-}
-
-type IterationRow = {
-  iteration: number
-  uOverall: number
-  heatLoss: number
-  twSurface: number
-}
-
-function aggregateSurfaces(iteration: {
-  iteration: number
-  dryWall?: PerSurfaceResult | HorizontalTankSurfaceSnap
-  wetWall?: PerSurfaceResult | HorizontalTankSurfaceSnap
-  roof?: PerSurfaceResult
-  floor?: PerSurfaceResult
-  dryHead?: HorizontalTankSurfaceSnap
-  wetHead?: HorizontalTankSurfaceSnap
-}): IterationRow | null {
-  const surfaces = [iteration.dryWall, iteration.wetWall, iteration.roof, iteration.floor, iteration.dryHead, iteration.wetHead]
-    .filter((surface): surface is PerSurfaceResult | HorizontalTankSurfaceSnap => Boolean(surface))
-  const area = surfaces.reduce((sum, surface) => sum + surface.area, 0)
-  if (surfaces.length === 0 || area <= 0) return null
-
-  return {
-    iteration: iteration.iteration,
-    uOverall: surfaces.reduce((sum, surface) => sum + surface.uOverall * surface.area, 0) / area,
-    heatLoss: surfaces.reduce((sum, surface) => sum + surface.heatLoss, 0),
-    twSurface: surfaces.reduce((sum, surface) => sum + surface.twOutside * surface.area, 0) / area,
-  }
-}
-
-function firstFiveAndLast<T>(items: T[]): T[] {
-  return items.length > 6 ? [...items.slice(0, 5), items[items.length - 1]] : items
-}
-
-function buildIterationRows(result: ReportResult): IterationRow[] {
-  if (!result.iterations || result.iterations.length === 0) return []
-
-  if (isPipeResult(result)) {
-    return firstFiveAndLast(result.iterations).map((iteration) => ({
-      iteration: iteration.iteration,
-      uOverall: iteration.uOverall,
-      heatLoss: iteration.heatLoss,
-      twSurface: iteration.twOutside,
-    }))
-  }
-
-  if (isHorizontalTankResult(result)) {
-    return firstFiveAndLast(result.iterations)
-      .map((iteration) => aggregateSurfaces(iteration))
-      .filter((row): row is IterationRow => Boolean(row))
-  }
-
-  if (isVerticalTankResult(result)) {
-    return firstFiveAndLast(result.iterations)
-      .map((iteration) => aggregateSurfaces(iteration))
-      .filter((row): row is IterationRow => Boolean(row))
-  }
-
-  return []
-}
-
-function IterationTable({ rows }: { rows: IterationRow[] }) {
-  const columns = [
-    { label: 'Iteration #', width: '20%', numeric: true },
-    { label: 'U (W/m²·K)', width: '26%', numeric: true },
-    { label: 'Q (W)', width: '26%', numeric: true },
-    { label: 'Tws outside (°C)', width: '28%', numeric: true },
-  ]
-
-  return (
-    <View style={S.table}>
-      <ResultHeader columns={columns} />
-      {rows.map((row, index) => (
-        <View key={`${row.iteration}-${index}`} style={[S.row, index % 2 === 0 ? S.rowWhite : S.rowAlt]}>
-          <View style={[S.cell, { width: '20%' }]}><Text style={S.numericCell}>{present(row.iteration)}</Text></View>
-          <View style={[S.cell, { width: '26%' }]}><Text style={S.numericCell}>{formatNumber(row.uOverall, 4)}</Text></View>
-          <View style={[S.cell, { width: '26%' }]}><Text style={S.numericCell}>{formatNumber(row.heatLoss, 2)}</Text></View>
-          <View style={[S.cell, { width: '28%' }, S.cellLast]}><Text style={S.numericCell}>{formatNumber(row.twSurface, 2)}</Text></View>
+        <View style={{ flex: 2, flexDirection: 'row' }}>
+          <View style={{ flex: 1, paddingHorizontal: 3, paddingVertical: 2, borderRightWidth: BW, borderRightColor: BLACK }}>
+            <Text style={{ fontSize: 5.5, color: MUTED }}>Doc No: {metadata.documentNumber || DOCUMENT_CODE}</Text>
+          </View>
+          <View style={{ flex: 1, paddingHorizontal: 3, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 5.5, color: MUTED }}>Project: {metadata.projectNumber || '—'}</Text>
+          </View>
         </View>
-      ))}
+      </View>
     </View>
   )
 }
 
-// ─── Schematic SVG builders ────────────────────────────────────────────────
+// ─── Schematic rendering ────────────────────────────────────────────────────
 
-const PDF_STROKE  = '#111827'
-const PDF_GUIDE   = '#6b7280'
-const PDF_LIQUID  = '#38bdf8'
-const PDF_DRY     = '#d97706'
-const PDF_INSUL   = '#ea580c'
-const PDF_METAL   = '#64748b'
+const PDF_STROKE   = '#1f3864'
+const PDF_GUIDE    = '#374151'
+const PDF_LIQUID   = '#93c5fd'
+const PDF_DRY      = '#e2e8f0'
+const PDF_INSUL    = '#fbbf24'
+const PDF_METAL    = '#94a3b8'
 
 function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode }) {
-  const model: HeatSchematicModel | null =
-    mode === 'pipe'      ? buildPipeSchematic(input as PipeCalculationInput, 420, 340, 34) :
-    mode === 'horizontal' ? buildHorizontalTankSchematic(input as HorizontalTankInput, 420, 340, 34) :
-    buildVerticalTankSchematic(input as CalculationInput, 420, 340, 34)
+  const raw = mode === 'pipe'
+    ? buildPipeSchematic(input as PipeCalculationInput, 220, 180, 10)
+    : mode === 'horizontal'
+      ? buildHorizontalTankSchematic(input as HorizontalTankInput, 220, 180, 10)
+      : buildVerticalTankSchematic(input as CalculationInput, 220, 180, 10)
 
-  if (!model) return null
+  if (!raw) return null
+
+  const model = raw
 
   return (
-    <Svg viewBox={`0 0 ${model.width} ${model.height}`} style={{ width: 260, height: 210 }}>
+    <Svg viewBox={`0 0 ${model.width} ${model.height}`} style={{ width: 220, height: 180 }}>
       {/* Zone fills */}
       {model.zoneFills.rects.map((r) => (
-        <Rect key={r.key} x={r.x} y={r.y} width={r.width} height={r.height} fill={fillColor(r.tone)} opacity={r.opacity ?? 1} />
+        <Rect key={r.key} x={r.x} y={r.y} width={r.width} height={r.height}
+          fill={fillColor(r.tone)} opacity={r.opacity ?? 1} />
       ))}
       {model.zoneFills.circles.map((c) => (
-        <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r} fill={fillColor(c.tone)} opacity={c.opacity ?? 1} />
+        <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r}
+          fill={fillColor(c.tone)} opacity={c.opacity ?? 1} />
       ))}
       {model.zoneFills.ellipses.map((e) => (
-        <Ellipse key={e.key} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry} fill={fillColor(e.tone)} opacity={e.opacity ?? 1} />
+        <Ellipse key={e.key} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry}
+          fill={fillColor(e.tone)} opacity={e.opacity ?? 1} />
       ))}
       {model.zoneFills.paths.map((p) => (
         <Path key={p.key} d={p.d} fill={fillColor(p.tone)} opacity={p.opacity ?? 1} />
       ))}
-      {model.liquidFill && (
-        <Rect
-          x={model.liquidFill.x} y={model.liquidFill.y}
-          width={model.liquidFill.width} height={model.liquidFill.height}
-          fill={fillColor(model.liquidFill.tone)} opacity={model.liquidFill.opacity ?? 1}
-        />
-      )}
 
       {/* Outlines */}
       {model.outlines.rects.map((r) => (
@@ -737,10 +528,12 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
           rx={r.rx} ry={r.ry} stroke={PDF_STROKE} strokeWidth={2} fill="none" />
       ))}
       {model.outlines.circles.map((c) => (
-        <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r} stroke={PDF_STROKE} strokeWidth={2} fill="none" />
+        <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r}
+          stroke={PDF_STROKE} strokeWidth={2} fill="none" />
       ))}
       {model.outlines.ellipses.map((e) => (
-        <Ellipse key={e.key} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry} stroke={PDF_STROKE} strokeWidth={2} fill="none" />
+        <Ellipse key={e.key} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry}
+          stroke={PDF_STROKE} strokeWidth={2} fill="none" />
       ))}
       {model.outlines.paths.map((p) => (
         <Path key={p.key} d={p.d} stroke={PDF_STROKE} strokeWidth={2} fill="none" />
@@ -762,9 +555,7 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
         <G key={lv.key}>
           <Line x1={lv.x0} y1={lv.y} x2={lv.x1} y2={lv.y}
             stroke={lv.color} strokeWidth={1.5} strokeDasharray={lv.dashed ? '5 4' : undefined} />
-          <Text
-            x={lv.x1 + (lv.labelOffset ?? 18)} y={lv.y - 4}
-            fill={lv.color} style={{ fontSize: 9 }}>
+          <Text x={lv.x1 + 18} y={lv.y - 4} fill={lv.color} style={{ fontSize: 9 }}>
             {lv.label}
           </Text>
         </G>
@@ -790,8 +581,7 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
 
       {/* Labels */}
       {model.labels.map((lb) => (
-        <Text
-          key={lb.key} x={lb.x} y={lb.y}
+        <Text key={lb.key} x={lb.x} y={lb.y}
           textAnchor={lb.anchor ?? 'middle'}
           style={{ fontSize: lb.size ?? 10 }}
           fill={PDF_GUIDE}>
@@ -809,50 +599,58 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
 
 function fillColor(tone?: string): string {
   switch (tone) {
-    case 'liquid':  return PDF_LIQUID
-    case 'wet':     return '#7dd3fc'
-    case 'dry':     return PDF_DRY
+    case 'liquid':    return PDF_LIQUID
+    case 'wet':       return '#7dd3fc'
+    case 'dry':       return PDF_DRY
     case 'insulation': return PDF_INSUL
-    case 'metal':   return PDF_METAL
-    default:        return '#cbd5e1'
+    case 'metal':     return PDF_METAL
+    default:          return '#cbd5e1'
   }
 }
 
-function SchematicLegend({ mode }: { mode: ReportMode }) {
-  const items = [
-    { color: PDF_LIQUID, label: 'LIQUID / WET' },
-    { color: PDF_DRY,    label: 'DRY WALL' },
-    { color: PDF_INSUL,  label: 'INSULATION' },
-    { color: PDF_METAL,  label: 'METAL' },
-  ]
-  if (mode === 'pipe') items.push({ color: PDF_GUIDE, label: 'AMBIENT' })
+// ─── Mode detection ─────────────────────────────────────────────────────────
 
-  return (
-    <View style={{ flexDirection: 'row', gap: 12, marginTop: 6, justifyContent: 'center' }}>
-      {items.map((item) => (
-        <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Rect x={0} y={0} width={8} height={8} fill={item.color} />
-          <Text style={{ fontSize: 7, color: PDF_GUIDE }}>{item.label}</Text>
-        </View>
-      ))}
-    </View>
-  )
+type ReportMode = 'vertical' | 'pipe' | 'horizontal'
+
+function isPipeResult(r: ReportResult): r is PipeCalculationResult {
+  return 'surfaceArea' in r && 'outletTemp' in r
+}
+function isHorizontalTankResult(r: ReportResult): r is HorizontalTankResult {
+  return 'dryHead' in r && 'wetHead' in r
+}
+function isVerticalTankResult(r: ReportResult): r is CalculationResult {
+  return 'roof' in r && 'floor' in r
 }
 
-function SchematicSection({ input, mode }: { input: ReportInput; mode: ReportMode }) {
-  return (
-    <View>
-      <PdfSchematic input={input} mode={mode} />
-      <SchematicLegend mode={mode} />
-      <Text style={{ fontSize: 7, color: '#94a3b8', textAlign: 'center', marginTop: 3 }}>
-        {mode === 'pipe' ? 'Pipe / duct cross-section with insulation layers' :
-         mode === 'horizontal' ? 'Horizontal tank dry/wet surface zones' :
-         'Vertical tank dry/wet surface zones'}
-      </Text>
-    </View>
-  )
+function detectMode(input: ReportInput, result: ReportResult): ReportMode {
+  const explicitMode = (input as unknown as Record<string, unknown>).mode
+  if (explicitMode === 'pipe') return 'pipe'
+  if (explicitMode === 'horizontal') return 'horizontal'
+  if (explicitMode === 'vertical' || explicitMode === 'tank' || explicitMode === 'storage-tank') return 'vertical'
+  if (isPipeResult(result)) return 'pipe'
+  if (isHorizontalTankResult(result)) return 'horizontal'
+  return 'vertical'
 }
 
+// ─── Input helpers ───────────────────────────────────────────────────────────
+
+function valueOf(input: ReportInput, key: string): unknown {
+  return (input as unknown as Record<string, unknown>)[key]
+}
+
+// ─── Result helpers ──────────────────────────────────────────────────────────
+
+function isPipeResultB(r: ReportResult): r is PipeCalculationResult {
+  return 'surfaceArea' in r && 'outletTemp' in r
+}
+function isHorizontalTankResultB(r: ReportResult): r is HorizontalTankResult {
+  return 'dryHead' in r && 'wetHead' in r
+}
+function isVerticalTankResultB(r: ReportResult): r is CalculationResult {
+  return 'roof' in r && 'floor' in r
+}
+
+// ─── Document ───────────────────────────────────────────────────────────────
 
 export function CalculationReport({
   input,
@@ -861,74 +659,202 @@ export function CalculationReport({
   revisions,
 }: CalculationReportProps) {
   const mode = detectMode(input, result)
-  const revision = latestRevision(revisions)
-  const inputGroups = buildInputGroups(input, mode)
-  const iterationRows = buildIterationRows(result)
-  const pageCount = iterationRows.length > 0 ? 3 : 2
 
-  const metadataRows: KeyValueRow[] = [
-    { label: 'Tag', value: present(valueOf(input, 'tag')) },
-    { label: 'Description', value: present(valueOf(input, 'description')) },
-    { label: 'Project Number', value: present(metadata.projectNumber) },
-    { label: 'Document Number', value: present(metadata.documentNumber) },
-    { label: 'Title', value: present(metadata.title) },
-    { label: 'Project Name', value: present(metadata.projectName) },
-    { label: 'Client', value: present(metadata.client) },
-    { label: 'Revision', value: present(revision?.rev) },
-    { label: 'Prepared By / Date', value: `${present(revision?.by)} / ${present(revision?.byDate)}` },
-    { label: 'Checked By / Date', value: `${present(revision?.checkedBy)} / ${present(revision?.checkedDate)}` },
-    { label: 'Approved By / Date', value: `${present(revision?.approvedBy)} / ${present(revision?.approvedDate)}` },
-    { label: 'Calculated At', value: present(result.calculatedAt) },
-  ]
+  const modeLabel = mode === 'pipe'
+    ? 'Pipe / duct heat-loss calculation'
+    : mode === 'horizontal'
+      ? 'Horizontal tank heat-loss calculation'
+      : 'Vertical storage tank heat-loss calculation'
+
+  const tag = present(valueOf(input, 'tag'))
 
   return (
-    <Document title={`Heat Transfer Calculation Report - ${present(valueOf(input, 'tag'))}`}>
-      <FramedPage pageNumber={1}>
-        <ReportHeader mode={mode} tag={present(valueOf(input, 'tag'))} />
+    <Document title={`Heat Transfer Calculation Report — ${tag}`}>
+      <Page size="A4" style={S.page}>
+        <View style={S.pageOuterFrame} fixed />
+        <View style={S.disclaimerWrap} fixed>
+          <Text style={S.disclaimerText}>{DISCLAIMER}</Text>
+        </View>
 
-        <Section title="Metadata">
-          <KeyValueTable rows={metadataRows} />
-        </Section>
+        <View style={S.outerBorder}>
+          {/* ── Top header bar ── */}
+          <View style={S.topHeader}>
+            <Text style={S.topHeaderTitle}>Heat Transfer Calculation Report</Text>
+            <Text style={S.topHeaderCode}>{DOCUMENT_CODE}</Text>
+          </View>
 
-        <Section title="Input Summary">
-          <TwoColumnInputTable groups={inputGroups} />
-        </Section>
-      </FramedPage>
+          {/* ── Type row ── */}
+          <View style={S.typeRow}>
+            <View style={S.typeLabel}>
+              <Text style={{ fontSize: 6, fontFamily: 'Helvetica-Bold', color: GUIDE }}>TYPE</Text>
+            </View>
+            <View style={S.typeValue}>
+              <Text>{modeLabel} · Tag: {tag}</Text>
+            </View>
+          </View>
 
-      <FramedPage pageNumber={2}>
-        <ReportHeader mode={mode} tag={present(valueOf(input, 'tag'))} />
+          {/* ── Body: left (inputs + results) | right (sketch) ── */}
+          <View style={S.bodyRow}>
+            <View style={S.leftCol}>
+              {/* ── INPUTS ── */}
+              <Section title="I. GEOMETRY">
+                {mode === 'pipe' && (
+                  <>
+                    <DataRow label="Pipe / duct type" value={present(valueOf(input, 'pipeType'))} />
+                    <DataRow label="Orientation" value={present(valueOf(input, 'pipeOrientation'))} />
+                    <DataRow label="Pipe length" value={fmt(valueOf(input, 'pipeLength') as number, 2)} unit="m" />
+                    <DataRow label="Inside diameter" value={fmt(valueOf(input, 'insideDiameter') as number, 2)} unit="mm" />
+                    <DataRow label="Outside diameter" value={fmt(valueOf(input, 'outsideDiameter') as number, 2)} unit="mm" />
+                    <DataRow label="Side A" value={fmt(valueOf(input, 'sideA') as number, 2)} unit="mm" />
+                    <DataRow label="Side B" value={fmt(valueOf(input, 'sideB') as number, 2)} unit="mm" />
+                  </>
+                )}
+                {(mode === 'vertical' || mode === 'horizontal') && (
+                  <>
+                    <DataRow label="Inside diameter" value={fmt(valueOf(input, 'insideDiameter') as number, 2)} unit="mm" />
+                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
+                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
+                    {mode === 'horizontal' && (
+                      <>
+                        <DataRow label="Tank length" value={fmt(valueOf(input, 'tankLength') as number, 2)} unit="mm" />
+                        <DataRow label="Head type" value={present(valueOf(input, 'headType'))} />
+                        <DataRow label="Head depth" value={fmt(valueOf(input, 'headDepth') as number, 2)} unit="mm" />
+                        <DataRow label="Flange width" value={fmt(valueOf(input, 'flangeWidth') as number, 2)} unit="mm" />
+                        <DataRow label="Liquid level" value={fmt(valueOf(input, 'liquidLevel') as number, 2)} unit="mm" />
+                      </>
+                    )}
+                  </>
+                )}
+              </Section>
 
-        <Section title="Results Summary">
-          <ResultsSummary mode={mode} result={result} />
-        </Section>
+              <Section title="II. OPERATING CONDITIONS">
+                {mode === 'pipe' && (
+                  <>
+                    <DataRow label="Flow rate" value={fmt(valueOf(input, 'flowRate') as number, 2)} unit="kg/h" />
+                    <DataRow label="Inlet temperature" value={fmt(valueOf(input, 'inletTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Ambient temperature" value={fmt(valueOf(input, 'ambientTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Wind speed" value={fmt(valueOf(input, 'windSpeed') as number, 2)} unit="m/s" />
+                    <DataRow label="Pressure" value={fmt(valueOf(input, 'pressure') as number, 2)} unit="barg" />
+                  </>
+                )}
+                {(mode === 'vertical' || mode === 'horizontal') && (
+                  <>
+                    <DataRow label="Fluid temperature" value={fmt(valueOf(input, 'fluidTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Vapor temperature" value={fmt(valueOf(input, 'vaporTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Ambient temperature" value={fmt(valueOf(input, 'ambientTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Wind speed" value={fmt(valueOf(input, 'windSpeed') as number, 2)} unit="m/s" />
+                    {mode === 'horizontal' && (
+                      <DataRow label="Ground temperature" value={fmt(valueOf(input, 'groundTemp') as number, 2)} unit="°C" />
+                    )}
+                  </>
+                )}
+              </Section>
 
-        <Section title="Calculation Status">
-          <KeyValueTable
-            rows={[
-              { label: 'Status', value: present(result.status) },
-              { label: 'Result type', value: mode === 'pipe' ? 'Pipe' : mode === 'horizontal' ? 'Horizontal Tank' : 'Vertical Tank' },
-              { label: 'Revision records', value: present(revisions.length) },
-            ]}
-          />
-        </Section>
+              <Section title="III. CONSTRUCTION &amp; FLUID PROPERTIES">
+                {mode === 'pipe' && (
+                  <>
+                    <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
+                    <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fluid density" value={fmt(valueOf(input, 'fluidDensity') as number, 2)} unit="kg/m³" />
+                    <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
+                    <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
+                    <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
+                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
+                  </>
+                )}
+                {(mode === 'vertical' || mode === 'horizontal') && (
+                  <>
+                    <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
+                    <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fluid density" value={fmt(valueOf(input, 'fluidDensity') as number, 2)} unit="kg/m³" />
+                    <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
+                    <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
+                    <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
+                  </>
+                )}
+              </Section>
 
-        <Section title="System Schematic">
-          <SchematicSection input={input} mode={mode} />
-        </Section>
-      </FramedPage>
+              {/* ── RESULTS ── */}
+              {isPipeResultB(result) && (
+                <Section title="IV. CALCULATION RESULTS">
+                  <DataRow label="Q heat loss" value={fmt(result.heatLoss, 2)} unit="W" highlight />
+                  <DataRow label="Outlet temperature" value={fmt(result.outletTemp, 2)} unit="°C" highlight />
+                  <DataRow label="U overall" value={fmt(result.uOverall, 3)} unit="W/m²·K" highlight />
+                  <DataRow label="Surface area" value={fmt(result.surfaceArea, 3)} unit="m²" />
+                  <DataRow label="Re_internal" value={fmt(result.reynoldsInternal, 0)} />
+                  <DataRow label="h_internal" value={fmt(result.internalHTC, 3)} unit="W/m²·K" />
+                  <DataRow label="h_external" value={fmt(result.externalHTC, 3)} unit="W/m²·K" />
+                  <DataRow label="Radiation HTC" value={fmt(result.radiationHTC, 3)} unit="W/m²·K" />
+                  <DataRow label="T_wall in / out" value={`${fmt(result.twInside, 2)} / ${fmt(result.twOutside, 2)}`} unit="°C" />
+                </Section>
+              )}
 
-      {iterationRows.length > 0 && (
-        <FramedPage pageNumber={pageCount}>
-          <ReportHeader mode={mode} tag={present(valueOf(input, 'tag'))} />
+              {isHorizontalTankResultB(result) && (
+                <Section title="IV. CALCULATION RESULTS">
+                  <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                  <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
+                  <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
+                  <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
+                  <DataRow label="Dry Head U" value={fmt(result.dryHead.uOverall, 4)} unit="W/m²·K" />
+                  <DataRow label="Wet Head U" value={fmt(result.wetHead.uOverall, 4)} unit="W/m²·K" />
+                </Section>
+              )}
 
-          <Section title="Iteration Details">
-            <IterationTable rows={iterationRows} />
-            <Text style={S.note}>
-              Table shows the first five iterations and the final iteration when more than six iterations are available. Tank U and Tws values are area-weighted averages; Q is summed across surfaces.
-            </Text>
-          </Section>
-        </FramedPage>
-      )}
+              {isVerticalTankResultB(result) && (
+                <Section title="IV. CALCULATION RESULTS">
+                  <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                  <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
+                  <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
+                  <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
+                  <DataRow label="Roof U" value={fmt(result.roof.uOverall, 4)} unit="W/m²·K" />
+                  <DataRow label="Floor U" value={fmt(result.floor.uOverall, 4)} unit="W/m²·K" />
+                </Section>
+              )}
+            </View>
+
+            {/* ── Right column: SKETCH ── */}
+            <View style={S.rightCol}>
+              <View style={{ flex: 1, padding: '6 6 4 6', minHeight: '100%' }}>
+                <View style={S.sectionHeader}>
+                  <Text style={S.sectionHeaderText}>SKETCH</Text>
+                </View>
+                <View style={S.sketchBody}>
+                  <PdfSchematic input={input} mode={mode} />
+                </View>
+                <Text style={S.sketchCaption}>
+                  {mode === 'pipe' ? 'Pipe / duct cross-section with insulation layers' :
+                   mode === 'horizontal' ? 'Horizontal tank dry/wet surface zones' :
+                   'Vertical tank dry/wet surface zones'}
+                </Text>
+                {/* Legend */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, columnGap: 8, rowGap: 3 }}>
+                  {[
+                    { color: PDF_LIQUID, label: 'LIQUID / WET' },
+                    { color: PDF_DRY, label: 'DRY WALL' },
+                    { color: PDF_INSUL, label: 'INSULATION' },
+                    { color: PDF_METAL, label: 'METAL' },
+                  ].map((item) => (
+                    <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Rect x={0} y={0} width={7} height={7} fill={item.color} />
+                      <Text style={{ fontSize: 5.5, color: GUIDE, marginLeft: 3 }}>{item.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* ── Title block (bottom) ── */}
+          <TitleBlock metadata={metadata} revisions={revisions} />
+        </View>
+
+        {/* Footer */}
+        <View style={S.footer} fixed>
+          <Text style={S.footerText}>GC MAINTENANCE &amp; ENGINEERING COMPANY LIMITED</Text>
+          <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+        </View>
+      </Page>
     </Document>
   )
 }
