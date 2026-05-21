@@ -3,9 +3,9 @@
  * Run: TMPDIR=./.tmp npx vitest run __tests__/fixtures.test.ts
  */
 import { readFileSync } from 'fs'
-import { calculate } from '../src/lib/calculations/index.ts'
-import { calculatePipe } from '../src/lib/calculations/pipe.ts'
-import { calculateHorizontalTank } from '../src/lib/calculations/horizontal-tank.ts'
+import { calculate } from '../src/lib/calculations'
+import { calculatePipe } from '../src/lib/calculations/pipe'
+import { calculateHorizontalTank } from '../src/lib/calculations/horizontal-tank'
 import { describe, test, expect } from 'vitest'
 
 // ── Load fixtures ──────────────────────────────────────────────────────────────

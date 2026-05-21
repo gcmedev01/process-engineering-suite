@@ -149,20 +149,19 @@ const S = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 2,
   },
-  // ── Body: left (inputs/results) + right (sketch)
+  // ── Body: two equal data panels
   bodyRow: {
-    flex: 1,
     flexDirection: 'row',
     borderBottomWidth: HB,
     borderBottomColor: BLACK,
   },
   leftCol: {
-    flex: 3,
+    flex: 1,
     borderRightWidth: HB,
     borderRightColor: BLACK,
   },
   rightCol: {
-    flex: 2,
+    flex: 1,
   },
   // ── Section header
   sectionHeader: {
@@ -213,8 +212,9 @@ const S = StyleSheet.create({
   },
   // ── Sketch section (full width)
   sketchSection: {
+    flex: 1,
     flexDirection: 'column',
-    minHeight: 180,
+    minHeight: 245,
     borderBottomWidth: HB,
     borderBottomColor: BLACK,
   },
@@ -232,12 +232,13 @@ const S = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 4,
   },
   sketchCaption: {
     fontSize: 5.5,
     color: MUTED,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 1,
   },
   // ── Disclaimer strip
   disclaimerWrap: {
@@ -501,18 +502,22 @@ const PDF_INSUL    = '#fbbf24'
 const PDF_METAL    = '#94a3b8'
 
 function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode }) {
+  const schematicWidth = 440
+  const schematicHeight = mode === 'pipe' ? 210 : 240
+  const schematicPadding = mode === 'pipe' ? 24 : 30
+
   const raw = mode === 'pipe'
-    ? buildPipeSchematic(input as PipeCalculationInput, 220, 180, 10)
+    ? buildPipeSchematic(input as PipeCalculationInput, schematicWidth, schematicHeight, schematicPadding)
     : mode === 'horizontal'
-      ? buildHorizontalTankSchematic(input as HorizontalTankInput, 220, 180, 10)
-      : buildVerticalTankSchematic(input as CalculationInput, 220, 180, 10)
+      ? buildHorizontalTankSchematic(input as HorizontalTankInput, schematicWidth, schematicHeight, schematicPadding)
+      : buildVerticalTankSchematic(input as CalculationInput, schematicWidth, schematicHeight, schematicPadding)
 
   if (!raw) return null
 
   const model = raw
 
   return (
-    <Svg viewBox={`0 0 ${model.width} ${model.height}`} style={{ width: 220, height: 180 }}>
+    <Svg viewBox={`0 0 ${model.width} ${model.height}`} style={{ width: schematicWidth, height: schematicHeight }}>
       {/* Zone fills */}
       {model.zoneFills.rects.map((r) => (
         <Rect key={r.key} x={r.x} y={r.y} width={r.width} height={r.height}
@@ -591,16 +596,11 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
       {model.labels.map((lb) => (
         <Text key={lb.key} x={lb.x} y={lb.y}
           textAnchor={lb.anchor ?? 'middle'}
-          style={{ fontSize: lb.size ?? 10 }}
+          style={{ fontSize: Math.min(lb.size ?? 10, 8) }}
           fill={PDF_GUIDE}>
           {lb.text}
         </Text>
       ))}
-
-      {/* Title */}
-      <Text x={model.width / 2} y={20} textAnchor="middle" fill={PDF_GUIDE} style={{ fontSize: 10 }}>
-        {model.subtitle}
-      </Text>
     </Svg>
   )
 }
