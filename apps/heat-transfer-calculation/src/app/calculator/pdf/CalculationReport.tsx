@@ -684,6 +684,30 @@ export function CalculationReport({
 
   const tag = present(valueOf(input, 'tag'))
 
+  // Guard: show placeholder if result is missing
+  if (!result) {
+    return (
+      <Document title="Heat Transfer Calculation Report">
+        <Page size="A4" style={S.page}>
+          <View style={S.pageOuterFrame} fixed />
+          <View style={S.disclaimerWrap} fixed>
+            <Text style={S.disclaimerText}>{DISCLAIMER}</Text>
+          </View>
+          <View style={S.outerBorder}>
+            <View style={S.topHeader}>
+              <Text style={S.topHeaderTitle}>Heat Transfer Calculation Report</Text>
+              <Text style={S.topHeaderCode}>{DOCUMENT_CODE}</Text>
+            </View>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 10, color: MUTED }}>No calculation result available</Text>
+              <Text style={{ fontSize: 8, color: MUTED, marginTop: 6 }}>Run the calculation first to generate the report</Text>
+            </View>
+          </View>
+        </Page>
+      </Document>
+    )
+  }
+
   return (
     <Document title={`Heat Transfer Calculation Report — ${tag}`}>
       <Page size="A4" style={S.page}>
@@ -709,8 +733,7 @@ export function CalculationReport({
             </View>
           </View>
 
-          {/* ── Body: left (inputs + results) | right (sketch) ── */}
-                    {/* ── Content: all inputs + results (full width) ── */}
+          {/* ── Content: all inputs + results (full width) ── */}
           <View style={{ flexDirection: 'column', flex: 1 }}>
 
               {/* ── INPUTS ── */}
@@ -833,40 +856,48 @@ export function CalculationReport({
               </Section>
 
               {/* ── RESULTS ── */}
-              {isPipeResultB(result) && (
+              {result.status === 'error' ? (
                 <Section title="IV. CALCULATION RESULTS">
-                  <DataRow label="Q heat loss" value={fmt(result.heatLoss, 2)} unit="W" highlight />
-                  <DataRow label="Outlet temperature" value={fmt(result.outletTemp, 2)} unit="°C" highlight />
-                  <DataRow label="U overall" value={fmt(result.uOverall, 3)} unit="W/m²·K" highlight />
-                  <DataRow label="Surface area" value={fmt(result.surfaceArea, 3)} unit="m²" />
-                  <DataRow label="Re_internal" value={fmt(result.reynoldsInternal, 0)} />
-                  <DataRow label="h_internal" value={fmt(result.internalHTC, 3)} unit="W/m²·K" />
-                  <DataRow label="h_external" value={fmt(result.externalHTC, 3)} unit="W/m²·K" />
-                  <DataRow label="Radiation HTC" value={fmt(result.radiationHTC, 3)} unit="W/m²·K" />
-                  <DataRow label="T_wall in / out" value={`${fmt(result.twInside, 2)} / ${fmt(result.twOutside, 2)}`} unit="°C" />
+                  <DataRow label="Status" value="Calculation failed — check inputs" />
                 </Section>
-              )}
+              ) : (
+                <>
+                  {isPipeResultB(result) && (
+                    <Section title="IV. CALCULATION RESULTS">
+                      <DataRow label="Q heat loss" value={fmt(result.heatLoss, 2)} unit="W" highlight />
+                      <DataRow label="Outlet temperature" value={fmt(result.outletTemp, 2)} unit="°C" highlight />
+                      <DataRow label="U overall" value={fmt(result.uOverall, 3)} unit="W/m²·K" highlight />
+                      <DataRow label="Surface area" value={fmt(result.surfaceArea, 3)} unit="m²" />
+                      <DataRow label="Re_internal" value={fmt(result.reynoldsInternal, 0)} />
+                      <DataRow label="h_internal" value={fmt(result.internalHTC, 3)} unit="W/m²·K" />
+                      <DataRow label="h_external" value={fmt(result.externalHTC, 3)} unit="W/m²·K" />
+                      <DataRow label="Radiation HTC" value={fmt(result.radiationHTC, 3)} unit="W/m²·K" />
+                      <DataRow label="T_wall in / out" value={`${fmt(result.twInside, 2)} / ${fmt(result.twOutside, 2)}`} unit="°C" />
+                    </Section>
+                  )}
 
-              {isHorizontalTankResultB(result) && (
-                <Section title="IV. CALCULATION RESULTS">
-                  <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
-                  <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
-                  <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
-                  <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
-                  <DataRow label="Dry Head U" value={fmt(result.dryHead.uOverall, 4)} unit="W/m²·K" />
-                  <DataRow label="Wet Head U" value={fmt(result.wetHead.uOverall, 4)} unit="W/m²·K" />
-                </Section>
-              )}
+                  {isHorizontalTankResultB(result) && (
+                    <Section title="IV. CALCULATION RESULTS">
+                      <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                      <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
+                      <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
+                      <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
+                      <DataRow label="Dry Head U" value={fmt(result.dryHead.uOverall, 4)} unit="W/m²·K" />
+                      <DataRow label="Wet Head U" value={fmt(result.wetHead.uOverall, 4)} unit="W/m²·K" />
+                    </Section>
+                  )}
 
-              {isVerticalTankResultB(result) && (
-                <Section title="IV. CALCULATION RESULTS">
-                  <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
-                  <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
-                  <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
-                  <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
-                  <DataRow label="Roof U" value={fmt(result.roof.uOverall, 4)} unit="W/m²·K" />
-                  <DataRow label="Floor U" value={fmt(result.floor.uOverall, 4)} unit="W/m²·K" />
-                </Section>
+                  {isVerticalTankResultB(result) && (
+                    <Section title="IV. CALCULATION RESULTS">
+                      <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                      <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
+                      <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
+                      <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
+                      <DataRow label="Roof U" value={fmt(result.roof.uOverall, 4)} unit="W/m²·K" />
+                      <DataRow label="Floor U" value={fmt(result.floor.uOverall, 4)} unit="W/m²·K" />
+                    </Section>
+                  )}
+                </>
               )}
             
           </View>
