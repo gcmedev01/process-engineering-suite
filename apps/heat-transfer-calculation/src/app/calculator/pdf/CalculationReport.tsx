@@ -4,8 +4,9 @@
  * Layout (top→bottom of content area):
  *   1. Top header bar — document title + doc code
  *   2. TYPE row — blue background, mode label + tag
- *   3. Body — leftCol (inputs + results, flex:3) | rightCol (SKETCH, flex:2)
- *   4. Title block — TITLE/PROJECT/CLIENT left | revision grid right | GCME strip bottom
+ *   3. INPUT SECTIONS — all inputs, full width (I GEOMETRY, II CONDITIONS, III PROPERTIES)
+ *   4. SKETCH — spans full width below inputs
+ *   5. Title block — TITLE/PROJECT/CLIENT | revision grid | GCME strip
  * Disclaimer strip rotated on left edge.
  */
 
@@ -210,12 +211,22 @@ const S = StyleSheet.create({
     textAlign: 'right',
     paddingLeft: 2,
   },
-  // ── Sketch section
+  // ── Sketch section (full width)
   sketchSection: {
-    flex: 1,
-    minHeight: 150,
+    flexDirection: 'column',
+    minHeight: 180,
     borderBottomWidth: HB,
     borderBottomColor: BLACK,
+  },
+  sketchHeader: {
+    backgroundColor: NAVY,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  sketchHeaderText: {
+    color: WHITE,
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
   },
   sketchBody: {
     flex: 1,
