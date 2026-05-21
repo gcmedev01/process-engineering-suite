@@ -710,8 +710,9 @@ export function CalculationReport({
           </View>
 
           {/* ── Body: left (inputs + results) | right (sketch) ── */}
-          <View style={S.bodyRow}>
-            <View style={S.leftCol}>
+                    {/* ── Content: all inputs + results (full width) ── */}
+          <View style={{ flexDirection: 'column', flex: 1 }}>
+
               {/* ── INPUTS ── */}
               <Section title="I. GEOMETRY">
                 {mode === 'pipe' && (
@@ -725,20 +726,27 @@ export function CalculationReport({
                     <DataRow label="Side B" value={fmt(valueOf(input, 'sideB') as number, 2)} unit="mm" />
                   </>
                 )}
-                {(mode === 'vertical' || mode === 'horizontal') && (
+                {mode === 'vertical' && (
                   <>
-                    <DataRow label="Inside diameter" value={fmt(valueOf(input, 'insideDiameter') as number, 2)} unit="mm" />
+                    <DataRow label="Tank diameter" value={fmt(valueOf(input, 'tankDiameter') as number, 2)} unit="mm" />
+                    <DataRow label="Tank height" value={fmt(valueOf(input, 'tankHeight') as number, 2)} unit="mm" />
+                    <DataRow label="Roof type" value={present(valueOf(input, 'tankRoofType'))} />
+                    <DataRow label="Roof height" value={fmt(valueOf(input, 'roofHeight') as number, 2)} unit="mm" />
+                    <DataRow label="Liquid level" value={fmt(valueOf(input, 'liquidLevel') as number, 2)} unit="mm" />
                     <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
                     <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
-                    {mode === 'horizontal' && (
-                      <>
-                        <DataRow label="Tank length" value={fmt(valueOf(input, 'tankLength') as number, 2)} unit="mm" />
-                        <DataRow label="Head type" value={present(valueOf(input, 'headType'))} />
-                        <DataRow label="Head depth" value={fmt(valueOf(input, 'headDepth') as number, 2)} unit="mm" />
-                        <DataRow label="Flange width" value={fmt(valueOf(input, 'flangeWidth') as number, 2)} unit="mm" />
-                        <DataRow label="Liquid level" value={fmt(valueOf(input, 'liquidLevel') as number, 2)} unit="mm" />
-                      </>
-                    )}
+                  </>
+                )}
+                {mode === 'horizontal' && (
+                  <>
+                    <DataRow label="Tank diameter" value={fmt(valueOf(input, 'insideDiameter') as number, 2)} unit="mm" />
+                    <DataRow label="Tank length" value={fmt(valueOf(input, 'tankLength') as number, 2)} unit="mm" />
+                    <DataRow label="Head type" value={present(valueOf(input, 'headType'))} />
+                    <DataRow label="Head depth" value={fmt(valueOf(input, 'headDepth') as number, 2)} unit="mm" />
+                    <DataRow label="Flange width" value={fmt(valueOf(input, 'flangeWidth') as number, 2)} unit="mm" />
+                    <DataRow label="Liquid level" value={fmt(valueOf(input, 'liquidLevel') as number, 2)} unit="mm" />
+                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
+                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
                   </>
                 )}
               </Section>
@@ -779,7 +787,7 @@ export function CalculationReport({
                     <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
                   </>
                 )}
-                {(mode === 'vertical' || mode === 'horizontal') && (
+                {mode === 'vertical' && (
                   <>
                     <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
                     <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
@@ -787,6 +795,39 @@ export function CalculationReport({
                     <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
                     <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
                     <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fluid expansion coeff." value={fmt(valueOf(input, 'fluidExpansionCoeff') as number, 6)} unit="1/K" />
+                    <DataRow label="Vapor density" value={fmt(valueOf(input, 'vaporDensity') as number, 2)} unit="kg/m³" />
+                    <DataRow label="Vapor specific heat" value={fmt(valueOf(input, 'vaporSpecificHeat') as number, 2)} unit="J/kg·K" />
+                    <DataRow label="Vapor viscosity" value={fmt(valueOf(input, 'vaporViscosity') as number, 6)} unit="Pa·s" />
+                    <DataRow label="Vapor thermal conductivity" value={fmt(valueOf(input, 'vaporThermalConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fouling dry wall" value={fmt(valueOf(input, 'foulingDryWall') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Fouling wet wall" value={fmt(valueOf(input, 'foulingWetWall') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Fouling roof" value={fmt(valueOf(input, 'foulingRoof') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Fouling floor" value={fmt(valueOf(input, 'foulingFloor') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
+                    <DataRow label="Roof emissivity" value={fmt(valueOf(input, 'roofEmissivity') as number, 3)} />
+                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
+                  </>
+                )}
+                {mode === 'horizontal' && (
+                  <>
+                    <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
+                    <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fluid density" value={fmt(valueOf(input, 'fluidDensity') as number, 2)} unit="kg/m³" />
+                    <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
+                    <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
+                    <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fluid expansion coeff." value={fmt(valueOf(input, 'fluidExpansionCoeff') as number, 6)} unit="1/K" />
+                    <DataRow label="Vapor density" value={fmt(valueOf(input, 'vaporDensity') as number, 2)} unit="kg/m³" />
+                    <DataRow label="Vapor specific heat" value={fmt(valueOf(input, 'vaporSpecificHeat') as number, 2)} unit="J/kg·K" />
+                    <DataRow label="Vapor viscosity" value={fmt(valueOf(input, 'vaporViscosity') as number, 6)} unit="Pa·s" />
+                    <DataRow label="Vapor thermal conductivity" value={fmt(valueOf(input, 'vaporThermalConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Fouling dry wall" value={fmt(valueOf(input, 'foulingDryWall') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Fouling wet wall" value={fmt(valueOf(input, 'foulingWetWall') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Fouling dry head" value={fmt(valueOf(input, 'foulingDryHead') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Fouling wet head" value={fmt(valueOf(input, 'foulingWetHead') as number, 3)} unit="W/m²·K" />
+                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
+                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
                   </>
                 )}
               </Section>
@@ -827,49 +868,43 @@ export function CalculationReport({
                   <DataRow label="Floor U" value={fmt(result.floor.uOverall, 4)} unit="W/m²·K" />
                 </Section>
               )}
-            </View>
-
-            {/* ── Right column: SKETCH ── */}
-            <View style={S.rightCol}>
-              <View style={{ flex: 1, padding: '6 6 4 6', minHeight: '100%' }}>
-                <View style={S.sectionHeader}>
-                  <Text style={S.sectionHeaderText}>SKETCH</Text>
-                </View>
-                <View style={S.sketchBody}>
-                  <PdfSchematic input={input} mode={mode} />
-                </View>
-                <Text style={S.sketchCaption}>
-                  {mode === 'pipe' ? 'Pipe / duct cross-section with insulation layers' :
-                   mode === 'horizontal' ? 'Horizontal tank dry/wet surface zones' :
-                   'Vertical tank dry/wet surface zones'}
-                </Text>
-                {/* Legend */}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, columnGap: 8, rowGap: 3 }}>
-                  {[
-                    { color: PDF_LIQUID, label: 'LIQUID / WET' },
-                    { color: PDF_DRY, label: 'DRY WALL' },
-                    { color: PDF_INSUL, label: 'INSULATION' },
-                    { color: PDF_METAL, label: 'METAL' },
-                  ].map((item) => (
-                    <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Rect x={0} y={0} width={7} height={7} fill={item.color} />
-                      <Text style={{ fontSize: 5.5, color: GUIDE, marginLeft: 3 }}>{item.label}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
+            
           </View>
 
-          {/* ── Title block (bottom) ── */}
-          <TitleBlock metadata={metadata} revisions={revisions} />
-        </View>
+          {/* ── SKETCH (full width below inputs) ── */}
+          <View style={{ flexDirection: 'column', flex: 1 }}>
 
-        {/* Footer */}
-        <View style={S.footer} fixed>
-          <Text style={S.footerText}>GC MAINTENANCE &amp; ENGINEERING COMPANY LIMITED</Text>
-          <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+        <View style={{ flex: 1, padding: '6 6 4 6', minHeight: '100%' }}>
+          <View style={S.sectionHeader}>
+            <Text style={S.sectionHeaderText}>SKETCH</Text>
+          </View>
+          <View style={S.sketchBody}>
+            <PdfSchematic input={input} mode={mode} />
+          </View>
+          <Text style={S.sketchCaption}>
+            {mode === 'pipe' ? 'Pipe / duct cross-section with insulation layers' :
+             mode === 'horizontal' ? 'Horizontal tank dry/wet surface zones' :
+             'Vertical tank dry/wet surface zones'}
+          </Text>
+          {/* Legend */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, columnGap: 8, rowGap: 3 }}>
+            {[
+              { color: PDF_LIQUID, label: 'LIQUID / WET' },
+              { color: PDF_DRY, label: 'DRY WALL' },
+              { color: PDF_INSUL, label: 'INSULATION' },
+              { color: PDF_METAL, label: 'METAL' },
+            ].map((item) => (
+              <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Rect x={0} y={0} width={7} height={7} fill={item.color} />
+                <Text style={{ fontSize: 5.5, color: GUIDE, marginLeft: 3 }}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
+      </View>
+   
+          </View>
+
       </Page>
     </Document>
   )
