@@ -252,23 +252,10 @@ const S = StyleSheet.create({
   disclaimerText: {
     width: 800,
     fontSize: 5.6,
-    color: '#7F7F7F',
+    color: '#dc2626',
     textAlign: 'center',
     transform: 'rotate(-90deg)',
   },
-  // ── Footer
-  footer: {
-    position: 'absolute',
-    bottom: 6,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: BW,
-    borderTopColor: '#d1d5db',
-    paddingTop: 3,
-  },
-  footerText: { fontSize: 6, color: MUTED },
 })
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -494,6 +481,11 @@ function TitleBlock({
             <Text style={{ fontSize: 5.5, color: MUTED }}>Project: {metadata.projectNumber || '—'}</Text>
           </View>
         </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: NAVY, paddingHorizontal: 4, paddingVertical: 2 }}>
+        <Text style={{ fontSize: 5.5, color: WHITE }}>{DOCUMENT_CODE}</Text>
+        <Text style={{ fontSize: 5.5, color: WHITE }}>VALIDATION REPORT : {DOCUMENT_CODE}</Text>
       </View>
     </View>
   )
@@ -733,10 +725,8 @@ export function CalculationReport({
             </View>
           </View>
 
-          {/* ── Content: all inputs + results (full width) ── */}
-          <View style={{ flexDirection: 'column', flex: 1 }}>
-
-              {/* ── INPUTS ── */}
+          <View style={S.bodyRow}>
+            <View style={S.leftCol}>
               <Section title="I. GEOMETRY">
                 {mode === 'pipe' && (
                   <>
@@ -797,7 +787,46 @@ export function CalculationReport({
                 )}
               </Section>
 
-              <Section title="III. CONSTRUCTION &amp; FLUID PROPERTIES">
+              <Section title="IV. CALCULATION RESULTS">
+                {result.status === 'error' ? (
+                  <DataRow label="Status" value="Calculation failed — check inputs" />
+                ) : isPipeResultB(result) ? (
+                  <>
+                    <DataRow label="Q heat loss" value={fmt(result.heatLoss, 2)} unit="W" highlight />
+                    <DataRow label="Outlet temperature" value={fmt(result.outletTemp, 2)} unit="°C" highlight />
+                    <DataRow label="U overall" value={fmt(result.uOverall, 3)} unit="W/m²·K" highlight />
+                    <DataRow label="Surface area" value={fmt(result.surfaceArea, 3)} unit="m²" />
+                    <DataRow label="Re_internal" value={fmt(result.reynoldsInternal, 0)} />
+                    <DataRow label="h_internal" value={fmt(result.internalHTC, 3)} unit="W/m²·K" />
+                    <DataRow label="h_external" value={fmt(result.externalHTC, 3)} unit="W/m²·K" />
+                    <DataRow label="Radiation HTC" value={fmt(result.radiationHTC, 3)} unit="W/m²·K" />
+                    <DataRow label="T_wall in / out" value={`${fmt(result.twInside, 2)} / ${fmt(result.twOutside, 2)}`} unit="°C" />
+                  </>
+                ) : isHorizontalTankResultB(result) ? (
+                  <>
+                    <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                    <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
+                    <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
+                    <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
+                    <DataRow label="Dry Head U" value={fmt(result.dryHead.uOverall, 4)} unit="W/m²·K" />
+                    <DataRow label="Wet Head U" value={fmt(result.wetHead.uOverall, 4)} unit="W/m²·K" />
+                  </>
+                ) : (
+                  <>
+                    <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                    <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
+                    <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
+                    <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
+                    <DataRow label="Roof U" value={fmt(result.roof.uOverall, 4)} unit="W/m²·K" />
+                    <DataRow label="Floor U" value={fmt(result.floor.uOverall, 4)} unit="W/m²·K" />
+                  </>
+                )}
+              </Section>
+            </View>
+
+            <View style={S.rightCol}>
+              <Section title="III. CONSTRUCTION & FLUID PROPERTIES">
+
                 {mode === 'pipe' && (
                   <>
                     <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
@@ -854,88 +883,40 @@ export function CalculationReport({
                   </>
                 )}
               </Section>
-
-              {/* ── RESULTS ── */}
-              {result.status === 'error' ? (
-                <Section title="IV. CALCULATION RESULTS">
-                  <DataRow label="Status" value="Calculation failed — check inputs" />
-                </Section>
-              ) : (
-                <>
-                  {isPipeResultB(result) && (
-                    <Section title="IV. CALCULATION RESULTS">
-                      <DataRow label="Q heat loss" value={fmt(result.heatLoss, 2)} unit="W" highlight />
-                      <DataRow label="Outlet temperature" value={fmt(result.outletTemp, 2)} unit="°C" highlight />
-                      <DataRow label="U overall" value={fmt(result.uOverall, 3)} unit="W/m²·K" highlight />
-                      <DataRow label="Surface area" value={fmt(result.surfaceArea, 3)} unit="m²" />
-                      <DataRow label="Re_internal" value={fmt(result.reynoldsInternal, 0)} />
-                      <DataRow label="h_internal" value={fmt(result.internalHTC, 3)} unit="W/m²·K" />
-                      <DataRow label="h_external" value={fmt(result.externalHTC, 3)} unit="W/m²·K" />
-                      <DataRow label="Radiation HTC" value={fmt(result.radiationHTC, 3)} unit="W/m²·K" />
-                      <DataRow label="T_wall in / out" value={`${fmt(result.twInside, 2)} / ${fmt(result.twOutside, 2)}`} unit="°C" />
-                    </Section>
-                  )}
-
-                  {isHorizontalTankResultB(result) && (
-                    <Section title="IV. CALCULATION RESULTS">
-                      <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
-                      <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
-                      <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
-                      <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
-                      <DataRow label="Dry Head U" value={fmt(result.dryHead.uOverall, 4)} unit="W/m²·K" />
-                      <DataRow label="Wet Head U" value={fmt(result.wetHead.uOverall, 4)} unit="W/m²·K" />
-                    </Section>
-                  )}
-
-                  {isVerticalTankResultB(result) && (
-                    <Section title="IV. CALCULATION RESULTS">
-                      <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
-                      <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
-                      <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
-                      <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
-                      <DataRow label="Roof U" value={fmt(result.roof.uOverall, 4)} unit="W/m²·K" />
-                      <DataRow label="Floor U" value={fmt(result.floor.uOverall, 4)} unit="W/m²·K" />
-                    </Section>
-                  )}
-                </>
-              )}
-            
+            </View>
           </View>
 
-          {/* ── SKETCH (full width below inputs) ── */}
-          <View style={{ flexDirection: 'column', flex: 1 }}>
+          <View style={S.sketchSection}>
+            <View style={S.sketchHeader}>
+              <Text style={S.sketchHeaderText}>SKETCH</Text>
+            </View>
+            <View style={S.sketchBody}>
+              <PdfSchematic input={input} mode={mode} />
+            </View>
+            <Text style={S.sketchCaption}>
+              {mode === 'pipe'
+                ? 'Pipe / duct cross-section with insulation layers'
+                : mode === 'horizontal'
+                  ? 'Horizontal tank dry/wet surface zones'
+                  : 'Vertical tank dry/wet surface zones'}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, columnGap: 8, rowGap: 3 }}>
+              {[
+                { color: PDF_LIQUID, label: 'LIQUID / WET' },
+                { color: PDF_DRY, label: 'DRY WALL' },
+                { color: PDF_INSUL, label: 'INSULATION' },
+                { color: PDF_METAL, label: 'METAL' },
+              ].map((item) => (
+                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Rect x={0} y={0} width={7} height={7} fill={item.color} />
+                  <Text style={{ fontSize: 5.5, color: GUIDE, marginLeft: 3 }}>{item.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
 
-        <View style={{ flex: 1, padding: '6 6 4 6', minHeight: '100%' }}>
-          <View style={S.sectionHeader}>
-            <Text style={S.sectionHeaderText}>SKETCH</Text>
-          </View>
-          <View style={S.sketchBody}>
-            <PdfSchematic input={input} mode={mode} />
-          </View>
-          <Text style={S.sketchCaption}>
-            {mode === 'pipe' ? 'Pipe / duct cross-section with insulation layers' :
-             mode === 'horizontal' ? 'Horizontal tank dry/wet surface zones' :
-             'Vertical tank dry/wet surface zones'}
-          </Text>
-          {/* Legend */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, columnGap: 8, rowGap: 3 }}>
-            {[
-              { color: PDF_LIQUID, label: 'LIQUID / WET' },
-              { color: PDF_DRY, label: 'DRY WALL' },
-              { color: PDF_INSUL, label: 'INSULATION' },
-              { color: PDF_METAL, label: 'METAL' },
-            ].map((item) => (
-              <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Rect x={0} y={0} width={7} height={7} fill={item.color} />
-                <Text style={{ fontSize: 5.5, color: GUIDE, marginLeft: 3 }}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
+          <TitleBlock metadata={metadata} revisions={revisions} />
         </View>
-      </View>
-   
-          </View>
-
       </Page>
     </Document>
   )
