@@ -13,11 +13,14 @@
 import {
   Document,
   Circle,
+  ClipPath,
+  Defs,
   Ellipse,
   G,
   Line,
   Page,
   Path,
+  Polygon,
   Rect,
   StyleSheet,
   Svg,
@@ -494,81 +497,130 @@ function TitleBlock({
 
 // ─── Schematic rendering ────────────────────────────────────────────────────
 
-const PDF_STROKE   = '#1f3864'
-const PDF_GUIDE    = '#374151'
-const PDF_LIQUID   = '#93c5fd'
-const PDF_DRY      = '#e2e8f0'
-const PDF_INSUL    = '#fbbf24'
+const PDF_FOREGROUND = '#111827'
+const PDF_GUIDE    = '#6b7280'
+const PDF_SKY      = '#0ea5e9'
+const PDF_AMBER    = '#f59e0b'
+const PDF_ORANGE   = '#fb923c'
 const PDF_METAL    = '#94a3b8'
+const HEAT_SCHEMATIC_SIZE = 420
+const HEAT_SCHEMATIC_PADDING = 34
+const PDF_SCHEMATIC_RENDER_SIZE = 340
 
 function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode }) {
-  const schematicWidth = 440
-  const schematicHeight = mode === 'pipe' ? 210 : 240
-  const schematicPadding = mode === 'pipe' ? 24 : 30
-
   const raw = mode === 'pipe'
-    ? buildPipeSchematic(input as PipeCalculationInput, schematicWidth, schematicHeight, schematicPadding)
+    ? buildPipeSchematic(input as PipeCalculationInput, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_PADDING)
     : mode === 'horizontal'
-      ? buildHorizontalTankSchematic(input as HorizontalTankInput, schematicWidth, schematicHeight, schematicPadding)
-      : buildVerticalTankSchematic(input as CalculationInput, schematicWidth, schematicHeight, schematicPadding)
+      ? buildHorizontalTankSchematic(input as HorizontalTankInput, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_PADDING)
+      : buildVerticalTankSchematic(input as CalculationInput, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_PADDING)
 
   if (!raw) return null
 
   const model = raw
+  const clipPathUrl = model.clipPath ? `url(#${model.clipPath.id}-pdf)` : undefined
 
   return (
-    <Svg viewBox={`0 0 ${model.width} ${model.height}`} style={{ width: schematicWidth, height: schematicHeight }}>
-      {/* Zone fills */}
+    <Svg
+      viewBox={`0 0 ${model.width} ${model.height}`}
+      style={{ width: PDF_SCHEMATIC_RENDER_SIZE, height: PDF_SCHEMATIC_RENDER_SIZE }}
+    >
+      <Defs>
+        {model.clipPath && (
+          <ClipPath id={`${model.clipPath.id}-pdf`}>
+            {model.clipPath.path && <Path d={model.clipPath.path} />}
+            {model.clipPath.rect && (
+              <Rect
+                x={model.clipPath.rect.x}
+                y={model.clipPath.rect.y}
+                width={model.clipPath.rect.width}
+                height={model.clipPath.rect.height}
+                rx={model.clipPath.rect.rx}
+                ry={model.clipPath.rect.ry}
+              />
+            )}
+          </ClipPath>
+        )}
+      </Defs>
+
+      <Rect
+        x={1}
+        y={1}
+        width={model.width - 2}
+        height={model.height - 2}
+        rx={16}
+        fill="none"
+        stroke={PDF_FOREGROUND}
+        strokeWidth={1}
+        opacity={0.1}
+      />
+
+      {/* Zone fills mirror the web SVG order and clipping behavior. */}
+      {model.zoneFills.paths.map((p) => (
+        <Path key={p.key} d={p.d} fill={fillColor(p.tone)} opacity={p.opacity ?? 1} clipPath={clipPathUrl} />
+      ))}
       {model.zoneFills.rects.map((r) => (
         <Rect key={r.key} x={r.x} y={r.y} width={r.width} height={r.height}
-          fill={fillColor(r.tone)} opacity={r.opacity ?? 1} />
-      ))}
-      {model.zoneFills.circles.map((c) => (
-        <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r}
-          fill={fillColor(c.tone)} opacity={c.opacity ?? 1} />
+          rx={r.rx} ry={r.ry} fill={fillColor(r.tone)} opacity={r.opacity ?? 1} clipPath={clipPathUrl} />
       ))}
       {model.zoneFills.ellipses.map((e) => (
         <Ellipse key={e.key} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry}
-          fill={fillColor(e.tone)} opacity={e.opacity ?? 1} />
+          fill={fillColor(e.tone)} opacity={e.opacity ?? 1} clipPath={clipPathUrl} />
       ))}
-      {model.zoneFills.paths.map((p) => (
-        <Path key={p.key} d={p.d} fill={fillColor(p.tone)} opacity={p.opacity ?? 1} />
+      {model.zoneFills.circles.map((c) => (
+        <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r}
+          fill={fillColor(c.tone)} opacity={c.opacity ?? 1} clipPath={clipPathUrl} />
+      ))}
+      {model.liquidFill && (
+        <Rect
+          x={model.liquidFill.x}
+          y={model.liquidFill.y}
+          width={model.liquidFill.width}
+          height={model.liquidFill.height}
+          rx={model.liquidFill.rx}
+          ry={model.liquidFill.ry}
+          fill={fillColor(model.liquidFill.tone)}
+          opacity={model.liquidFill.opacity ?? 1}
+          clipPath={clipPathUrl}
+        />
+      )}
+
+      {/* Guide lines */}
+      {model.guideLines.map((g) => (
+        <Line key={g.key} x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2}
+          stroke={PDF_GUIDE} strokeWidth={1.2} opacity={g.opacity ?? 0.6} />
       ))}
 
       {/* Outlines */}
       {model.outlines.rects.map((r) => (
         <Rect key={r.key} x={r.x} y={r.y} width={r.width} height={r.height}
-          rx={r.rx} ry={r.ry} stroke={PDF_STROKE} strokeWidth={2} fill="none" />
+          rx={r.rx} ry={r.ry} stroke={PDF_FOREGROUND} strokeWidth={2} fill="none" opacity={0.85} />
       ))}
       {model.outlines.circles.map((c) => (
         <Circle key={c.key} cx={c.cx} cy={c.cy} r={c.r}
-          stroke={PDF_STROKE} strokeWidth={2} fill="none" />
+          stroke={PDF_FOREGROUND} strokeWidth={2} fill="none" opacity={0.85} />
       ))}
       {model.outlines.ellipses.map((e) => (
         <Ellipse key={e.key} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry}
-          stroke={PDF_STROKE} strokeWidth={2} fill="none" />
+          stroke={PDF_FOREGROUND} strokeWidth={2} fill="none" opacity={0.85} />
       ))}
       {model.outlines.paths.map((p) => (
-        <Path key={p.key} d={p.d} stroke={PDF_STROKE} strokeWidth={2} fill="none" />
+        <Path key={p.key} d={p.d} stroke={PDF_FOREGROUND} strokeWidth={2} fill="none" opacity={0.85} />
       ))}
       {model.outlines.lines.map((l) => (
-        <Line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
-          stroke={PDF_STROKE} strokeWidth={l.strokeWidth ?? 1.2}
-          strokeDasharray={l.dashed} opacity={l.opacity ?? 1} />
-      ))}
-
-      {/* Guide lines */}
-      {model.guideLines.map((g) => (
-        <Line key={g.key} x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2}
-          stroke={PDF_GUIDE} strokeWidth={0.75} opacity={g.opacity ?? 0.55} />
+        <G key={l.key}>
+          <Line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
+            stroke={PDF_FOREGROUND} strokeWidth={l.strokeWidth ?? 1.2}
+            strokeDasharray={l.dashed} opacity={l.opacity ?? 0.85} />
+          {l.key.includes('arrow') && <ArrowHead x={l.x2} y={l.y2} fromX={l.x1} fromY={l.y1} color={PDF_FOREGROUND} />}
+        </G>
       ))}
 
       {/* Levels */}
       {model.levels.map((lv) => (
         <G key={lv.key}>
           <Line x1={lv.x0} y1={lv.y} x2={lv.x1} y2={lv.y}
-            stroke={lv.color} strokeWidth={1.5} strokeDasharray={lv.dashed ? '5 4' : undefined} />
-          <Text x={lv.x1 + 18} y={lv.y - 4} fill={lv.color} style={{ fontSize: 9 }}>
+            stroke={lv.color} strokeWidth={2} strokeDasharray={lv.dashed ? '5 4' : undefined} />
+          <Text x={lv.x1 + (lv.labelOffset ?? 18)} y={lv.y - 4} fill={lv.color} style={{ fontSize: 11 }}>
             {lv.label}
           </Text>
         </G>
@@ -578,16 +630,30 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
       {model.annotations.map((ann) => {
         const mx = (ann.x1 + ann.x2) / 2
         const my = (ann.y1 + ann.y2) / 2
-        const labelY = ann.vertical ? my : my - 6
-        const labelX = ann.vertical ? (ann.labelSide === 'end' ? mx + 10 : mx - 10) : mx
-        const anchor = ann.vertical ? (ann.labelSide === 'end' ? 'start' : 'end') : 'middle'
+        const verticalLabelX = mx + (ann.labelSide === 'end' ? 13 : -13)
+        const verticalTransform = `rotate(-90 ${verticalLabelX} ${my})`
         return (
           <G key={ann.key}>
             <Line x1={ann.x1} y1={ann.y1} x2={ann.x2} y2={ann.y2}
               stroke={PDF_GUIDE} strokeWidth={1.2} />
-            <Text x={labelX} y={labelY} fill={PDF_GUIDE} style={{ fontSize: 9 }} textAnchor={anchor}>
-              {ann.label}
-            </Text>
+            <ArrowHead x={ann.x1} y={ann.y1} fromX={ann.x2} fromY={ann.y2} color={PDF_GUIDE} />
+            <ArrowHead x={ann.x2} y={ann.y2} fromX={ann.x1} fromY={ann.y1} color={PDF_GUIDE} />
+            {ann.vertical ? (
+              <Text
+                x={verticalLabelX}
+                y={my}
+                fill={PDF_GUIDE}
+                style={{ fontSize: 11 }}
+                textAnchor="middle"
+                transform={verticalTransform}
+              >
+                {ann.label}
+              </Text>
+            ) : (
+              <Text x={mx} y={my - 6} fill={PDF_GUIDE} style={{ fontSize: 11 }} textAnchor="middle">
+                {ann.label}
+              </Text>
+            )}
           </G>
         )
       })}
@@ -596,24 +662,63 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
       {model.labels.map((lb) => (
         <Text key={lb.key} x={lb.x} y={lb.y}
           textAnchor={lb.anchor ?? 'middle'}
-          style={{ fontSize: Math.min(lb.size ?? 10, 8) }}
-          fill={PDF_GUIDE}>
+          style={{ fontSize: lb.size ?? 12 }}
+          fill={labelColor(lb.tone)}>
           {lb.text}
         </Text>
       ))}
+
+      <Text x={model.width / 2} y={22} textAnchor="middle" fill={PDF_GUIDE} style={{ fontSize: 12 }}>
+        {model.subtitle}
+      </Text>
     </Svg>
   )
 }
 
 function fillColor(tone?: string): string {
   switch (tone) {
-    case 'liquid':    return PDF_LIQUID
-    case 'wet':       return '#7dd3fc'
-    case 'dry':       return PDF_DRY
-    case 'insulation': return PDF_INSUL
+    case 'liquid':
+    case 'wet':       return PDF_SKY
+    case 'dry':       return PDF_AMBER
+    case 'insulation': return PDF_ORANGE
     case 'metal':     return PDF_METAL
     default:          return '#cbd5e1'
   }
+}
+
+function labelColor(tone?: string): string {
+  switch (tone) {
+    case 'liquid':
+    case 'wet':       return '#0284c7'
+    case 'dry':       return '#b45309'
+    case 'insulation': return '#c2410c'
+    case 'metal':     return '#475569'
+    default:          return PDF_GUIDE
+  }
+}
+
+function ArrowHead({
+  x,
+  y,
+  fromX,
+  fromY,
+  color,
+}: {
+  x: number
+  y: number
+  fromX: number
+  fromY: number
+  color: string
+}) {
+  const angle = Math.atan2(y - fromY, x - fromX)
+  const size = 5
+  const wing = Math.PI / 7
+  const p1x = x - size * Math.cos(angle - wing)
+  const p1y = y - size * Math.sin(angle - wing)
+  const p2x = x - size * Math.cos(angle + wing)
+  const p2y = y - size * Math.sin(angle + wing)
+
+  return <Polygon points={`${x},${y} ${p1x},${p1y} ${p2x},${p2y}`} fill={color} />
 }
 
 // ─── Mode detection ─────────────────────────────────────────────────────────
@@ -892,26 +997,6 @@ export function CalculationReport({
             </View>
             <View style={S.sketchBody}>
               <PdfSchematic input={input} mode={mode} />
-            </View>
-            <Text style={S.sketchCaption}>
-              {mode === 'pipe'
-                ? 'Pipe / duct cross-section with insulation layers'
-                : mode === 'horizontal'
-                  ? 'Horizontal tank dry/wet surface zones'
-                  : 'Vertical tank dry/wet surface zones'}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, columnGap: 8, rowGap: 3 }}>
-              {[
-                { color: PDF_LIQUID, label: 'LIQUID / WET' },
-                { color: PDF_DRY, label: 'DRY WALL' },
-                { color: PDF_INSUL, label: 'INSULATION' },
-                { color: PDF_METAL, label: 'METAL' },
-              ].map((item) => (
-                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Rect x={0} y={0} width={7} height={7} fill={item.color} />
-                  <Text style={{ fontSize: 5.5, color: GUIDE, marginLeft: 3 }}>{item.label}</Text>
-                </View>
-              ))}
             </View>
           </View>
 
