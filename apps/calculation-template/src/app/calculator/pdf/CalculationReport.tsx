@@ -1,7 +1,17 @@
 /**
  * CalculationReport — @react-pdf/renderer document.
  * Replicates CA-PR-1050.0101 single-page engineering calculation form.
- * Layout (top→bottom): title/project/client block + revision grid, inputs, sketch, title block at bottom.
+ * Layout (top→bottom of content area):
+ *   1. Top header bar — document title + doc code
+ *   2. TYPE row — blue background, tag/description
+ *   3. Body — leftCol (inputs + results, flex:3) | rightCol (SKETCH, flex:2)
+ *   4. Title block — TITLE/PROJECT/CLIENT left | revision grid right | GCME strip bottom
+ * Disclaimer strip rotated on left edge.
+ *
+ * To adapt for a new calculator app: extend Sections I–III with geometry/fluid rows,
+ * update Section IV with result fields, and replace the SKETCH placeholder with an
+ * app-specific schematic renderer (see pump-calculation/PumpReport or
+ * vessels-calculation/VesselReport for reference implementations).
  */
 
 import {

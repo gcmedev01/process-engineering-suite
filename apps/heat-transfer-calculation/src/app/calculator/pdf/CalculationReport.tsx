@@ -1,7 +1,12 @@
 /**
  * CalculationReport — @react-pdf/renderer document.
  * Replicates CA-PR-1050.0101 single-page engineering calculation form.
- * Layout (top→bottom): title/project/client block, revision grid, input/sections, sketch
+ * Layout (top→bottom of content area):
+ *   1. Top header bar — document title + doc code
+ *   2. TYPE row — blue background, mode label + tag
+ *   3. Body — leftCol (inputs + results, flex:3) | rightCol (SKETCH, flex:2)
+ *   4. Title block — TITLE/PROJECT/CLIENT left | revision grid right | GCME strip bottom
+ * Disclaimer strip rotated on left edge.
  */
 
 import {
