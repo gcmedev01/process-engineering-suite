@@ -4,14 +4,15 @@
  * Layout (top→bottom of content area):
  *   1. Top header bar — document title + doc code
  *   2. TYPE row — blue background, tag/description
- *   3. Body — leftCol (inputs + results, flex:3) | rightCol (SKETCH, flex:2)
- *   4. Title block — TITLE/PROJECT/CLIENT left | revision grid right | GCME strip bottom
+ *   3. Body — input sections on left, outputs on right
+ *   4. SKETCH — full-width section below body, spanning both columns
+ *   5. Title block — TITLE/PROJECT/CLIENT left | revision grid right | GCME strip bottom
  * Disclaimer strip rotated on left edge.
  *
- * To adapt for a new calculator app: extend Sections I–III with geometry/fluid rows,
- * update Section IV with result fields, and replace the SKETCH placeholder with an
- * app-specific schematic renderer (see pump-calculation/PumpReport or
- * vessels-calculation/VesselReport for reference implementations).
+ * To adapt for a new calculator app: put required inputs in the left data panel,
+ * continue optional/overflow inputs in the right panel only when needed, keep
+ * calculated outputs grouped in the right panel, and replace the full-width
+ * SKETCH placeholder with the same schematic model used by the web SVG.
  */
 
 import {
@@ -40,7 +41,6 @@ export interface CalculationReportProps {
 const NAVY      = '#1f3864'
 const BLACK     = '#000000'
 const VALUE_BG  = '#dbeafe'
-const ROW_ALT   = '#E7EFF6'
 const WHITE     = '#ffffff'
 const GUIDE     = '#374151'
 const MUTED     = '#6b7280'
@@ -126,20 +126,19 @@ const S = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 2,
   },
-  // ── Body: left (inputs/results) + right (sketch)
+  // ── Body: input panel left, output panel right
   bodyRow: {
-    flex: 1,
     flexDirection: 'row',
     borderBottomWidth: HB,
     borderBottomColor: BLACK,
   },
   leftCol: {
-    flex: 3,
+    flex: 1,
     borderRightWidth: HB,
     borderRightColor: BLACK,
   },
   rightCol: {
-    flex: 2,
+    flex: 1,
   },
   // ── Section header
   sectionHeader: {
@@ -188,15 +187,19 @@ const S = StyleSheet.create({
     textAlign: 'right',
     paddingLeft: 2,
   },
-  // ── Sketch
+  // ── Sketch: full-width section below the two data panels
   sketchSection: {
     flex: 1,
-    minHeight: 150,
+    flexDirection: 'column',
+    minHeight: 245,
+    borderBottomWidth: HB,
+    borderBottomColor: BLACK,
   },
   sketchBody: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 4,
   },
   sketchCaption: {
     fontSize: 5.5,
@@ -217,23 +220,10 @@ const S = StyleSheet.create({
   disclaimerText: {
     width: 800,
     fontSize: 5.6,
-    color: '#7F7F7F',
+    color: '#dc2626',
     textAlign: 'center',
     transform: 'rotate(-90deg)',
   },
-  // ── Footer
-  footer: {
-    position: 'absolute',
-    bottom: 6,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: BW,
-    borderTopColor: '#d1d5db',
-    paddingTop: 3,
-  },
-  footerText: { fontSize: 6, color: MUTED },
 })
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -454,6 +444,11 @@ function TitleBlock({
           </View>
         </View>
       </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: NAVY, paddingHorizontal: 4, paddingVertical: 2 }}>
+        <Text style={{ fontSize: 5.5, color: WHITE }}>{DOCUMENT_CODE}</Text>
+        <Text style={{ fontSize: 5.5, color: WHITE }}>VALIDATION REPORT : {DOCUMENT_CODE}</Text>
+      </View>
     </View>
   )
 }
@@ -493,56 +488,53 @@ export function CalculationReport({
             </View>
           </View>
 
-          {/* ── Body: left (inputs + results) | right (sketch) ── */}
+          {/* ── Body: inputs left, outputs right ── */}
           <View style={S.bodyRow}>
             <View style={S.leftCol}>
-              {/* Replace or extend these sections with app-specific inputs and results */}
               <Section title="I. INPUT SUMMARY">
                 <DataRow label="Tag" value={present(input.tag)} />
                 <DataRow label="Description" value={present(input.description)} />
               </Section>
 
-              <Section title="II. RESULT SUMMARY">
+              {/* Continue long input lists here before moving optional overflow inputs to the right panel. */}
+              <Section title="II. INPUT DETAILS">
+                <DataRow label="Primary input" value="—" />
+                <DataRow label="Secondary input" value="—" />
+              </Section>
+            </View>
+
+            <View style={S.rightCol}>
+              <Section title="III. CALCULATION OUTPUT">
                 <DataRow label="Status" value={present(result.status)} />
                 {'calculatedAt' in result && (
                   <DataRow label="Calculated At" value={present(result.calculatedAt)} />
                 )}
               </Section>
 
-              {/* Add app-specific sections here, e.g.:
-              <Section title="III. GEOMETRY">
-                <DataRow label="Diameter" value={fmt(input.diameter, 2)} unit="mm" />
-                ...
+              <Section title="IV. OUTPUT DETAILS">
+                <DataRow label="Main result" value="—" highlight />
+                <DataRow label="Design margin" value="—" />
               </Section>
-              */}
             </View>
+          </View>
 
-            {/* ── Right column: SKETCH placeholder ── */}
-            <View style={S.rightCol}>
-              <View style={{ flex: 1, padding: '6 6 4 6', minHeight: '100%' }}>
-                <View style={S.sectionHeader}>
-                  <Text style={S.sectionHeaderText}>SKETCH</Text>
-                </View>
-                <View style={S.sketchBody}>
-                  <Text style={{ fontSize: 8, color: MUTED, textAlign: 'center' }}>
-                    Replace with app-specific schematic
-                  </Text>
-                </View>
-                <Text style={S.sketchCaption}>
-                  Add a schematic figure or diagram here
-                </Text>
-              </View>
+          {/* ── Sketch spans both data columns ── */}
+          <View style={S.sketchSection}>
+            <View style={S.sectionHeader}>
+              <Text style={S.sectionHeaderText}>SKETCH</Text>
+            </View>
+            <View style={S.sketchBody}>
+              <Text style={{ fontSize: 8, color: MUTED, textAlign: 'center' }}>
+                Replace with app-specific schematic rendered from the same model as the web SVG
+              </Text>
+              <Text style={S.sketchCaption}>
+                Sketch area spans both columns and stays centered in the available space
+              </Text>
             </View>
           </View>
 
           {/* ── Title block (bottom) ── */}
           <TitleBlock metadata={metadata} revisions={revisions} />
-        </View>
-
-        {/* Footer */}
-        <View style={S.footer} fixed>
-          <Text style={S.footerText}>GC MAINTENANCE &amp; ENGINEERING COMPANY LIMITED</Text>
-          <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
         </View>
       </Page>
     </Document>

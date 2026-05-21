@@ -794,16 +794,57 @@ src/app/calculator/
 **Report design rules:**
 - Use a dedicated `CalculationReport` React PDF document, not DOM-to-image capture
 - Keep PDF layout deterministic and page-size aware from the start
-- Put title block, metadata, result sections, and sketch/schematic in explicit containers
+- Use the confirmed GCME sheet structure:
+  - top report title and type/tag row
+  - two-column calculation body with input sections on the left and output/result sections on the right
+  - allow long input lists to continue into the right panel only when the right panel is not needed for outputs
+  - full-width `SKETCH` section below the calculation body, spanning both columns
+  - bottom title/revision/GCME block anchored at the page bottom
+  - bottom navy ID bar with left document code and right validation/report label
+- Put title block, metadata, input sections, output sections, and sketch/schematic in explicit containers
 - If the app renders a live SVG schematic, share the geometry/model layer between web and PDF renderers instead of maintaining two separate calculations
+- Make the PDF schematic renderer mirror the web SVG draw order:
+  - same model dimensions and padding
+  - same clipped fills and liquid fills
+  - same guide lines, outlines, annotation arrows, labels, colors, and subtitle
+  - no PDF-only sketch legend/caption unless the web schematic also has it
 - Keep title/revision blocks anchored at the page bottom; center sketches inside the remaining space
 - Prefer one-page output for normal calculator cases, but design overflow behavior intentionally
-- Standardize the left-side GCME disclaimer strip, section headers, row alternation, and footer with these settings:
+- Standardize the left-side GCME disclaimer strip, section headers, row alternation, page frame, and bottom blue report bar with these settings:
 
 ```ts
-const ROW_ALT = '#E7EFF6'
-const SECTION_HEADER_BG = '#D9E1F2'
+const NAVY = '#1f3864'
+const VALUE_BG = '#dbeafe'
 const DOCUMENT_CODE = 'CA-PR-1050-0101'
+const DISCLAIMER =
+  'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
+
+page: {
+  fontFamily: 'Helvetica',
+  fontSize: 7,
+  padding: 0,
+  color: '#000000',
+  lineHeight: 1.3,
+},
+pageOuterFrame: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  borderWidth: 8,
+  borderColor: NAVY,
+},
+outerBorder: {
+  flex: 1,
+  marginTop: 8,
+  marginRight: 8,
+  marginBottom: 8,
+  marginLeft: 18,
+  borderWidth: 1,
+  borderColor: '#000000',
+  flexDirection: 'column',
+},
 
 disclaimerWrap: {
   position: 'absolute',
@@ -813,64 +854,72 @@ disclaimerWrap: {
   width: 12,
   alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: '#ffffff',
 },
 disclaimerText: {
   width: 800,
   fontSize: 5.6,
-  color: '#7F7F7F',
+  color: '#dc2626',
   textAlign: 'center',
   transform: 'rotate(-90deg)',
 },
 sectionHeader: {
-  backgroundColor: NAVY,   // #1f3864
-  paddingHorizontal: 8,
-  paddingVertical: 5,
+  backgroundColor: NAVY,
+  paddingHorizontal: 5,
+  paddingVertical: 2,
 },
 sectionHeaderText: {
   color: '#ffffff',
-  fontSize: 9.5,
-  fontFamily: 'Helvetica-Bold',
-},
-headerRow: {  // column-header rows in results tables
-  backgroundColor: SECTION_HEADER_BG,
-  // …
-},
-groupRow: {   // sub-section group rows (e.g. Geometry / Operating Conditions)
-  backgroundColor: SECTION_HEADER_BG,
-  // …
-},
-footer: {
-  position: 'absolute',
-  bottom: 16,
-  left: 40,
-  right: 30,
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  color: '#64748b',
-  fontSize: 7,
-},
-footerDocCode: {
-  color: '#21436D',
   fontSize: 6.5,
   fontFamily: 'Helvetica-Bold',
+},
+bodyRow: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderBottomColor: '#000000',
+},
+leftCol: {
+  flex: 1,
+  borderRightWidth: 1,
+  borderRightColor: '#000000',
+},
+rightCol: {
+  flex: 1,
+},
+sketchSection: {
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 245,
+  borderBottomWidth: 1,
+  borderBottomColor: '#000000',
+},
+sketchBody: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+bottomReportBar: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  backgroundColor: NAVY,
+  paddingHorizontal: 4,
+  paddingVertical: 2,
 },
 ```
 
 **Key differences from the old spec:**
-- Disclaimer text color: `#dc2626` (red) → `#7F7F7F` (gray) — matches GCME corporate T-101/P-101 style
-- Disclaimer background: explicit white band on `disclaimerWrap` prevents color bleed
+- Input/output layout: use data panels first, then full-width sketch; do not put the sketch in the right panel
+- PDF sketch source: reuse the same schematic model as the web SVG and match the web renderer as closely as React PDF supports
+- Disclaimer text color: `#dc2626` red
 - Section header: navy blue (`NAVY`) with white bold text — not light gray
-- `SECTION_HEADER_BG = '#D9E1F2'` — single constant for all sub-header / column-header row backgrounds
-- `DOCUMENT_CODE = 'CA-PR-1050-0101'` — GCME form number, shown left of footer divider
-- Footer left: doc code in navy bold; Footer right: report title + page number
+- `DOCUMENT_CODE = 'CA-PR-1050-0101'` — GCME form number, shown in the top code and bottom navy bar
+- Footer: do not add a separate floating footer; the bottom title/revision block and navy ID bar are the footer
 
 **Testing expectations:**
 - Mock `@react-pdf/renderer` in `ActionMenu` tests
 - Assert blob download behavior, not popup-window behavior
 - Add targeted report layout tests for any print/PDF helper views
 - Add regression tests for shared schematic models when dimensions or annotation placement matter
+- For schematic-heavy reports, render at least one temporary PDF during development and rasterize it to verify clipping, labels, arrows, and page count
 
 ---
 

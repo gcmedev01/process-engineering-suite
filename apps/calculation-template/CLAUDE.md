@@ -48,3 +48,5 @@ __tests__/        # Vitest tests + setup.ts
 - Prefer Tailwind over MUI `sx` for new UI work
 - API calls proxy to `services/api` (port 8000)
 - Shared types from `@eng-suite/types` and `@eng-suite/physics-engine`
+- PDF export starts from `src/app/calculator/pdf/CalculationReport.tsx`. Keep the GCME sheet layout: input sections in the left panel, calculated outputs in the right panel, full-width `SKETCH` section below both panels, bottom title/revision block, navy page frame, red vertical disclaimer, and bottom navy report bar.
+- When adding a schematic, share the same geometry/model layer used by the web SVG and mirror the web draw order in React PDF. Avoid a separate PDF-only sketch calculation.
