@@ -21,6 +21,9 @@ export interface CalculationReportProps {
 
 const NAVY = '#1f3864'
 const BLACK = '#000000'
+const ROW_ALT = '#E7EFF6'
+const SECTION_HEADER_BG = '#D9E1F2'
+const DOCUMENT_CODE = 'CA-PR-1050-0101'
 
 const DISCLAIMER =
   'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
@@ -59,42 +62,45 @@ const S = StyleSheet.create({
     width: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ffffff',
   },
   disclaimerText: {
     width: 800,
     fontSize: 5.6,
-    color: '#dc2626',
+    color: '#7F7F7F',
     textAlign: 'center',
     transform: 'rotate(-90deg)',
   },
   header: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#cbd5e1',
+    borderBottomWidth: 2,
+    borderBottomColor: NAVY,
     paddingBottom: 10,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: 'Helvetica-Bold',
+    color: NAVY,
   },
   subtitle: {
-    marginTop: 2,
+    marginTop: 3,
     fontSize: 9,
     color: '#64748b',
   },
   section: {
-    marginTop: 12,
+    marginTop: 11,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#cbd5e1',
   },
   sectionHeader: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: NAVY,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
   sectionHeaderText: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
+    color: '#ffffff',
   },
   row: {
     flexDirection: 'row',
@@ -103,15 +109,34 @@ const S = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#e2e8f0',
+  },
+  rowAlt: {
+    backgroundColor: ROW_ALT,
   },
   label: {
     flex: 1,
     color: '#475569',
+    fontFamily: 'Helvetica-Bold',
   },
   value: {
     flex: 1,
     textAlign: 'right',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 40,
+    right: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: '#64748b',
+    fontSize: 7,
+  },
+  footerDocCode: {
+    color: '#21436D',
+    fontSize: 6.5,
     fontFamily: 'Helvetica-Bold',
   },
 })
@@ -154,49 +179,57 @@ export function CalculationReport({
             <View style={S.sectionHeader}>
               <Text style={S.sectionHeaderText}>Metadata</Text>
             </View>
-            <View style={S.row}>
-              <Text style={S.label}>Tag</Text>
-              <Text style={S.value}>{present(input.tag)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Description</Text>
-              <Text style={S.value}>{present(input.description)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Project Number</Text>
-              <Text style={S.value}>{present(metadata.projectNumber)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Document Number</Text>
-              <Text style={S.value}>{present(metadata.documentNumber)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Title</Text>
-              <Text style={S.value}>{present(metadata.title)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Project Name</Text>
-              <Text style={S.value}>{present(metadata.projectName)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Client</Text>
-              <Text style={S.value}>{present(metadata.client)}</Text>
-            </View>
+            {[
+              { label: 'Tag', value: present(input.tag) },
+              { label: 'Description', value: present(input.description) },
+              { label: 'Project Number', value: present(metadata.projectNumber) },
+              { label: 'Document Number', value: present(metadata.documentNumber) },
+              { label: 'Title', value: present(metadata.title) },
+              { label: 'Project Name', value: present(metadata.projectName) },
+              { label: 'Client', value: present(metadata.client) },
+              { label: 'Revision', value: present(revisions.at(-1)?.rev) },
+              { label: 'Prepared By / Date', value: `${present(revisions.at(-1)?.by)} / ${present(revisions.at(-1)?.byDate)}` },
+              { label: 'Checked By / Date', value: `${present(revisions.at(-1)?.checkedBy)} / ${present(revisions.at(-1)?.checkedDate)}` },
+              { label: 'Approved By / Date', value: `${present(revisions.at(-1)?.approvedBy)} / ${present(revisions.at(-1)?.approvedDate)}` },
+            ].map((row, i) => {
+              const rowStyle = i % 2 === 1 ? S.rowAlt : {}
+              return (
+              <View
+                key={row.label}
+                style={[S.row, rowStyle]}
+              >
+                <Text style={S.label}>{row.label}</Text>
+                <Text style={S.value}>{row.value}</Text>
+              </View>
+              )
+            })}
           </View>
 
           <View style={S.section}>
             <View style={S.sectionHeader}>
               <Text style={S.sectionHeaderText}>Result Summary</Text>
             </View>
-            <View style={S.row}>
-              <Text style={S.label}>Status</Text>
-              <Text style={S.value}>{present(result.status)}</Text>
-            </View>
-            <View style={S.row}>
-              <Text style={S.label}>Revision Records</Text>
-              <Text style={S.value}>{revisions.length}</Text>
-            </View>
+            {[
+              { label: 'Status', value: present(result.status) },
+              { label: 'Revision Records', value: String(revisions.length) },
+            ].map((row, i) => {
+              const rowStyle = i % 2 === 1 ? S.rowAlt : {}
+              return (
+              <View
+                key={row.label}
+                style={[S.row, rowStyle]}
+              >
+                <Text style={S.label}>{row.label}</Text>
+                <Text style={S.value}>{row.value}</Text>
+              </View>
+              )
+            })}
           </View>
+        </View>
+
+        <View style={S.footer} fixed>
+          <Text style={S.footerDocCode}>{DOCUMENT_CODE}</Text>
+          <Text>Calculation Report · Page 1</Text>
         </View>
       </Page>
     </Document>

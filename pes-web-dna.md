@@ -798,9 +798,13 @@ src/app/calculator/
 - If the app renders a live SVG schematic, share the geometry/model layer between web and PDF renderers instead of maintaining two separate calculations
 - Keep title/revision blocks anchored at the page bottom; center sketches inside the remaining space
 - Prefer one-page output for normal calculator cases, but design overflow behavior intentionally
-- Standardize the left-side GCME disclaimer strip with these settings:
+- Standardize the left-side GCME disclaimer strip, section headers, row alternation, and footer with these settings:
 
 ```ts
+const ROW_ALT = '#E7EFF6'
+const SECTION_HEADER_BG = '#D9E1F2'
+const DOCUMENT_CODE = 'CA-PR-1050-0101'
+
 disclaimerWrap: {
   position: 'absolute',
   left: 7,
@@ -809,15 +813,58 @@ disclaimerWrap: {
   width: 12,
   alignItems: 'center',
   justifyContent: 'center',
+  backgroundColor: '#ffffff',
 },
 disclaimerText: {
   width: 800,
   fontSize: 5.6,
-  color: '#dc2626',
+  color: '#7F7F7F',
   textAlign: 'center',
   transform: 'rotate(-90deg)',
 },
+sectionHeader: {
+  backgroundColor: NAVY,   // #1f3864
+  paddingHorizontal: 8,
+  paddingVertical: 5,
+},
+sectionHeaderText: {
+  color: '#ffffff',
+  fontSize: 9.5,
+  fontFamily: 'Helvetica-Bold',
+},
+headerRow: {  // column-header rows in results tables
+  backgroundColor: SECTION_HEADER_BG,
+  // …
+},
+groupRow: {   // sub-section group rows (e.g. Geometry / Operating Conditions)
+  backgroundColor: SECTION_HEADER_BG,
+  // …
+},
+footer: {
+  position: 'absolute',
+  bottom: 16,
+  left: 40,
+  right: 30,
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  color: '#64748b',
+  fontSize: 7,
+},
+footerDocCode: {
+  color: '#21436D',
+  fontSize: 6.5,
+  fontFamily: 'Helvetica-Bold',
+},
 ```
+
+**Key differences from the old spec:**
+- Disclaimer text color: `#dc2626` (red) → `#7F7F7F` (gray) — matches GCME corporate T-101/P-101 style
+- Disclaimer background: explicit white band on `disclaimerWrap` prevents color bleed
+- Section header: navy blue (`NAVY`) with white bold text — not light gray
+- `SECTION_HEADER_BG = '#D9E1F2'` — single constant for all sub-header / column-header row backgrounds
+- `DOCUMENT_CODE = 'CA-PR-1050-0101'` — GCME form number, shown left of footer divider
+- Footer left: doc code in navy bold; Footer right: report title + page number
 
 **Testing expectations:**
 - Mock `@react-pdf/renderer` in `ActionMenu` tests

@@ -48,8 +48,10 @@ export interface CalculationReportProps {
 
 const NAVY = '#1f3864'
 const BLACK = '#000000'
-const ROW_ALT = '#f8fafc'
+const ROW_ALT = '#E7EFF6'
 const ROW_WHITE = '#ffffff'
+const SECTION_HEADER_BG = '#D9E1F2'
+const DOCUMENT_CODE = 'CA-PR-1050-0101'
 
 const DISCLAIMER =
   'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
@@ -88,11 +90,12 @@ const S = StyleSheet.create({
     width: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ffffff',
   },
   disclaimerText: {
     width: 800,
     fontSize: 5.6,
-    color: '#dc2626',
+    color: '#7F7F7F',
     textAlign: 'center',
     transform: 'rotate(-90deg)',
   },
@@ -173,7 +176,7 @@ const S = StyleSheet.create({
     width: '27%',
   },
   groupRow: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: SECTION_HEADER_BG,
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderTopWidth: 1,
@@ -186,7 +189,7 @@ const S = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: SECTION_HEADER_BG,
     minHeight: 22,
   },
   headerCell: {
@@ -214,8 +217,14 @@ const S = StyleSheet.create({
     right: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     color: '#64748b',
     fontSize: 7,
+  },
+  footerDocCode: {
+    color: '#21436D',
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
   },
 })
 
@@ -432,8 +441,8 @@ function FramedPage({ children, pageNumber }: { children: React.ReactNode; pageN
       </View>
       <View style={S.outerBorder}>{children}</View>
       <View style={S.footer} fixed>
-        <Text>Heat Transfer Calculation Report</Text>
-        <Text>Page {pageNumber}</Text>
+        <Text style={S.footerDocCode}>{DOCUMENT_CODE}</Text>
+        <Text>Heat Transfer Calculation Report · Page {pageNumber}</Text>
       </View>
     </Page>
   )
