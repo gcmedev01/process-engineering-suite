@@ -633,7 +633,6 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
         const mx = (ann.x1 + ann.x2) / 2
         const my = (ann.y1 + ann.y2) / 2
         const verticalLabelX = mx + (ann.labelSide === 'end' ? 13 : -13)
-        const verticalTransform = `rotate(-90 ${verticalLabelX} ${my})`
         return (
           <G key={ann.key}>
             <Line x1={ann.x1} y1={ann.y1} x2={ann.x2} y2={ann.y2}
@@ -643,11 +642,10 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
             {ann.vertical ? (
               <Text
                 x={verticalLabelX}
-                y={my}
+                y={my + 3}
                 fill={PDF_GUIDE}
                 style={{ fontSize: 11 }}
-                textAnchor="middle"
-                transform={verticalTransform}
+                textAnchor={ann.labelSide === 'end' ? 'start' : 'end'}
               >
                 {ann.label}
               </Text>
