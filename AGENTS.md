@@ -21,8 +21,8 @@ bun turbo run check-types
 # Format code
 bun run format
 
-# Run development servers for all apps
-bun turbo run dev --parallel
+# Run development servers for apps, excluding the calculator template
+bun turbo run dev --parallel --filter=!calculation-template
 
 # Validate deployment lane compatibility (Vercel + AWS)
 bun run check:deploy:matrix
@@ -382,7 +382,7 @@ bun turbo run build
 bun turbo run lint
 bun turbo run check-types
 bun run format
-bun turbo run dev --parallel
+bun turbo run dev --parallel --filter=!calculation-template
 bun run check:deploy:matrix
 ```
 
