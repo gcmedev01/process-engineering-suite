@@ -297,11 +297,13 @@ function TitleBlock({
     ...revisions.slice(0, 3),
     ...Array(Math.max(0, 3 - revisions.length)).fill(null),
   ]
+  const titleInfoHeight = 42
   const trS = {
     flexDirection: 'row' as const,
+    alignItems: 'stretch' as const,
+    flex: 1,
     borderBottomWidth: BW,
     borderBottomColor: BLACK,
-    minHeight: 14,
   }
   const tlCellS = {
     width: 48,
@@ -361,8 +363,8 @@ function TitleBlock({
     <View style={{ borderTopWidth: HB, borderTopColor: BLACK }}>
 
       {/* Row 1: TITLE/PROJECT/CLIENT (left) | revision columns (right) */}
-      <View style={{ flexDirection: 'row', borderBottomWidth: HB, borderBottomColor: BLACK }}>
-        <View style={{ flex: 3, borderRightWidth: HB, borderRightColor: BLACK }}>
+      <View style={{ flexDirection: 'row', height: titleInfoHeight, borderBottomWidth: HB, borderBottomColor: BLACK }}>
+        <View style={{ flex: 3, height: titleInfoHeight, borderRightWidth: HB, borderRightColor: BLACK }}>
           <View style={trS}>
             <View style={tlCellS}>
               <Text style={tlTextS}>TITLE</Text>
