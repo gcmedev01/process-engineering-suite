@@ -851,8 +851,6 @@ export function CalculationReport({
                     <DataRow label="Roof type" value={present(valueOf(input, 'tankRoofType'))} />
                     <DataRow label="Roof height" value={fmt(valueOf(input, 'roofHeight') as number, 2)} unit="mm" />
                     <DataRow label="Liquid level" value={fmt(valueOf(input, 'liquidLevel') as number, 2)} unit="mm" />
-                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
-                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
                   </>
                 )}
                 {mode === 'horizontal' && (
@@ -863,8 +861,6 @@ export function CalculationReport({
                     <DataRow label="Head depth" value={fmt(valueOf(input, 'headDepth') as number, 2)} unit="mm" />
                     <DataRow label="Flange width" value={fmt(valueOf(input, 'flangeWidth') as number, 2)} unit="mm" />
                     <DataRow label="Liquid level" value={fmt(valueOf(input, 'liquidLevel') as number, 2)} unit="mm" />
-                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
-                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
                   </>
                 )}
               </Section>
@@ -882,17 +878,14 @@ export function CalculationReport({
                 {(mode === 'vertical' || mode === 'horizontal') && (
                   <>
                     <DataRow label="Fluid temperature" value={fmt(valueOf(input, 'fluidTemp') as number, 2)} unit="°C" />
-                    <DataRow label="Vapor temperature" value={fmt(valueOf(input, 'vaporTemp') as number, 2)} unit="°C" />
                     <DataRow label="Ambient temperature" value={fmt(valueOf(input, 'ambientTemp') as number, 2)} unit="°C" />
                     <DataRow label="Wind speed" value={fmt(valueOf(input, 'windSpeed') as number, 2)} unit="m/s" />
-                    {mode === 'horizontal' && (
-                      <DataRow label="Ground temperature" value={fmt(valueOf(input, 'groundTemp') as number, 2)} unit="°C" />
-                    )}
+                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} unit="—" />
                   </>
                 )}
               </Section>
 
-              <Section title="IV. CALCULATION RESULTS">
+              <Section title="CALCULATION RESULTS">
                 {result.status === 'error' ? (
                   <DataRow label="Status" value="Calculation failed — check inputs" />
                 ) : isPipeResultB(result) ? (
@@ -910,6 +903,7 @@ export function CalculationReport({
                 ) : isHorizontalTankResultB(result) ? (
                   <>
                     <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                    <DataRow label="Cooling Rate" value={fmt(result.cooling.rateCHr, 4)} unit="°C/hr" highlight />
                     <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
                     <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
                     <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
@@ -919,6 +913,7 @@ export function CalculationReport({
                 ) : (
                   <>
                     <DataRow label="Total heat loss" value={fmt(result.totalHeatLoss, 2)} unit="W" highlight />
+                    <DataRow label="Cooling Rate" value={fmt(result.cooling.rateCHr, 4)} unit="°C/hr" highlight />
                     <DataRow label="Total area" value={fmt(result.totalArea, 3)} unit="m²" />
                     <DataRow label="Dry Wall U" value={fmt(result.dryWall.uOverall, 4)} unit="W/m²·K" />
                     <DataRow label="Wet Wall U" value={fmt(result.wetWall.uOverall, 4)} unit="W/m²·K" />
@@ -930,64 +925,83 @@ export function CalculationReport({
             </View>
 
             <View style={S.rightCol}>
-              <Section title="III. CONSTRUCTION & FLUID PROPERTIES">
-
-                {mode === 'pipe' && (
-                  <>
-                    <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
-                    <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+              {mode === 'pipe' && (
+                <>
+                  <Section title="FLUID PROPERTIES">
                     <DataRow label="Fluid density" value={fmt(valueOf(input, 'fluidDensity') as number, 2)} unit="kg/m³" />
                     <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
                     <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
                     <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
-                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
-                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
-                  </>
-                )}
-                {mode === 'vertical' && (
-                  <>
+                  </Section>
+                  <Section title="WALL & INSULATION">
+                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
                     <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
+                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
                     <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+                  </Section>
+                  <Section title="SURFACE PROPERTIES">
+                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
+                  </Section>
+                </>
+              )}
+              {mode === 'vertical' && (
+                <>
+                  <Section title="WALL CONSTRUCTION">
+                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
+                    <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
+                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
+                    <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+                  </Section>
+                  <Section title="FLUID PROPERTIES">
                     <DataRow label="Fluid density" value={fmt(valueOf(input, 'fluidDensity') as number, 2)} unit="kg/m³" />
                     <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
                     <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
                     <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
                     <DataRow label="Fluid expansion coeff." value={fmt(valueOf(input, 'fluidExpansionCoeff') as number, 6)} unit="1/K" />
+                  </Section>
+                  <Section title="VAPOR/GAS PROPERTIES">
                     <DataRow label="Vapor density" value={fmt(valueOf(input, 'vaporDensity') as number, 2)} unit="kg/m³" />
                     <DataRow label="Vapor specific heat" value={fmt(valueOf(input, 'vaporSpecificHeat') as number, 2)} unit="J/kg·K" />
                     <DataRow label="Vapor viscosity" value={fmt(valueOf(input, 'vaporViscosity') as number, 6)} unit="Pa·s" />
                     <DataRow label="Vapor thermal conductivity" value={fmt(valueOf(input, 'vaporThermalConductivity') as number, 4)} unit="W/m·K" />
+                    <DataRow label="Vapor expansion coeff." value={fmt(valueOf(input, 'vaporExpansionCoeff') as number, 6)} unit="1/K" />
+                  </Section>
+                  <Section title="SURFACE PROPERTIES">
+                    <DataRow label="Wall emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
+                    <DataRow label="Roof emissivity" value={fmt(valueOf(input, 'roofEmissivity') as number, 3)} />
+                  </Section>
+                  <Section title="FOULING & GROUND">
                     <DataRow label="Fouling dry wall" value={fmt(valueOf(input, 'foulingDryWall') as number, 3)} unit="W/m²·K" />
                     <DataRow label="Fouling wet wall" value={fmt(valueOf(input, 'foulingWetWall') as number, 3)} unit="W/m²·K" />
                     <DataRow label="Fouling roof" value={fmt(valueOf(input, 'foulingRoof') as number, 3)} unit="W/m²·K" />
                     <DataRow label="Fouling floor" value={fmt(valueOf(input, 'foulingFloor') as number, 3)} unit="W/m²·K" />
-                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
-                    <DataRow label="Roof emissivity" value={fmt(valueOf(input, 'roofEmissivity') as number, 3)} />
-                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
-                  </>
-                )}
-                {mode === 'horizontal' && (
-                  <>
+                    <DataRow label="Ground temperature" value={fmt(valueOf(input, 'groundTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Ground conductivity" value={fmt(valueOf(input, 'groundConductivity') as number, 4)} unit="W/m·K" />
+                  </Section>
+                </>
+              )}
+              {mode === 'horizontal' && (
+                <>
+                  <Section title="WALL & INSULATION">
+                    <DataRow label="Wall thickness" value={fmt(valueOf(input, 'wallThickness') as number, 2)} unit="mm" />
                     <DataRow label="Wall conductivity" value={fmt(valueOf(input, 'wallConductivity') as number, 3)} unit="W/m·K" />
+                    <DataRow label="Insulation thickness" value={fmt(valueOf(input, 'insulationThickness') as number, 2)} unit="mm" />
                     <DataRow label="Insulation conductivity" value={fmt(valueOf(input, 'insulationConductivity') as number, 4)} unit="W/m·K" />
+                  </Section>
+                  <Section title="FLUID PROPERTIES">
                     <DataRow label="Fluid density" value={fmt(valueOf(input, 'fluidDensity') as number, 2)} unit="kg/m³" />
                     <DataRow label="Fluid specific heat" value={fmt(valueOf(input, 'fluidSpecificHeat') as number, 2)} unit="J/kg·K" />
                     <DataRow label="Fluid viscosity" value={fmt(valueOf(input, 'fluidViscosity') as number, 6)} unit="Pa·s" />
                     <DataRow label="Fluid thermal conductivity" value={fmt(valueOf(input, 'fluidThermalConductivity') as number, 4)} unit="W/m·K" />
                     <DataRow label="Fluid expansion coeff." value={fmt(valueOf(input, 'fluidExpansionCoeff') as number, 6)} unit="1/K" />
-                    <DataRow label="Vapor density" value={fmt(valueOf(input, 'vaporDensity') as number, 2)} unit="kg/m³" />
-                    <DataRow label="Vapor specific heat" value={fmt(valueOf(input, 'vaporSpecificHeat') as number, 2)} unit="J/kg·K" />
-                    <DataRow label="Vapor viscosity" value={fmt(valueOf(input, 'vaporViscosity') as number, 6)} unit="Pa·s" />
-                    <DataRow label="Vapor thermal conductivity" value={fmt(valueOf(input, 'vaporThermalConductivity') as number, 4)} unit="W/m·K" />
-                    <DataRow label="Fouling dry wall" value={fmt(valueOf(input, 'foulingDryWall') as number, 3)} unit="W/m²·K" />
-                    <DataRow label="Fouling wet wall" value={fmt(valueOf(input, 'foulingWetWall') as number, 3)} unit="W/m²·K" />
-                    <DataRow label="Fouling dry head" value={fmt(valueOf(input, 'foulingDryHead') as number, 3)} unit="W/m²·K" />
-                    <DataRow label="Fouling wet head" value={fmt(valueOf(input, 'foulingWetHead') as number, 3)} unit="W/m²·K" />
-                    <DataRow label="Surface emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
-                    <DataRow label="Wind enhancement" value={fmt(valueOf(input, 'windEnhancement') as number, 3)} />
-                  </>
-                )}
-              </Section>
+                  </Section>
+                  <Section title="SURFACE & GROUND">
+                    <DataRow label="Emissivity" value={fmt(valueOf(input, 'surfaceEmissivity') as number, 3)} />
+                    <DataRow label="Ground temperature" value={fmt(valueOf(input, 'groundTemp') as number, 2)} unit="°C" />
+                    <DataRow label="Ground conductivity" value={fmt(valueOf(input, 'groundConductivity') as number, 4)} unit="W/m·K" />
+                  </Section>
+                </>
+              )}
             </View>
           </View>
 
