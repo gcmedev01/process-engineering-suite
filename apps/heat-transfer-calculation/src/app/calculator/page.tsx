@@ -10,7 +10,7 @@ import type { Resolver } from "react-hook-form"
 import { InputPanel } from "./components/InputPanel"
 import { ResultsPanel } from "./components/ResultsPanel"
 import { ActionMenu } from "./components/ActionMenu"
-import Link from "next/link"
+import { ModeHeader } from "./components/ModeHeader"
 
 const createDefaultValues = (): Partial<CalculationInput> => ({
   tag: "",
@@ -86,40 +86,29 @@ export default function CalculatorPage() {
   return (
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        {/* Secondary action bar with tabs */}
-        <div className="border-b bg-card/50 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-2">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold px-3 py-1 rounded bg-primary/10 text-primary">Storage Tank</span>
-                <Link href="/calculator/pipe" className="text-xs px-3 py-1 rounded hover:bg-muted text-muted-foreground transition-colors">Pipe</Link>
-                <Link href="/calculator/horizontal" className="text-xs px-3 py-1 rounded hover:bg-muted text-muted-foreground transition-colors">Horizontal Tank</Link>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Heat Loss Calculator · Storage Tank
-              </p>
-              <ActionMenu
-                linkedEquipmentId={linkedEquipmentId}
-                linkedEquipmentTag={linkedEquipmentTag}
-                onEquipmentLinked={(equipmentId, equipmentTag) => {
-                  setLinkedEquipmentId(equipmentId)
-                  setLinkedEquipmentTag(equipmentTag ?? null)
-                }}
-                onClear={handleClear}
-                calculationMetadata={calculationMetadata}
-                revisionHistory={revisionHistory}
-                onCalculationLoaded={(metadata, loadedRevisionHistory) => {
-                  setCalculationMetadata(metadata)
-                  setRevisionHistory(loadedRevisionHistory)
-                }}
-                calculationResult={calculationResult}
-                derivedGeometry={null}
-              />
-            </div>
-          </div>
-        </div>
+        <ModeHeader
+          activeMode="storage"
+          action={(
+            <ActionMenu
+              linkedEquipmentId={linkedEquipmentId}
+              linkedEquipmentTag={linkedEquipmentTag}
+              onEquipmentLinked={(equipmentId, equipmentTag) => {
+                setLinkedEquipmentId(equipmentId)
+                setLinkedEquipmentTag(equipmentTag ?? null)
+              }}
+              onClear={handleClear}
+              calculationMetadata={calculationMetadata}
+              revisionHistory={revisionHistory}
+              onCalculationLoaded={(metadata, loadedRevisionHistory) => {
+                setCalculationMetadata(metadata)
+                setRevisionHistory(loadedRevisionHistory)
+              }}
+              calculationResult={calculationResult}
+              derivedGeometry={null}
+            />
+          )}
+        />
 
-        {/* Two-column layout */}
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
             <div>

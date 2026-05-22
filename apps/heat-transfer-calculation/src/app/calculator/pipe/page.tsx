@@ -1,13 +1,20 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useForm, FormProvider, useWatch } from "react-hook-form"
-import type { PipeCalculationInput, PipeCalculationResult } from "@/types"
+import type {
+  CalculationMetadata,
+  HeatTransferCalculationInput,
+  PipeCalculationInput,
+  PipeCalculationResult,
+  RevisionRecord,
+} from "@/types"
 import { PipeType, PipeOrientation } from "@/types"
 import { calculatePipe } from "@/lib/calculations/pipe"
 import { PipeInputPanel } from "./PipeInputPanel"
 import { PipeResultsPanel } from "./PipeResultsPanel"
-import Link from "next/link"
+import { ActionMenu } from "../components/ActionMenu"
+import { ModeHeader } from "../components/ModeHeader"
 
 const defaultPipeValues: PipeCalculationInput = {
   tag: "",
@@ -42,6 +49,14 @@ const defaultPipeValues: PipeCalculationInput = {
 
 export type PipeInput = PipeCalculationInput
 
+const EMPTY_METADATA: CalculationMetadata = {
+  projectNumber: "",
+  documentNumber: "",
+  title: "",
+  projectName: "",
+  client: "",
+}
+
 export default function PipeCalculator() {
   const form = useForm<PipeCalculationInput>({
     defaultValues: defaultPipeValues,
@@ -50,8 +65,15 @@ export default function PipeCalculator() {
 
   const [tag, setTag] = useState(defaultPipeValues.tag)
   const [description, setDescription] = useState(defaultPipeValues.description ?? "")
+  const [calculationMetadata, setCalculationMetadata] = useState<CalculationMetadata>(EMPTY_METADATA)
+  const [revisionHistory, setRevisionHistory] = useState<RevisionRecord[]>([])
 
   const watchedValues = useWatch({ control: form.control })
+
+  useEffect(() => {
+    form.setValue("tag", tag, { shouldValidate: true })
+    form.setValue("description", description)
+  }, [description, form, tag])
 
   const result = useMemo<PipeCalculationResult | null>(() => {
     if (!watchedValues.pipeLength || !watchedValues.flowRate ||
@@ -70,19 +92,41 @@ export default function PipeCalculator() {
     }
   }, [watchedValues, tag, description])
 
+  const handleClear = () => {
+    form.reset(defaultPipeValues, { keepDefaultValues: false })
+    form.clearErrors()
+    setTag(defaultPipeValues.tag)
+    setDescription(defaultPipeValues.description ?? "")
+    setCalculationMetadata(EMPTY_METADATA)
+    setRevisionHistory([])
+  }
+
+  const handleInputsLoaded = (inputs: HeatTransferCalculationInput) => {
+    setTag(inputs.tag)
+    setDescription(inputs.description ?? "")
+  }
+
   return (
-    <main className="min-h-screen bg-background">
-      <div className="border-b bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center gap-1">
-            <Link href="/calculator" className="text-xs px-3 py-1 rounded hover:bg-muted text-muted-foreground transition-colors">Storage Tank</Link>
-            <span className="text-xs font-semibold px-3 py-1 rounded bg-primary/10 text-primary">Pipe</span>
-            <Link href="/calculator/horizontal" className="text-xs px-3 py-1 rounded hover:bg-muted text-muted-foreground transition-colors">Horizontal Tank</Link>
-          </div>
-        </div>
-      </div>
-      <div className="container mx-auto px-4 py-6">
-        <FormProvider {...form}>
+    <FormProvider {...form}>
+      <main className="min-h-screen bg-background">
+        <ModeHeader
+          activeMode="pipe"
+          action={(
+            <ActionMenu
+              onClear={handleClear}
+              calculationMetadata={calculationMetadata}
+              revisionHistory={revisionHistory}
+              onCalculationLoaded={(metadata, loadedRevisionHistory) => {
+                setCalculationMetadata(metadata)
+                setRevisionHistory(loadedRevisionHistory)
+              }}
+              onInputsLoaded={handleInputsLoaded}
+              calculationResult={result}
+              showEquipmentActions={false}
+            />
+          )}
+        />
+        <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
             <div>
               <PipeInputPanel
@@ -96,8 +140,8 @@ export default function PipeCalculator() {
               <PipeResultsPanel result={result} />
             </div>
           </div>
-        </FormProvider>
-      </div>
-    </main>
+        </div>
+      </main>
+    </FormProvider>
   )
 }

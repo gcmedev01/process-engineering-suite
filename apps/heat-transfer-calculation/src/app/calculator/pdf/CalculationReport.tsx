@@ -780,6 +780,8 @@ export function CalculationReport({
       : 'Vertical storage tank heat-loss calculation'
 
   const tag = present(valueOf(input, 'tag'))
+  const rawDescription = valueOf(input, 'description')
+  const description = typeof rawDescription === 'string' ? rawDescription.trim() : ''
 
   // Guard: show placeholder if result is missing
   if (!result) {
@@ -826,7 +828,7 @@ export function CalculationReport({
               <Text style={{ fontSize: 6, fontFamily: 'Helvetica-Bold', color: GUIDE }}>TYPE</Text>
             </View>
             <View style={S.typeValue}>
-              <Text>{modeLabel} · Tag: {tag}</Text>
+              <Text>{modeLabel} · Tag: {tag}{description ? ` · Description: ${description}` : ''}</Text>
             </View>
           </View>
 

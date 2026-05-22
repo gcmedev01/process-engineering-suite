@@ -341,6 +341,16 @@ export interface CalculationResult {
   calculatedAt: string            // ISO timestamp
 }
 
+export type HeatTransferCalculationInput =
+  | CalculationInput
+  | PipeCalculationInput
+  | HorizontalTankInput
+
+export type HeatTransferCalculationResult =
+  | CalculationResult
+  | PipeCalculationResult
+  | HorizontalTankResult
+
 // ─── Status ───────────────────────────────────────────────────────────────────
 
 export enum CalculationStatus {

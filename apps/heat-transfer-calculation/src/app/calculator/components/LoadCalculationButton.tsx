@@ -15,7 +15,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSavedCalculations } from '@/lib/hooks/useSavedCalculations';
 import { readCalculationFile } from '@/lib/calculationFile';
-import type { CalculationInput, CalculationMetadata, RevisionRecord } from '@/types';
+import type { CalculationMetadata, RevisionRecord, HeatTransferCalculationInput } from '@/types';
 
 const EMPTY_METADATA: CalculationMetadata = {
   projectNumber: '',
@@ -29,6 +29,7 @@ interface Props {
   controlledOpen?: boolean;
   onControlledOpenChange?: (open: boolean) => void;
   onCalculationLoaded: (metadata: CalculationMetadata, revisions: RevisionRecord[]) => void;
+  onInputsLoaded?: (inputs: HeatTransferCalculationInput) => void;
   onEquipmentLinked?: (equipmentId: string | null, equipmentTag?: string | null) => void;
 }
 
@@ -36,9 +37,10 @@ export function LoadCalculationButton({
   controlledOpen,
   onControlledOpenChange,
   onCalculationLoaded,
+  onInputsLoaded,
   onEquipmentLinked,
 }: Props) {
-  const { reset } = useFormContext<CalculationInput>();
+  const { reset } = useFormContext<HeatTransferCalculationInput>();
   const {
     fetchList,
     softDelete,
@@ -89,11 +91,13 @@ export function LoadCalculationButton({
   }, [savedItems, search, showDeleted]);
 
   const handleSelect = (item: (typeof filteredItems)[number]) => {
-    reset(item.inputs as unknown as CalculationInput, { keepDefaultValues: false });
+    const inputs = item.inputs as unknown as HeatTransferCalculationInput;
+    reset(inputs, { keepDefaultValues: false });
 
     const metadata = item.calculationMetadata ?? EMPTY_METADATA;
     const revisions = item.revisionHistory ?? [];
     onCalculationLoaded(metadata, revisions);
+    onInputsLoaded?.(inputs);
     onEquipmentLinked?.(item.equipmentId ?? null, item.equipmentTag ?? null);
 
     setOpen(false);
@@ -111,8 +115,10 @@ export function LoadCalculationButton({
 
     try {
       const payload = await readCalculationFile(file);
-      reset(payload.inputs as unknown as CalculationInput, { keepDefaultValues: false });
+      const inputs = payload.inputs as unknown as HeatTransferCalculationInput;
+      reset(inputs, { keepDefaultValues: false });
       onCalculationLoaded(payload.metadata, payload.revisionHistory);
+      onInputsLoaded?.(inputs);
       onEquipmentLinked?.(null, null);
       setOpen(false);
     } catch (err) {

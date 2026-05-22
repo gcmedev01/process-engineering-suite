@@ -16,7 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSavedCalculations } from '@/lib/hooks/useSavedCalculations';
 import { buildCalculationFileEnvelope, downloadCalculationFile } from '@/lib/calculationFile';
-import type { CalculationInput, CalculationMetadata, RevisionRecord, CalculationResult } from '@/types';
+import type {
+  CalculationMetadata,
+  RevisionRecord,
+  HeatTransferCalculationInput,
+  HeatTransferCalculationResult,
+} from '@/types';
 
 interface Props {
   controlledOpen?: boolean;
@@ -25,7 +30,7 @@ interface Props {
   equipmentTag?: string | null;
   calculationMetadata: CalculationMetadata;
   revisionHistory: RevisionRecord[];
-  calculationResult: CalculationResult | null;
+  calculationResult: HeatTransferCalculationResult | null;
 }
 
 export function SaveCalculationButton({
@@ -37,7 +42,7 @@ export function SaveCalculationButton({
   revisionHistory,
   calculationResult,
 }: Props) {
-  const { getValues } = useFormContext<CalculationInput>();
+  const { getValues } = useFormContext<HeatTransferCalculationInput>();
   const { save, fetchList, isSaving, savedItems } = useSavedCalculations();
 
   const [name, setName] = useState('');

@@ -23,18 +23,28 @@ import { apiClient } from '@/lib/apiClient';
 import { SaveCalculationButton } from './SaveCalculationButton';
 import { LoadCalculationButton } from './LoadCalculationButton';
 import { EquipmentLinkButton } from './EquipmentLinkButton';
-import type { CalculationInput, CalculationMetadata, RevisionRecord, CalculationResult, DerivedGeometry } from '@/types';
+import type {
+  CalculationInput,
+  CalculationMetadata,
+  RevisionRecord,
+  CalculationResult,
+  DerivedGeometry,
+  HeatTransferCalculationInput,
+  HeatTransferCalculationResult,
+} from '@/types';
 
 interface ActionMenuProps {
   onClear: () => void;
   calculationMetadata: CalculationMetadata;
   revisionHistory: RevisionRecord[];
   onCalculationLoaded: (metadata: CalculationMetadata, revisionHistory: RevisionRecord[]) => void;
-  calculationResult: CalculationResult | null;
-  derivedGeometry: DerivedGeometry | null;
-  linkedEquipmentId: string | null;
-  linkedEquipmentTag: string | null;
-  onEquipmentLinked: (equipmentId: string | null, equipmentTag?: string | null) => void;
+  onInputsLoaded?: (inputs: HeatTransferCalculationInput) => void;
+  calculationResult: HeatTransferCalculationResult | null;
+  derivedGeometry?: DerivedGeometry | null;
+  linkedEquipmentId?: string | null;
+  linkedEquipmentTag?: string | null;
+  onEquipmentLinked?: (equipmentId: string | null, equipmentTag?: string | null) => void;
+  showEquipmentActions?: boolean;
 }
 
 function latestRevisionValue(revisions: RevisionRecord[]): string | null {
@@ -63,8 +73,10 @@ export function ActionMenu({
   linkedEquipmentId,
   linkedEquipmentTag,
   onEquipmentLinked,
+  onInputsLoaded,
+  showEquipmentActions = true,
 }: ActionMenuProps) {
-  const { getValues } = useFormContext<CalculationInput>();
+  const { getValues } = useFormContext<HeatTransferCalculationInput>();
 
   const [saveOpen, setSaveOpen] = useState(false);
   const [loadOpen, setLoadOpen] = useState(false);
@@ -142,7 +154,8 @@ export function ActionMenu({
       const current = await apiClient.engineeringObjects.get(resolvedTag);
       const currentProperties = (current.properties ?? {}) as Record<string, unknown>;
       const existingDetails = (currentProperties.details ?? {}) as Record<string, unknown>;
-      const values = getValues();
+      const values = getValues() as CalculationInput;
+      const result = calculationResult as CalculationResult | null;
       const normalLiquidLevelPct = values.tankHeight > 0
         ? Math.round((values.liquidLevel / values.tankHeight) * 10000) / 100
         : null;
@@ -159,12 +172,12 @@ export function ActionMenu({
         insulationThicknessMm: values.insulationThickness,
         insulationConductivityWMK: values.insulationConductivity,
         surfaceEmissivity: values.surfaceEmissivity,
-        totalHeatLossW: calculationResult?.totalHeatLoss ?? null,
-        totalHeatTransferAreaM2: calculationResult?.totalArea ?? null,
+        totalHeatLossW: result?.totalHeatLoss ?? null,
+        totalHeatTransferAreaM2: result?.totalArea ?? null,
         heatTransferGeometry: derivedGeometry ?? null,
         heatTransferCalculation: {
           inputs: values,
-          result: calculationResult ?? null,
+          result,
           calculationMetadata,
           revisionHistory,
           syncedAt: new Date().toISOString(),
@@ -218,18 +231,22 @@ export function ActionMenu({
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onSelect={() => setLinkOpen(true)} className="gap-2">
-            <LinkIcon className={`h-4 w-4 ${linkedEquipmentId ? 'text-green-600' : ''}`} />
-            {linkedEquipmentTag ? `Linked: ${linkedEquipmentTag}` : linkedEquipmentId ? `Linked: ${linkedEquipmentId}` : 'Link equipment…'}
-          </DropdownMenuItem>
-          {linkedEquipmentId && (
-            <DropdownMenuItem onSelect={() => { void handleUpdateEquipment(); }} className="gap-2" disabled={isUpdating}>
-              <UpdateIcon className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
-              {updateLabel}
-            </DropdownMenuItem>
-          )}
+          {showEquipmentActions && (
+            <>
+              <DropdownMenuItem onSelect={() => setLinkOpen(true)} className="gap-2">
+                <LinkIcon className={`h-4 w-4 ${linkedEquipmentId ? 'text-green-600' : ''}`} />
+                {linkedEquipmentTag ? `Linked: ${linkedEquipmentTag}` : linkedEquipmentId ? `Linked: ${linkedEquipmentId}` : 'Link equipment…'}
+              </DropdownMenuItem>
+              {linkedEquipmentId && (
+                <DropdownMenuItem onSelect={() => { void handleUpdateEquipment(); }} className="gap-2" disabled={isUpdating}>
+                  <UpdateIcon className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                  {updateLabel}
+                </DropdownMenuItem>
+              )}
 
-          <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
+            </>
+          )}
 
           <DropdownMenuItem onSelect={handleExportPdf} disabled={!calculationResult || pdfLoading}>
             {pdfLoading
@@ -261,15 +278,18 @@ export function ActionMenu({
         controlledOpen={loadOpen}
         onControlledOpenChange={setLoadOpen}
         onCalculationLoaded={onCalculationLoaded}
+        onInputsLoaded={onInputsLoaded}
         onEquipmentLinked={onEquipmentLinked}
       />
-      <EquipmentLinkButton
-        controlledOpen={linkOpen}
-        onControlledOpenChange={setLinkOpen}
-        linkedEquipmentId={linkedEquipmentId}
-        linkedEquipmentTag={linkedEquipmentTag}
-        onEquipmentLinked={onEquipmentLinked}
-      />
+      {showEquipmentActions && onEquipmentLinked && (
+        <EquipmentLinkButton
+          controlledOpen={linkOpen}
+          onControlledOpenChange={setLinkOpen}
+          linkedEquipmentId={linkedEquipmentId ?? null}
+          linkedEquipmentTag={linkedEquipmentTag ?? null}
+          onEquipmentLinked={onEquipmentLinked}
+        />
+      )}
     </>
   );
 }

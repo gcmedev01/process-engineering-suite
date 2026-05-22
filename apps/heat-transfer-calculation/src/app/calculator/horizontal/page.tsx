@@ -1,13 +1,20 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useForm, FormProvider, useWatch } from "react-hook-form"
-import type { HorizontalTankInput, HorizontalTankResult } from "@/types"
+import type {
+  CalculationMetadata,
+  HeatTransferCalculationInput,
+  HorizontalTankInput,
+  HorizontalTankResult,
+  RevisionRecord,
+} from "@/types"
 import { HeadType } from "@/types"
 import { calculateHorizontalTank } from "@/lib/calculations/horizontal-tank"
 import { HorizontalInputPanel } from "./HorizontalInputPanel"
 import { HorizontalResultsPanel } from "./HorizontalResultsPanel"
-import Link from "next/link"
+import { ActionMenu } from "../components/ActionMenu"
+import { ModeHeader } from "../components/ModeHeader"
 
 const defaults: HorizontalTankInput = {
   tag: "", description: "",
@@ -22,11 +29,26 @@ const defaults: HorizontalTankInput = {
   metadata: { projectNumber: "", documentNumber: "", title: "", projectName: "", client: "" },
 }
 
+const EMPTY_METADATA: CalculationMetadata = {
+  projectNumber: "",
+  documentNumber: "",
+  title: "",
+  projectName: "",
+  client: "",
+}
+
 export default function HorizontalCalculatorPage() {
   const form = useForm<HorizontalTankInput>({ defaultValues: defaults, mode: "onChange" })
   const [tag, setTag] = useState(defaults.tag)
   const [desc, setDesc] = useState(defaults.description ?? "")
+  const [calculationMetadata, setCalculationMetadata] = useState<CalculationMetadata>(EMPTY_METADATA)
+  const [revisionHistory, setRevisionHistory] = useState<RevisionRecord[]>([])
   const watched = useWatch({ control: form.control })
+
+  useEffect(() => {
+    form.setValue("tag", tag, { shouldValidate: true })
+    form.setValue("description", desc)
+  }, [desc, form, tag])
 
   const result = useMemo<HorizontalTankResult | null>(() => {
     if (!watched.insideDiameter || !watched.tankLength || watched.fluidTemp === undefined) return null
@@ -34,25 +56,47 @@ export default function HorizontalCalculatorPage() {
     catch { return null }
   }, [watched, tag, desc])
 
+  const handleClear = () => {
+    form.reset(defaults, { keepDefaultValues: false })
+    form.clearErrors()
+    setTag(defaults.tag)
+    setDesc(defaults.description ?? "")
+    setCalculationMetadata(EMPTY_METADATA)
+    setRevisionHistory([])
+  }
+
+  const handleInputsLoaded = (inputs: HeatTransferCalculationInput) => {
+    setTag(inputs.tag)
+    setDesc(inputs.description ?? "")
+  }
+
   return (
-    <main className="min-h-screen bg-background">
-      <div className="border-b bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center gap-1">
-            <Link href="/calculator" className="text-xs px-3 py-1 rounded hover:bg-muted text-muted-foreground transition-colors">Storage Tank</Link>
-            <Link href="/calculator/pipe" className="text-xs px-3 py-1 rounded hover:bg-muted text-muted-foreground transition-colors">Pipe</Link>
-            <span className="text-xs font-semibold px-3 py-1 rounded bg-primary/10 text-primary">Horizontal Tank</span>
-          </div>
-        </div>
-      </div>
-      <div className="container mx-auto px-4 py-6">
-        <FormProvider {...form}>
+    <FormProvider {...form}>
+      <main className="min-h-screen bg-background">
+        <ModeHeader
+          activeMode="horizontal"
+          action={(
+            <ActionMenu
+              onClear={handleClear}
+              calculationMetadata={calculationMetadata}
+              revisionHistory={revisionHistory}
+              onCalculationLoaded={(metadata, loadedRevisionHistory) => {
+                setCalculationMetadata(metadata)
+                setRevisionHistory(loadedRevisionHistory)
+              }}
+              onInputsLoaded={handleInputsLoaded}
+              calculationResult={result}
+              showEquipmentActions={false}
+            />
+          )}
+        />
+        <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
             <HorizontalInputPanel tag={tag} onTagChange={setTag} desc={desc} onDescChange={setDesc} />
             <HorizontalResultsPanel result={result} />
           </div>
-        </FormProvider>
-      </div>
-    </main>
+        </div>
+      </main>
+    </FormProvider>
   )
 }
