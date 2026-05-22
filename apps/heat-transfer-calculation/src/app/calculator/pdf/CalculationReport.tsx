@@ -505,16 +505,18 @@ const PDF_SKY      = '#0ea5e9'
 const PDF_AMBER    = '#f59e0b'
 const PDF_ORANGE   = '#fb923c'
 const PDF_METAL    = '#94a3b8'
-const HEAT_SCHEMATIC_SIZE = 420
+const HEAT_SCHEMATIC_WIDTH = 560
+const HEAT_SCHEMATIC_HEIGHT = 420
 const HEAT_SCHEMATIC_PADDING = 34
-const PDF_SCHEMATIC_RENDER_SIZE = 340
+const PDF_SCHEMATIC_RENDER_WIDTH = 470
+const PDF_SCHEMATIC_RENDER_HEIGHT = 340
 
 function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode }) {
   const raw = mode === 'pipe'
-    ? buildPipeSchematic(input as PipeCalculationInput, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_PADDING)
+    ? buildPipeSchematic(input as PipeCalculationInput, HEAT_SCHEMATIC_WIDTH, HEAT_SCHEMATIC_HEIGHT, HEAT_SCHEMATIC_PADDING)
     : mode === 'horizontal'
-      ? buildHorizontalTankSchematic(input as HorizontalTankInput, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_PADDING)
-      : buildVerticalTankSchematic(input as CalculationInput, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_SIZE, HEAT_SCHEMATIC_PADDING)
+      ? buildHorizontalTankSchematic(input as HorizontalTankInput, HEAT_SCHEMATIC_WIDTH, HEAT_SCHEMATIC_HEIGHT, HEAT_SCHEMATIC_PADDING)
+      : buildVerticalTankSchematic(input as CalculationInput, HEAT_SCHEMATIC_WIDTH, HEAT_SCHEMATIC_HEIGHT, HEAT_SCHEMATIC_PADDING)
 
   if (!raw) return null
 
@@ -524,7 +526,7 @@ function PdfSchematic({ input, mode }: { input: ReportInput; mode: ReportMode })
   return (
     <Svg
       viewBox={`0 0 ${model.width} ${model.height}`}
-      style={{ width: PDF_SCHEMATIC_RENDER_SIZE, height: PDF_SCHEMATIC_RENDER_SIZE }}
+      style={{ width: PDF_SCHEMATIC_RENDER_WIDTH, height: PDF_SCHEMATIC_RENDER_HEIGHT }}
     >
       <Defs>
         {model.clipPath && (
