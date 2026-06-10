@@ -33,11 +33,10 @@ All packages live under `packages/` and are registered as Bun workspaces.
 | `ui-kit/`              | `@eng-suite/ui-kit`             | Glassmorphism MUI components, glass style helpers    |
 | `types/`               | `@eng-suite/types`              | Generated `.d.ts` type declarations                  |
 | `api-client/`          | `@eng-suite/api-client`         | Generated API client (do not hand-edit)              |
-| `unit-converter/`      | `@eng-suite/unit-converter`     | Unit conversion utilities (see warning below)        |
+| `unit-converter/`      | — (Python, not a JS package)    | ⚠️ Python unit converter — currently unused (see warning) |
 | `ui/`                  | `@repo/ui`                      | Shared UI primitives                                 |
 | `eslint-config/`       | `@repo/eslint-config`           | Shared ESLint config                                 |
-| `tsconfig/`            | `@repo/tsconfig`                | Shared tsconfig presets                              |
-| `typescript-config/`   | `@repo/typescript-config`       | Shared TypeScript config presets                     |
+| `typescript-config/`   | `@repo/typescript-config`       | Shared TS config presets: `app.json` (Next.js/bundler apps + frontend pkgs), `base.json`/`nextjs.json`/`react-library.json` (library builds) |
 
 ---
 
@@ -64,12 +63,15 @@ Do not add new methods to this class. If you must add persistence logic, discuss
 first.
 
 ### 4. Duplicate unit converters
-There are **two** unit converter implementations:
-- `packages/unit-converter/` — the shared frontend package
-- `services/api/app/services/process_design_agents/utils/unit_converter/` — embedded in the AI agents sub-project
+There are **two** Python unit-converter implementations (neither is a frontend package):
+- `packages/unit-converter/` — a standalone Python package (`process-eng-unit-converter`).
+  **Currently has zero consumers** — kept for potential future backend use. See its `README.md`
+  before wiring it into a service.
+- `services/api/app/services/process_design_agents/utils/unit_converter/` — a copy embedded in
+  the AI agents sub-project; this is the one actually imported today.
 
-Do **not** create a third. For frontend use, always reach for `convertUnit` from
-`packages/physics-engine/src/unitConversion.ts` (numeric math) or
+Do **not** create a third. **For frontend use, neither of these applies** — always reach for
+`convertUnit` from `packages/physics-engine/src/unitConversion.ts` (numeric math) or
 `@eng-suite/engineering-units` (UoM store + display). See the UoM section below.
 
 ### 5. `process_design_agents/` is an embedded sub-project

@@ -1,5 +1,9 @@
-"""Unit converter package for process engineering calculations."""
+"""process-eng-unit-converter — see README.md.
 
-from .unit_converter.converter import UnitConverter
+The importable package is ``unit_converter`` (this outer directory is not itself installed;
+see pyproject.toml). These re-exports exist only so the source tree is consistent.
+"""
 
-__all__ = ["UnitConverter"]
+from .unit_converter.converter import convert, converts
+
+__all__ = ["convert", "converts"]

@@ -155,10 +155,6 @@ export function calculateKw(
     setPressureGauge: number,
     valveType: 'conventional' | 'balanced' | 'pilot' = 'conventional'
 ): number {
-    console.log('calculateKw');
-    console.log('backpressureGauge', backpressureGauge);
-    console.log('setPressureGauge', setPressureGauge);
-    console.log('valveType', valveType);
 
     // Conventional and pilot valves: Kw = 1.0 (no correction needed)
     if (valveType === 'conventional' || valveType === 'pilot') {
@@ -168,7 +164,6 @@ export function calculateKw(
     // Calculate percent of gauge backpressure
     if (setPressureGauge <= 0) return 1.0;
     const percentBackpressure = (backpressureGauge / setPressureGauge) * 100;
-    console.log('percentBackpressure', percentBackpressure);
 
     // Clamp to table bounds
     if (percentBackpressure <= 15) return 1.0;
@@ -181,7 +176,6 @@ export function calculateKw(
         if (percentBackpressure >= lower.percent && percentBackpressure <= upper.percent) {
             const t = (percentBackpressure - lower.percent) / (upper.percent - lower.percent);
             const Kw = lower.kw + t * (upper.kw - lower.kw);
-            console.log('Kw', Kw);
             return Kw;
         }
     }
@@ -251,20 +245,8 @@ export function calculateGasArea(inputs: SizingInputs): SizingResult {
     let A_in2: number;
 
     if (critical) {
-        console.log('Critical flow conditions');
     } else {
-        console.log('Subcritical flow conditions');
     }
-    console.log('W', W);
-    console.log('C', C);
-    console.log('Kd', Kd);
-    console.log('P1', P1);
-    console.log('P2', P2);
-    console.log('Kb', Kb);
-    console.log('Kc', Kc);
-    console.log('T', T);
-    console.log('Z', Z);
-    console.log('M', M);
 
     if (critical) {
         // Critical flow equation
@@ -274,8 +256,6 @@ export function calculateGasArea(inputs: SizingInputs): SizingResult {
         // Subcritical flow equation
         const r = P2 / P1;
         const F2 = calculateF2(k, r);
-        console.log('r', r);
-        console.log('F2', F2);
         A_in2 = (W / (735 * F2 * Kd * Kb * Kc)) * Math.sqrt((T * Z) / (M * P1 * (P1 - P2)));
         messages.push('Subcritical flow conditions');
         messages.push(`Pressure ratio P2/P1 = ${(r * 100).toFixed(1)}%`);
@@ -335,9 +315,6 @@ export function calculateLiquidArea(inputs: SizingInputs): SizingResult {
     const backpressure = bargToPsig(inputs.backpressure);
     const valveType = inputs.valveType ?? 'conventional';
 
-    console.log('backpressure', backpressure);
-    console.log('setPressure', setPressure);
-    console.log('valveType', valveType);
 
     const Kw = calculateKw(backpressure, setPressure, valveType);
 
@@ -348,20 +325,10 @@ export function calculateLiquidArea(inputs: SizingInputs): SizingResult {
     const Kc = DEFAULT_KC;
     let Kv = 1.0; // Initial viscosity correction
 
-    console.log('Q', Q);
-    console.log('Kd', Kd);
-    console.log('Kw', Kw);
-    console.log('Kc', Kc);
-    console.log('Kv', Kv);
-    console.log('G', G);
-    console.log('P1', P1);
-    console.log('P2', P2);
-    console.log('deltaP', deltaP);
 
     // First pass - calculate preliminary area with Kv = 1.0
     let A_in2 = (Q / (38 * Kd * Kw * Kc * Kv)) * Math.sqrt(G / deltaP);
 
-    console.log('A_in2', A_in2);
 
     // Calculate viscosity correction if viscosity is provided
     const viscosity = inputs.viscosity ?? inputs.liquidViscosity;
@@ -382,9 +349,6 @@ export function calculateLiquidArea(inputs: SizingInputs): SizingResult {
         }
     }
 
-    console.log('Viscosity', viscosity);
-    console.log('Kv', Kv);
-    console.log('A_in2', A_in2);
 
     messages.push('Liquid service sizing per API-520');
 
@@ -448,14 +412,6 @@ export function calculateSteamArea(inputs: SizingInputs, edition: APIEdition = '
         }
     }
 
-    console.log('W', W);
-    console.log('Kd', Kd);
-    console.log('P1_psia', P1_psia);
-    console.log('T1_K', T1_K);
-    console.log('Kb', Kb);
-    console.log('Kc', Kc);
-    console.log('Kn', Kn);
-    console.log('Ksh', Ksh);
 
     const A_in2 = W / (51.5 * Kd * P1_psia * Kb * Kc * Kn * Ksh);
 
@@ -510,6 +466,13 @@ export function calculateSizing(inputs: SizingInputs, method: SizingMethod): Siz
 
     /**
      * Calculate required orifice area for Two-Phase service using Omega Method (API-520 Annex C)
+     *
+     * ⚠️ FIXME (UNVERIFIED — SAFETY-CRITICAL): The mass-flux (G) derivation below was not
+     * validated against API-520 Annex C. The inline comments document an exploratory, partly
+     * guessed formula and the constants (esp. the `term1`/`term2` energy integral and the gc
+     * factor) have NOT been confirmed. Do not rely on these results for relief-valve sizing
+     * until an engineer verifies the equations against API-520 Annex C and adds test fixtures.
+     * Consider gating two-phase Omega behind an explicit "experimental" flag until then.
      */
     function calculateTwoPhaseOmega(inputs: SizingInputs): SizingResult {
         const messages: string[] = [];
