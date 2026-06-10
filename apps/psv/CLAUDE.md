@@ -128,6 +128,6 @@ Accepts vertical/horizontal vessel, torispherical/F&D heads, liquid level. Links
 - `basePath` is `/psv`
 - Large MUI-based app (62 component dirs) — older than other calculation apps
 - API calls proxy to `services/api` (port 8000)
-- Shared types from `@eng-suite/types` and `@eng-suite/physics-engine`
+- Shared types from `@eng-suite/types` and calculation utilities from `@eng-suite/physics`
 - Revision system: every save creates a new revision record with change reason
 - Conflict detection: tracks if multiple users edit same PSV simultaneously
