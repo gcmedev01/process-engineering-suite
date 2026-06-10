@@ -10,13 +10,13 @@ import { describe, test, expect } from 'vitest'
 
 // ── Load fixtures ──────────────────────────────────────────────────────────────
 const ST_CASES: any[] = JSON.parse(readFileSync(
-  '/Users/maetee/.openclaw/agents/charlie/workspace/test-data/heat-transfer/storage-tank-cases.json', 'utf8'
+  new URL('./fixtures/storage-tank-cases.json', import.meta.url), 'utf8'
 ))
 const PC_CASES: any[] = JSON.parse(readFileSync(
-  '/Users/maetee/.openclaw/agents/charlie/workspace/test-data/heat-transfer/pipe-cases.json', 'utf8'
+  new URL('./fixtures/pipe-cases.json', import.meta.url), 'utf8'
 ))
 const HT_CASES: any[] = JSON.parse(readFileSync(
-  '/Users/maetee/.openclaw/agents/charlie/workspace/test-data/heat-transfer/horizontal-tank-cases.json', 'utf8'
+  new URL('./fixtures/horizontal-tank-cases.json', import.meta.url), 'utf8'
 ))
 
 // ── Tolerance assertion helper ─────────────────────────────────────────────────

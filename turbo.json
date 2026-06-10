@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
-      "env": ["VERCEL"]
+      "env": ["VERCEL", "DEPLOY_TARGET", "DEPLOYMENT_ENV"]
     },
     "lint": {
       "dependsOn": ["^lint"]
