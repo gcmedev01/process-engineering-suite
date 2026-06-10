@@ -37,8 +37,7 @@ All packages live under `packages/` and are registered as Bun workspaces.
 | `ui/`                  | `@repo/ui`                      | Shared UI primitives                                 |
 | `eslint-config/`       | `@repo/eslint-config`           | Shared ESLint config                                 |
 | `tsconfig/`            | `@repo/tsconfig`                | Shared tsconfig presets                              |
-| `vessels-calc/`        | `@eng-suite/vessels-calc`       | Vessel calculation shared logic                      |
-| `hydraulics/`          | —                               | ⚠️ **EMPTY — do not import from this package**       |
+| `typescript-config/`   | `@repo/typescript-config`       | Shared TypeScript config presets                     |
 
 ---
 
@@ -47,9 +46,10 @@ All packages live under `packages/` and are registered as Bun workspaces.
 These are pre-existing problems documented in `HANDOFF.md`. Do not work around them in ways
 that deepen the debt. Do not create new instances of the same anti-patterns.
 
-### 1. `packages/hydraulics/` is an empty ghost package
-The directory exists in the workspace but contains **zero files**. Do not attempt to import
-from it. The real hydraulic engine is at `services/calc-engine/hydraulics/`.
+### 1. There is no `packages/hydraulics/`
+Despite older references, no `hydraulics` package exists under `packages/` — do not try to
+import one. The real hydraulic engine lives at `services/calc-engine/hydraulics/` (~76 Python
+modules); use that.
 
 ### 2. Calc engine is not pip-installable
 `services/calc-engine/hydraulics/` is a full, well-tested engine (~40 modules, 30+ test files)
