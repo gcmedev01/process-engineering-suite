@@ -177,7 +177,7 @@ pytest -k "pattern"       # Run tests matching pattern
 ## Repository Structure
 
 - `apps/`: Frontend applications (web, docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, calculation-template)
-- `packages/`: Shared packages (api-client, api-std, engineering-units, eslint-config, physics-engine, tsconfig, types, typescript-config, ui, ui-kit, unit-converter, hydraulics, vessels-calc)
+- `packages/`: Shared packages (api-client, api-std, engineering-units, eslint-config, physics-engine, types, typescript-config, ui, ui-kit, unit-converter). Note: `unit-converter` is a standalone Python package (currently unused); the rest are JS/TS workspaces.
 - `infra/`: Docker and infrastructure configs
 - `services/`: Backend services (api, calc-engine)
 
@@ -333,19 +333,16 @@ process-engineering-suite/
 │        └─ integrations/ # Cross-domain workflows
 │
 ├─ packages/             # Shared libraries
-│  ├─ api-client/        # API client SDKs
-│  ├─ api-std/           # API standards and shared contracts
+│  ├─ api-client/        # API client SDKs (@eng-suite/api-client)
+│  ├─ api-std/           # API standards and shared contracts (@eng-suite/api-std)
 │  ├─ engineering-units/ # ★ Shared UoM constants + store factory (@eng-suite/engineering-units)
-│  ├─ eslint-config/     # ESLint shared configuration
-│  ├─ hydraulics/        # Hydraulic calculation utilities
+│  ├─ eslint-config/     # ESLint shared configuration (@repo/eslint-config)
 │  ├─ physics-engine/    # Shared physics helpers + convertUnit (@eng-suite/physics)
-│  ├─ tsconfig/          # Shared tsconfig presets
 │  ├─ types/             # Shared TypeScript types (@eng-suite/types)
-│  ├─ typescript-config/ # TypeScript tooling defaults
+│  ├─ typescript-config/ # Shared TS config presets — app.json + base/nextjs/react-library (@repo/typescript-config)
 │  ├─ ui/                # Shared UI primitives (@repo/ui)
 │  ├─ ui-kit/            # Shared MUI components (@eng-suite/ui-kit)
-│  ├─ unit-converter/    # Unit conversion utilities
-│  └─ vessels-calc/      # Vessel calculation shared logic
+│  └─ unit-converter/    # Python unit converter (process-eng-unit-converter) — currently unused
 │
 ├─ docs/                 # Architecture documentation
 ├─ infra/                # Docker and deployment

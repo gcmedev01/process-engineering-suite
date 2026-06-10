@@ -30,7 +30,7 @@
 
 - **`apps/`**: Frontend applications — web (dashboard), docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, calculation-template
 - **`services/`**: Backend services — api (FastAPI), calc-engine (Python)
-- **`packages/`**: Shared packages — api-client, api-std, engineering-units, physics-engine, types, ui, ui-kit, unit-converter, hydraulics, vessels-calc
+- **`packages/`**: Shared packages — api-client, api-std, engineering-units, eslint-config, physics-engine, types, typescript-config, ui, ui-kit, and unit-converter (a standalone Python package, currently unused)
 - **`infra/`**: Docker and deployment config
 
 ## Coding Standards

@@ -100,10 +100,12 @@ services/       # Backend services (Python)
 packages/       # Shared libraries
 ├── api-client/ # Generated API client
 ├── api-std/    # Standard API definitions
-├── physics-engine/ # Calculation logic
+├── physics-engine/ # Calculation logic (frontend unit conversion lives here)
+├── engineering-units/ # Shared UoM constants + store factory
 ├── ui-kit/     # Shared UI components
 ├── types/      # Shared TypeScript types
-├── unit-converter/ # Unit conversion utility
+├── typescript-config/ # Shared TS config presets
+├── unit-converter/ # Standalone Python unit converter (currently unused)
 └── ...
 
 infra/          # Docker & deployment config

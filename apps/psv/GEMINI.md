@@ -110,7 +110,7 @@ Converted to user-friendly units for display:
 1. Integration with Network-editor tool for hydraulic network visualizatio
 
 ### Configuration Notes
-- `tsconfig.json` extends `../../packages/tsconfig/base.json`
+- `tsconfig.json` extends `../../packages/typescript-config/app.json`
 - `next.config.ts` has `basePath: "/psv"` and `transpilePackages` for shared packages
 - Path alias `@eng-suite/physics` maps to `../../packages/physics-engine/src/index.ts`
 - Path alias `@eng-suite/api` maps to `../../packages/api-std/src/index.ts`

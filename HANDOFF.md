@@ -172,7 +172,7 @@ This is effectively a **separate application** embedded inside the API service.
 
 4. **Python outside workspace** — Turborepo manages JS/TS only. Python parts (`services/api/`, `services/calc-engine/`) are not part of the build pipeline. The `pyproject.toml` UV workspace is incomplete.
 
-5. **Duplicate unit converters** — `packages/unit-converter/` and `services/api/app/services/process_design_agents/utils/unit_converter/`. Two converters, different implementations.
+5. **Duplicate unit converters** — `packages/unit-converter/` and `services/api/app/services/process_design_agents/utils/unit_converter/`. Both are Python; the embedded copy is the one in use, while `packages/unit-converter/` currently has zero consumers (kept for future backend use — see its `README.md`). Neither is a frontend converter; TS apps use `@eng-suite/physics` / `@eng-suite/engineering-units`.
 
 6. **146 duplicate files** — likely from repeated test config styles or generated boilerplate across the 10 apps.
 
