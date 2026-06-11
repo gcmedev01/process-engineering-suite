@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Box } from "@mui/material";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Providers } from "./providers";
 import { TopToolbar } from "@/components/TopToolbar";
@@ -26,7 +27,18 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
-          <TopToolbar />
+          <Box
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 1000,
+              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+              backdropFilter: "blur(4px)",
+              "@media print": { display: "none" },
+            }}
+          >
+            <TopToolbar />
+          </Box>
           <TooltipProvider>{children}</TooltipProvider>
         </Providers>
       </body>
