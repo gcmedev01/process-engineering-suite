@@ -1,7 +1,6 @@
 {
   "extends": "../../packages/typescript-config/app.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
