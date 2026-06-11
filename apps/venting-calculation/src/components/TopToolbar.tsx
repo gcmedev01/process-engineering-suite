@@ -11,12 +11,14 @@ export function TopToolbar() {
   const isDark = theme.palette.mode === "dark";
 
   return (
-    <TopFloatingToolbar
-      title="Tank Venting"
-      subtitle="API 2000 Venting Calculator"
-      icon={<AirIcon fontSize="medium" />}
-      onToggleTheme={toggleColorMode}
-      isDarkMode={isDark}
-    />
+    <div className="print:hidden">
+      <TopFloatingToolbar
+        title="Tank Venting"
+        subtitle="API 2000 Venting Calculator"
+        icon={<AirIcon fontSize="medium" />}
+        onToggleTheme={toggleColorMode}
+        isDarkMode={isDark}
+      />
+    </div>
   );
 }

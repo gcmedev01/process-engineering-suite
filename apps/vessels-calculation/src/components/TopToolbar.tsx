@@ -12,7 +12,7 @@ export function TopToolbar() {
   const isDark = mode === "dark" || theme.palette.mode === "dark"
 
   return (
-    <div className="print:hidden">
+    <div className="print:hidden sticky top-0 z-[1100]">
       <TopFloatingToolbar
         title="Vessel Calculator"
         subtitle="Volume & Surface Area · Pressure Vessels & Tanks"

@@ -11,12 +11,14 @@ export function TopToolbar() {
   const isDark = theme.palette.mode === "dark";
 
   return (
-    <TopFloatingToolbar
-      title="Pump Calculator"
-      subtitle="Head · NPSHa · Motor Sizing"
-      icon={<BoltIcon fontSize="medium" />}
-      onToggleTheme={toggleColorMode}
-      isDarkMode={isDark}
-    />
+    <div className="print:hidden">
+      <TopFloatingToolbar
+        title="Pump Calculator"
+        subtitle="Head · NPSHa · Motor Sizing"
+        icon={<BoltIcon fontSize="medium" />}
+        onToggleTheme={toggleColorMode}
+        isDarkMode={isDark}
+      />
+    </div>
   );
 }
