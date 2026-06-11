@@ -47,7 +47,7 @@ export function DashboardPage() {
   const selectedTabBg = theme.palette.background.default;
   const { canManageHierarchy, canManageCustomer, canManageUsers } =
     useAuthStore();
-  const { setCurrentPage, dashboardTab, setDashboardTab } = usePsvStore();
+  const { setCurrentPage, dashboardTab, setDashboardTab, fetchSummaryCounts } = usePsvStore();
   // Determine visible tabs based on role
   const tabs = useMemo(
     () => [
@@ -75,6 +75,10 @@ export function DashboardPage() {
       setActiveTabLabel(firstVisibleTab);
     }
   }, [visibleTabs, activeTabLabel, firstVisibleTab]);
+
+  useEffect(() => {
+    fetchSummaryCounts();
+  }, [fetchSummaryCounts]);
 
   useEffect(() => {
     if (!dashboardTab) return;
@@ -123,7 +127,7 @@ export function DashboardPage() {
             Manage hierarchy and users
           </Typography>
         </Box>
-        <IconButton onClick={handleClose}>
+        <IconButton onClick={handleClose} aria-label="close">
           <Close />
         </IconButton>
       </Paper>

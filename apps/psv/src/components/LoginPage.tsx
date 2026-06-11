@@ -99,7 +99,7 @@ export function LoginPage({ onSuccess, onContinueAsGuest }: LoginPageProps) {
                 )}
 
                 {/* Login Form */}
-                <form onSubmit={handleSubmit}>
+                <form aria-label="Sign in" onSubmit={handleSubmit}>
                     <TextField
                         fullWidth
                         label="Username"

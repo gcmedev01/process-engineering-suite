@@ -1,5 +1,11 @@
 import "@testing-library/jest-dom/vitest";
-import { vi } from "vitest";
+import { vi, afterEach } from "vitest";
+import { cleanup } from "@testing-library/react";
+
+// Auto-cleanup DOM after each test (required since vitest globals are not enabled)
+afterEach(() => {
+  cleanup();
+});
 
 // Mock external APIs
 vi.mock("@eng-suite/api/psv", () => ({

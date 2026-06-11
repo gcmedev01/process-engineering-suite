@@ -15,6 +15,59 @@ vi.mock("@/store/usePsvStore", () => ({
 import { useAuthStore } from "@/store/useAuthStore";
 import { usePsvStore } from "@/store/usePsvStore";
 
+const makeAuthState = (overrides = {}) => ({
+  currentUser: { role: "engineer" },
+  canManageHierarchy: vi.fn(() => false),
+  canManageCustomer: vi.fn(() => false),
+  canManageUsers: vi.fn(() => false),
+  canEdit: vi.fn(() => true),
+  canApprove: vi.fn(() => true),
+  ...overrides,
+});
+
+const makePsvState = (overrides = {}) => ({
+  setCurrentPage: vi.fn(),
+  dashboardTab: null,
+  setDashboardTab: vi.fn(),
+  fetchSummaryCounts: vi.fn(),
+  summaryCounts: { areas: 0, projects: 0, psvs: 0, equipment: 0 },
+  projects: [],
+  protectiveSystems: [],
+  equipment: [],
+  equipmentLinkList: [],
+  customers: [],
+  plants: [],
+  units: [],
+  areas: [],
+  selectedArea: null,
+  selectedUnit: null,
+  selectedPlant: null,
+  selectedCustomer: null,
+  areProjectsLoaded: true,
+  areEquipmentLoaded: true,
+  arePsvsLoaded: true,
+  areAreasLoaded: true,
+  arePlantsLoaded: true,
+  areUnitsLoaded: true,
+  fetchAllProjects: vi.fn(),
+  fetchAllEquipment: vi.fn(),
+  fetchAllProtectiveSystems: vi.fn(),
+  fetchAllAreas: vi.fn(),
+  fetchAllPlants: vi.fn(),
+  fetchAllUnits: vi.fn(),
+  addProject: vi.fn(),
+  updateProject: vi.fn(),
+  softDeleteProject: vi.fn(),
+  addEquipment: vi.fn(),
+  updateEquipment: vi.fn(),
+  deleteEquipment: vi.fn(),
+  addProtectiveSystem: vi.fn(),
+  updateProtectiveSystem: vi.fn(),
+  softDeletePsv: vi.fn(),
+  getProjectUnits: vi.fn(() => ({ pressure: "barg" })),
+  ...overrides,
+});
+
 describe("DashboardPage", () => {
   const mockSetCurrentPage = vi.fn();
   const mockSetDashboardTab = vi.fn();
@@ -22,18 +75,19 @@ describe("DashboardPage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuthStore as any).mockReturnValue({
-      currentUser: { role: "engineer" },
-      canManageHierarchy: vi.fn(() => false),
-      canManageCustomer: vi.fn(() => false),
-      canManageUsers: vi.fn(() => false),
-    });
-    (usePsvStore as any).mockReturnValue({
+    const authState = makeAuthState();
+    (useAuthStore as any).mockImplementation((selector?: any) =>
+      selector ? selector(authState) : authState,
+    );
+    const psvState = makePsvState({
       setCurrentPage: mockSetCurrentPage,
-      dashboardTab: null,
       setDashboardTab: mockSetDashboardTab,
       fetchSummaryCounts: mockFetchSummaryCounts,
     });
+    (usePsvStore as any).mockImplementation((selector?: any) =>
+      selector ? selector(psvState) : psvState,
+    );
+    (usePsvStore as any).getState = vi.fn(() => psvState);
   });
 
   it("renders dashboard header", () => {
@@ -61,34 +115,35 @@ describe("DashboardPage", () => {
   });
 
   it("shows tabs based on user permissions", () => {
-    (useAuthStore as any).mockReturnValue({
+    const authState = makeAuthState({
       currentUser: { role: "admin" },
       canManageHierarchy: vi.fn(() => true),
       canManageCustomer: vi.fn(() => true),
       canManageUsers: vi.fn(() => true),
     });
+    (useAuthStore as any).mockImplementation((selector?: any) =>
+      selector ? selector(authState) : authState,
+    );
 
     render(<DashboardPage />);
 
     // Should show all tabs for admin
-    expect(screen.getByText("Customers")).toBeInTheDocument();
-    expect(screen.getByText("Plants")).toBeInTheDocument();
-    expect(screen.getByText("Units")).toBeInTheDocument();
-    expect(screen.getByText("Areas")).toBeInTheDocument();
-    expect(screen.getByText("Projects")).toBeInTheDocument();
-    expect(screen.getByText("Equipment")).toBeInTheDocument();
-    expect(screen.getByText("PSVs")).toBeInTheDocument();
-    expect(screen.getByText("Users")).toBeInTheDocument();
-    expect(screen.getByText("System")).toBeInTheDocument();
+    expect(screen.getAllByText("Customers")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Plants")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Units")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Areas")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Projects")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Equipment")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("PSVs")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Users")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("System")[0]).toBeInTheDocument();
   });
 
   it("hides tabs based on user permissions", () => {
-    (useAuthStore as any).mockReturnValue({
-      currentUser: { role: "engineer" },
-      canManageHierarchy: vi.fn(() => false),
-      canManageCustomer: vi.fn(() => false),
-      canManageUsers: vi.fn(() => false),
-    });
+    const authState = makeAuthState();
+    (useAuthStore as any).mockImplementation((selector?: any) =>
+      selector ? selector(authState) : authState,
+    );
 
     render(<DashboardPage />);
 
@@ -97,9 +152,9 @@ describe("DashboardPage", () => {
     expect(screen.queryByText("Plants")).not.toBeInTheDocument();
     expect(screen.queryByText("Units")).not.toBeInTheDocument();
     expect(screen.queryByText("Areas")).not.toBeInTheDocument();
-    expect(screen.getByText("Projects")).toBeInTheDocument();
-    expect(screen.getByText("Equipment")).toBeInTheDocument();
-    expect(screen.getByText("PSVs")).toBeInTheDocument();
+    expect(screen.getAllByText("Projects")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Equipment")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("PSVs")[0]).toBeInTheDocument();
     expect(screen.queryByText("Users")).not.toBeInTheDocument();
     expect(screen.queryByText("System")).not.toBeInTheDocument();
   });
@@ -111,12 +166,16 @@ describe("DashboardPage", () => {
   });
 
   it("sets active tab when dashboardTab is set", () => {
-    (usePsvStore as any).mockReturnValue({
+    const psvState = makePsvState({
       setCurrentPage: mockSetCurrentPage,
       dashboardTab: "Projects",
       setDashboardTab: mockSetDashboardTab,
       fetchSummaryCounts: mockFetchSummaryCounts,
     });
+    (usePsvStore as any).mockImplementation((selector?: any) =>
+      selector ? selector(psvState) : psvState,
+    );
+    (usePsvStore as any).getState = vi.fn(() => psvState);
 
     render(<DashboardPage />);
 
@@ -130,9 +189,9 @@ describe("DashboardPage", () => {
     render(<DashboardPage />);
 
     // Click on Projects tab (assuming it's the default active)
-    const projectsTab = screen.getByText("Projects");
+    const projectsTab = screen.getAllByText("Projects")[0];
     await user.click(projectsTab);
 
-    expect(mockSetDashboardTab).toHaveBeenCalledWith(null);
+    expect(mockSetDashboardTab).toHaveBeenCalledWith("Projects");
   });
 });

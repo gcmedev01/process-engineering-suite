@@ -1,12 +1,14 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { API521Calculator } from '../API521Calculator';
 import type { Equipment } from '@/data/types';
 
+vi.mock('@/lib/vesselCalculations', () => ({
+  calculateFireExposureArea: vi.fn().mockResolvedValue(5.0),
+}));
+
 describe('API521Calculator', () => {
     it('runs the fire load calculation and emits results', async () => {
-        const user = userEvent.setup();
         const onChange = vi.fn();
 
         const equipment: Equipment[] = [
@@ -54,11 +56,11 @@ describe('API521Calculator', () => {
             />
         );
 
-        await user.click(
+        fireEvent.click(
             screen.getByRole('button', { name: /calculate fire relief load/i })
         );
 
-        expect(onChange).toHaveBeenCalled();
+        await waitFor(() => expect(onChange).toHaveBeenCalled(), { timeout: 5000 });
         const results = onChange.mock.calls.at(-1)?.[1];
         expect(results).toMatchObject({
             totalWettedArea: expect.any(Number),

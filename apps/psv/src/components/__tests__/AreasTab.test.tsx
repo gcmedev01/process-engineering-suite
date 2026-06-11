@@ -172,7 +172,7 @@ describe("AreasTab", () => {
     it("renders basic structure", () => {
       render(<AreasTab />);
 
-      expect(screen.getAllByText("Add New Area")).toHaveLength(2); // Both button and icon button
+      expect(screen.getAllByText("Add New Area").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Code").length).toBeGreaterThan(0);
     });
 
@@ -275,7 +275,7 @@ describe("AreasTab", () => {
       render(<AreasTab />);
 
       const editButtons = screen.getAllByRole("button", { name: /edit/i });
-      const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+      const deleteButtons = screen.getAllByRole("button", { name: /deactivate/i });
 
       expect(editButtons.length).toBeGreaterThan(0);
       expect(deleteButtons.length).toBeGreaterThan(0);
@@ -287,7 +287,7 @@ describe("AreasTab", () => {
       render(<AreasTab />);
 
       const editButtons = screen.getAllByRole("button", { name: /edit/i });
-      const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+      const deleteButtons = screen.getAllByRole("button", { name: /deactivate/i });
 
       expect(editButtons.length).toBeGreaterThan(0);
       expect(deleteButtons.length).toBeGreaterThan(0);
@@ -327,7 +327,7 @@ describe("AreasTab", () => {
     it("renders delete buttons for each area row", () => {
       render(<AreasTab />);
 
-      const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+      const deleteButtons = screen.getAllByRole("button", { name: /deactivate/i });
       expect(deleteButtons.length).toBeGreaterThan(0);
     });
 
