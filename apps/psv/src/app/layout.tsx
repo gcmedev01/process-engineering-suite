@@ -27,21 +27,17 @@ export default function RootLayout({
             <body className={inter.className} suppressHydrationWarning>
                 <Providers>
                     <Box
-                        className="print-hide"
                         sx={{
-                            position: "fixed",
+                            position: "sticky",
                             top: 0,
-                            left: 0,
-                            right: 0,
                             zIndex: 1000,
                             boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
                             backdropFilter: "blur(4px)",
+                            "@media print": { display: "none" },
                         }}
                     >
                         <TopToolbar />
                     </Box>
-                    {/* Spacer to account for fixed toolbar height */}
-                    <Box className="print-hide" sx={{ height: 72 }} />
                     {children}
                     {/* Global conflict detection dialogs */}
                     <GlobalConflictHandler />

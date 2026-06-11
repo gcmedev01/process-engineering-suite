@@ -42,9 +42,10 @@ Every calculator app uses a **three-tier layout**:
 └──────────────────────────────┴──────────────────────────────────────┘
 ```
 
-**layout.tsx** — TopToolbar lives here, renders for all routes:
+**layout.tsx** — TopToolbar lives here, wrapped in the sticky MUI Box:
 ```tsx
 // app/layout.tsx
+import { Box } from "@mui/material"
 import { Providers } from "./providers"
 import { TopToolbar } from "@/components/TopToolbar"
 
@@ -53,7 +54,18 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>
-          <TopToolbar />
+          <Box
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 1000,
+              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+              backdropFilter: "blur(4px)",
+              "@media print": { display: "none" },
+            }}
+          >
+            <TopToolbar />
+          </Box>
           {children}
         </Providers>
       </body>
@@ -87,7 +99,7 @@ export default function RootLayout({ children }) {
 ```
 
 **Rules:**
-- `TopToolbar` always in `layout.tsx`, not `page.tsx`
+- `TopToolbar` always in `layout.tsx`, not `page.tsx`; wrapped in the sticky MUI `Box` (see §3.0)
 - Secondary action bar contains a left descriptor label and `<ActionMenu>` on the right
 - Single column on mobile, two columns at `xl` (1280 px)
 - `items-start` prevents stretching of shorter panel
@@ -100,33 +112,32 @@ export default function RootLayout({ children }) {
 
 ### 3.0 `TopToolbar` — Sticky branding + theme toggle
 
-Lives in `src/components/TopToolbar.tsx`. Mounted in `layout.tsx` so it persists across all routes.
+`TopToolbar.tsx` renders `<TopFloatingToolbar />` directly — **no wrapper div**. The sticky Box lives in `layout.tsx` (see §2 above). This matches the `apps/web` pattern exactly.
 
-**Visual spec** (matches `apps/venting-calculation` `TopFloatingToolbar`):
-- Container: `sticky top-0 z-[1100]`, `bg-card backdrop-blur-[10px]`, `border-b`, `boxShadow: "0 2px 10px rgba(0,0,0,0.1)"`, `px-6 py-4`
-- Left — icon box: 40×40 (`size-10`), `rounded-[12px]`, gradient `linear-gradient(#00C4F9, #0076F0)`, inset highlight shadow, white icon (`size-5`)
-- Left — title: `text-[1.25rem] font-bold leading-[1.2] tracking-tight`
-- Left — subtitle: `block text-xs leading-[1] text-muted-foreground`
-- Right — theme button: 40×40 (`size-10`), `rounded-full`, glassmorphism (dark: `rgba(255,255,255,0.1)` bg + `rgba(255,255,255,0.2)` border; light: `rgba(255,255,255,0.9)` bg + `rgba(0,0,0,0.1)` border), `backdrop-blur(10px)`, `boxShadow: "0 4px 12px rgba(0,0,0,0.1)"`, `hover:scale-105 transition-all duration-200`
+`TopFloatingToolbar` (from `@eng-suite/ui-kit`) provides the visual spec built-in:
+- Left — gradient icon box (40×40, `border-radius: 12px`, `linear-gradient(#00C4F9, #0076F0)`)
+- Left — title (`h6`, `fontWeight: 700`) + subtitle (`caption`, `text.secondary`)
+- Right — glassmorphism theme toggle button
+- Bottom border + `boxShadow` + `backdropFilter: blur(10px)`
 
 ```tsx
 // src/components/TopToolbar.tsx
 "use client"
 import { useTheme } from "@mui/material"
 import { TopFloatingToolbar } from "@eng-suite/ui-kit"
-import { Calculator } from "lucide-react"  // replace icon per app
-import { useColorMode } from "@/app/providers"
+import CalculateIcon from "@mui/icons-material/Calculate"  // TODO: replace per app
+import { useColorMode } from "@/contexts/ColorModeContext"
 
 export function TopToolbar() {
   const theme = useTheme()
-  const { mode, toggleColorMode } = useColorMode()
-  const isDark = mode === "dark" || theme.palette.mode === "dark"
-  
+  const { toggleColorMode } = useColorMode()
+  const isDark = theme.palette.mode === "dark"
+
   return (
     <TopFloatingToolbar
-      title="App Title" // TODO: replace per app
-      subtitle="Subtitle" // TODO: replace per app
-      icon={<Calculator className="size-5" />} // TODO: replace per app
+      title="App Title"    // TODO: replace per app
+      subtitle="Subtitle"  // TODO: replace per app
+      icon={<CalculateIcon fontSize="medium" />}  // TODO: replace per app
       onToggleTheme={toggleColorMode}
       isDarkMode={isDark}
     />
@@ -134,7 +145,7 @@ export function TopToolbar() {
 }
 ```
 
-**Per-app TODO:** replace `Calculator` icon, title string, subtitle string.
+**Per-app TODO:** replace icon, title, subtitle. Do **not** add a wrapper div — sticky/print/shadow are owned by the `Box` in `layout.tsx`.
 
 ---
 
