@@ -17,8 +17,9 @@ describe("LoginPage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuthStore as any).mockReturnValue({
-      login: mockLogin,
+    (useAuthStore as any).mockImplementation((selector?: any) => {
+      const state = { login: mockLogin };
+      return selector ? selector(state) : state;
     });
   });
 

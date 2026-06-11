@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useUnitConversion } from "../useUnitConversion";
 import { UnitPreferences } from "@/data/types";
+import { convertUnit } from "@eng-suite/physics";
 
 describe("useUnitConversion", () => {
   const mockPreferences: UnitPreferences = {
@@ -17,7 +18,6 @@ describe("useUnitConversion", () => {
 
   beforeEach(() => {
     // Reset the global mock from setup.ts
-    const { convertUnit } = require("@eng-suite/physics");
     vi.mocked(convertUnit).mockImplementation((value: number) => value); // Default passthrough
   });
 
@@ -28,7 +28,6 @@ describe("useUnitConversion", () => {
   });
 
   it("should convert to display units", () => {
-    const { convertUnit } = require("@eng-suite/physics");
     vi.mocked(convertUnit).mockReturnValue(14.5038);
 
     const { result } = renderHook(() => useUnitConversion(mockPreferences));
@@ -40,7 +39,6 @@ describe("useUnitConversion", () => {
   });
 
   it("should handle decimal places in toDisplay", () => {
-    const { convertUnit } = require("@eng-suite/physics");
     vi.mocked(convertUnit).mockReturnValue(14.503773773);
 
     const { result } = renderHook(() => useUnitConversion(mockPreferences));
