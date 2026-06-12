@@ -314,8 +314,18 @@ Stores saved design agent workflow sessions from `services/design-agents` (Pytho
 ## Schema Maintenance Notes
 
 ### Migration chain
-- Working head: **`202606120003`** (the main engineering-objects + calc-register chain).
-- ⚠️ **Pre-existing orphan branches**: `add_project_notes` and `add_case_consideration` both diverge from `202412120001` and were never included in the `202606110001` merge. They are present in the migration graph but have not been applied in production. They are not part of the current development chain — avoid running `alembic upgrade head` (which upgrades ALL heads) until these orphan branches are triaged.
+- **Single head, single root.** The DAG has exactly one root (`202412120001`)
+  and one head (`202606120003`), so `alembic upgrade head` is unambiguous and
+  safe. (Verify any time with `alembic heads` — it should print one revision.)
+- The chain forks and re-merges twice, but both forks are reconciled by merge
+  nodes, so there are no dangling heads:
+  - `add_project_notes` and `add_case_consideration` both branch off
+    `202412120001` and are **reconciled by the 3-way merge node
+    `add_rev_and_equip_details` (`202512150001`)** — they are not orphan heads.
+  - The two long-lived branches that forked around `202412150001` re-merge at
+    `202606110001` (see below).
+  - All branch migrations use `IF [NOT] EXISTS` guards, so applying any
+    previously-unapplied branch migration is idempotent-safe.
 - `202606110001` — merge node reconciling two branches that forked at
   `202412150001`. No schema ops; each branch's migrations applied individually
   with `IF [NOT] EXISTS` guards.
