@@ -19,19 +19,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { buildCalculationFileEnvelope, downloadCalculationFile, readCalculationFile } from "@/lib/calculationFile"
-import type { CalculationInput, CalculationMetadata, RevisionRecord, CalculationResult, DerivedGeometry } from "@/types"
+import type { CalculationInput, CalculationMetadata, RevisionRecord, CalculationResult } from "@/types"
 
 interface ActionMenuProps {
-  onTankLinked: (equipmentId: string | null, tankTag?: string | null) => void
-  linkedTag: string | null
-  linkedEquipmentId: string | null
-  clearToken: number
   onClear: () => void
   calculationMetadata: CalculationMetadata
   revisionHistory: RevisionRecord[]
   onCalculationLoaded: (metadata: CalculationMetadata, revisionHistory: RevisionRecord[]) => void
   calculationResult: CalculationResult | null
-  derivedGeometry: DerivedGeometry | null
 }
 
 function latestRevisionValue(revisions: RevisionRecord[]): string | null {
@@ -51,10 +46,10 @@ function latestRevisionValue(revisions: RevisionRecord[]): string | null {
 }
 
 export function ActionMenu({
-  onCalculationLoaded,
   onClear,
   calculationMetadata,
   revisionHistory,
+  onCalculationLoaded,
   calculationResult,
 }: ActionMenuProps) {
   const { getValues, reset } = useFormContext<CalculationInput>()
@@ -154,32 +149,30 @@ export function ActionMenu({
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-52">
-          {/* File group */}
-          <DropdownMenuItem onSelect={handleFilePick}>
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Load from File...
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleSaveToFile} className="gap-2">
+            <Save className="h-4 w-4" />
+            Save to File…
           </DropdownMenuItem>
 
-          <DropdownMenuItem onSelect={handleSaveToFile}>
-            <Save className="h-4 w-4 mr-2" />
-            Save to File...
+          <DropdownMenuItem onClick={handleFilePick} className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Load from File…
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={handleExportPdf} disabled={!calculationResult || pdfLoading} className="gap-2">
+            {pdfLoading
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <FileDown className="h-4 w-4" />
+            }
+            {pdfLoading ? "Generating PDF…" : "Export PDF…"}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
-          {/* Utility group */}
-          <DropdownMenuItem onClick={handleExportPdf} disabled={!calculationResult || pdfLoading}>
-            {pdfLoading
-              ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              : <FileDown className="h-4 w-4 mr-2" />
-            }
-            {pdfLoading ? "Generating PDF..." : "Export PDF..."}
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onSelect={onClear}>
+          <DropdownMenuItem onClick={onClear} className="text-destructive focus:text-destructive">
             <RotateCcw className="h-4 w-4 mr-2" />
-            Clear
+            Clear all inputs
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

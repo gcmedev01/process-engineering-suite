@@ -5,11 +5,9 @@ import { useFormContext } from "react-hook-form"
 import {
   Menu,
   Link2,
-  FolderOpen,
-  Save,
+  FileDown,
   Upload,
-  Eraser,
-  Download,
+  RotateCcw,
   Loader2,
   Check,
 } from "lucide-react"
@@ -259,48 +257,41 @@ export function ActionMenu({
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-52">
-          {/* Equipment group */}
-          <DropdownMenuItem onSelect={() => setLinkOpen(true)}>
-            <Link2 className="h-4 w-4 mr-2" />
-            {linkedTag ? `Linked: ${linkedTag}` : "Link Tank..."}
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSaveOpen(true)}>
+            Save calculation…
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => setLoadOpen(true)}>
+            Load calculation…
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={handleExport} disabled={!canExport} className="gap-2">
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4" />
+            )}
+            {isExporting ? "Generating PDF…" : "Export PDF…"}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => setLinkOpen(true)} className="gap-2">
+            <Link2 className={`h-4 w-4 ${linkedEquipmentId ? "text-green-600" : ""}`} />
+            {linkedTag ? `Linked: ${linkedTag}` : "Link Tank…"}
           </DropdownMenuItem>
 
           {linkedEquipmentId && (
-            <DropdownMenuItem onSelect={handleUpdateEquipment} disabled={!canUpdate}>
-              <UpdateIcon className={`h-4 w-4 mr-2 ${isUpdating ? "animate-spin" : ""}`} />
+            <DropdownMenuItem onClick={() => { void handleUpdateEquipment() }} className="gap-2" disabled={!canUpdate}>
+              <UpdateIcon className={`h-4 w-4 ${isUpdating ? "animate-spin" : ""}`} />
               {updateLabel}
             </DropdownMenuItem>
           )}
 
           <DropdownMenuSeparator />
 
-          {/* File group */}
-          <DropdownMenuItem onSelect={() => setLoadOpen(true)}>
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Load...
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onSelect={() => setSaveOpen(true)}>
-            <Save className="h-4 w-4 mr-2" />
-            Save...
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          {/* Utility group */}
-          <DropdownMenuItem onSelect={onClear}>
-            <Eraser className="h-4 w-4 mr-2" />
-            Clear
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onSelect={handleExport} disabled={!canExport}>
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            {isExporting ? "Generating..." : "Export PDF"}
+          <DropdownMenuItem onClick={onClear} className="text-destructive focus:text-destructive">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Clear all inputs
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

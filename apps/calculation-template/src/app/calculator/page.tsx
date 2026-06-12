@@ -36,14 +36,12 @@ export default function CalculatorPage() {
 
   const [calculationMetadata, setCalculationMetadata] = useState<CalculationMetadata>(EMPTY_METADATA)
   const [revisionHistory, setRevisionHistory] = useState<RevisionRecord[]>([])
-  const [clearToken, setClearToken] = useState(0)
 
   const handleClear = () => {
     form.reset(createDefaultValues() as unknown as CalculationInput, { keepDefaultValues: false })
     form.clearErrors()
     setCalculationMetadata(EMPTY_METADATA)
     setRevisionHistory([])
-    setClearToken((value) => value + 1)
   }
 
   return (
@@ -57,10 +55,6 @@ export default function CalculatorPage() {
                 Descriptor Label · Detailed Context
               </p>
               <ActionMenu
-                onTankLinked={() => { }} // Remove or mock if not used generally
-                linkedTag={null}
-                linkedEquipmentId={null}
-                clearToken={clearToken}
                 onClear={handleClear}
                 calculationMetadata={calculationMetadata}
                 revisionHistory={revisionHistory}
@@ -69,7 +63,6 @@ export default function CalculatorPage() {
                   setRevisionHistory(loadedRevisionHistory)
                 }}
                 calculationResult={calculationResult}
-                derivedGeometry={derivedGeometry}
               />
             </div>
           </div>
