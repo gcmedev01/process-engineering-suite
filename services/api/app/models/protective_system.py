@@ -1,7 +1,7 @@
 """ProtectiveSystem (PSV) model."""
 from typing import Optional, List
 
-from sqlalchemy import Boolean, CheckConstraint, Column, Enum as SQLEnum, ForeignKey, Integer, Numeric, String, Table, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Column, Enum as SQLEnum, ForeignKey, Index, Integer, Numeric, String, Table, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 
@@ -21,7 +21,15 @@ class ProtectiveSystem(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixi
     
     __tablename__ = "protective_systems"
     __table_args__ = (
-        UniqueConstraint("area_id", "tag", name="uq_protective_systems_area_id_tag"),
+        # Partial unique index: a (area_id, tag) pair is unique only among live
+        # rows, so a tag freed by soft-deleting a PSV can be reused in the area.
+        Index(
+            "uq_protective_systems_area_id_tag",
+            "area_id",
+            "tag",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
         CheckConstraint(
             "(deleted_at IS NULL) = is_active",
             name="ck_protective_systems_deleted_at_matches_is_active",
@@ -59,6 +67,7 @@ class ProtectiveSystem(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixi
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
     status: Mapped[str] = mapped_column(
         SQLEnum("draft", "in_review", "checked", "approved", "issued", name="psv_status"),
@@ -80,8 +89,9 @@ class ProtectiveSystem(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixi
         UUID(as_uuid=False),
         ForeignKey("revision_history.id"),
         nullable=True,
+        index=True,
     )
-    
+
     # Pipeline networks stored as JSONB
     inlet_network: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     outlet_network: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)

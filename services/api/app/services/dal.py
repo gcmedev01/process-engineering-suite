@@ -45,8 +45,25 @@ class DataAccessLayer(ABC):
         self,
         include_inactive: bool = False,
         app: Optional[str] = None,
+        *,
+        project_id: Optional[str] = None,
+        discipline: Optional[str] = None,
+        status: Optional[str] = None,
+        calc_number: Optional[str] = None,
     ) -> List[dict]:
-        """Get saved calculations, optionally filtered by app."""
+        """Get saved calculations, optionally filtered by app and register fields."""
+        pass
+
+    @abstractmethod
+    async def get_next_calc_number(
+        self,
+        project_id: str,
+        discipline: Optional[str] = None,
+    ) -> Optional[dict]:
+        """Suggest the next register number for a project (+ optional discipline).
+
+        Returns None when the project doesn't exist.
+        """
         pass
 
     @abstractmethod
@@ -459,6 +476,35 @@ class DataAccessLayer(ABC):
     @abstractmethod
     async def delete_network_design(self, design_id: str) -> bool:
         """Hard-delete a network design."""
+        pass
+
+    # --- Instrument Links ---
+
+    @abstractmethod
+    async def list_instrument_links(
+        self,
+        *,
+        instrument_id: Optional[str] = None,
+        target_id: Optional[str] = None,
+        relationship_type: Optional[str] = None,
+        protective_system_id: Optional[str] = None,
+    ) -> List[dict]:
+        """List instrument links, optionally filtered."""
+        pass
+
+    @abstractmethod
+    async def create_instrument_link(self, data: dict) -> dict:
+        """Create an instrument link. Raises TypeError on wrong object_type, ValueError on missing target."""
+        pass
+
+    @abstractmethod
+    async def update_instrument_link(self, link_id: str, data: dict) -> Optional[dict]:
+        """Partial update of an instrument link. Returns None when not found."""
+        pass
+
+    @abstractmethod
+    async def delete_instrument_link(self, link_id: str) -> bool:
+        """Hard-delete an instrument link. Returns False when not found."""
         pass
 
     # --- Design Agent Sessions ---

@@ -30,6 +30,7 @@ from .calculation_version import CalculationVersion
 from .venting_calculation import VentingCalculation
 from .network_design import NetworkDesign
 from .design_agent_session import DesignAgentSession
+from .instrument_link import InstrumentLink
 
 __all__ = [
     # Base
@@ -73,4 +74,5 @@ __all__ = [
     "VentingCalculation",
     "NetworkDesign",
     "DesignAgentSession",
+    "InstrumentLink",
 ]

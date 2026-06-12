@@ -23,11 +23,13 @@ class ProjectNote(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
     updated_by: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=True,
+        index=True,
     )
 
     # Soft delete flag

@@ -1,12 +1,16 @@
 """Mock data service - fallback when database is unavailable."""
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
 
+from sqlalchemy.exc import IntegrityError
+
 from .dal import DataAccessLayer
+from .calculation_register import DISCIPLINE_CODES
 
 logger = logging.getLogger(__name__)
 
@@ -83,18 +87,106 @@ class MockService(DataAccessLayer):
 
     # --- Calculations ---
 
+    def _lift_register_fields(self, data: dict, area_id: Optional[str]) -> dict:
+        """Mirror calculation_register.lift_register_fields for the mock store."""
+        metadata = data.get("metadata") or {}
+        calc_number = (data.get("calcNumber") or "").strip() or None
+        if not calc_number:
+            calc_number = str(metadata.get("documentNumber") or "").strip()[:64] or None
+        discipline = (data.get("discipline") or "").strip().lower() or None
+        project_id = (data.get("projectId") or "").strip() or None
+        if not project_id and area_id:
+            code = str(metadata.get("projectNumber") or "").strip()
+            if code:
+                for project in self._data.get("projects", []):
+                    if project.get("areaId") == area_id and project.get("code") == code:
+                        project_id = project.get("id")
+                        break
+        return {"projectId": project_id, "calcNumber": calc_number, "discipline": discipline}
+
+    def _check_calc_number_unique(
+        self, project_id: Optional[str], calc_number: Optional[str], exclude_id: Optional[str] = None
+    ) -> None:
+        if not project_id or not calc_number:
+            return
+        for item in self._data.get("calculations", []):
+            if (
+                item.get("id") != exclude_id
+                and item.get("isActive", True)
+                and item.get("projectId") == project_id
+                and item.get("calcNumber") == calc_number
+            ):
+                raise IntegrityError(
+                    "duplicate calc_number", params=None, orig=Exception("mock unique violation")
+                )
+
+    def _project_brief_fields(self, project_id: Optional[str]) -> dict:
+        if project_id:
+            for project in self._data.get("projects", []):
+                if project.get("id") == project_id:
+                    return {"projectCode": project.get("code"), "projectName": project.get("name")}
+        return {"projectCode": None, "projectName": None}
+
     async def get_calculations(
         self,
         include_inactive: bool = False,
         app: Optional[str] = None,
+        *,
+        project_id: Optional[str] = None,
+        discipline: Optional[str] = None,
+        status: Optional[str] = None,
+        calc_number: Optional[str] = None,
     ) -> List[dict]:
         calculations = list(self._data.get("calculations", []))
         if not include_inactive:
             calculations = [item for item in calculations if item.get("isActive", True)]
         if app:
             calculations = [item for item in calculations if item.get("app") == app]
+        if project_id:
+            calculations = [item for item in calculations if item.get("projectId") == project_id]
+        if discipline:
+            calculations = [item for item in calculations if item.get("discipline") == discipline]
+        if status:
+            calculations = [item for item in calculations if item.get("status") == status]
+        if calc_number:
+            needle = calc_number.lower()
+            calculations = [
+                item for item in calculations
+                if needle in (item.get("calcNumber") or "").lower()
+            ]
         calculations.sort(key=lambda item: item.get("updatedAt") or "", reverse=True)
         return calculations
+
+    async def get_next_calc_number(
+        self,
+        project_id: str,
+        discipline: Optional[str] = None,
+    ) -> Optional[dict]:
+        project = next(
+            (p for p in self._data.get("projects", []) if p.get("id") == project_id),
+            None,
+        )
+        if project is None:
+            return None
+        prefix = project.get("code") or ""
+        if discipline and DISCIPLINE_CODES.get(discipline):
+            prefix = f"{prefix}-{DISCIPLINE_CODES[discipline]}"
+        pattern = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
+        max_seq = 0
+        width = 3
+        for item in self._data.get("calculations", []):
+            if item.get("projectId") != project_id or not item.get("isActive", True):
+                continue
+            match = pattern.match(item.get("calcNumber") or "")
+            if match:
+                max_seq = max(max_seq, int(match.group(1)))
+                width = max(width, len(match.group(1)))
+        next_seq = max_seq + 1
+        return {
+            "nextNumber": f"{prefix}-{next_seq:0{width}d}",
+            "sequence": next_seq,
+            "pattern": f"{prefix}-<seq>",
+        }
 
     async def get_calculation_by_id(self, calculation_id: str) -> Optional[dict]:
         for calculation in self._data.get("calculations", []):
@@ -106,6 +198,9 @@ class MockService(DataAccessLayer):
         now = datetime.utcnow().isoformat()
         calculation_id = str(uuid4())
         version_id = str(uuid4())
+        register = self._lift_register_fields(data, data.get("areaId"))
+        self._check_calc_number_unique(register["projectId"], register["calcNumber"])
+        rows = data.get("revisionHistory") or []
         calculation = {
             "id": calculation_id,
             "app": data.get("app"),
@@ -116,6 +211,9 @@ class MockService(DataAccessLayer):
             "status": data.get("status") or "draft",
             "tag": data.get("tag"),
             "isActive": True,
+            **register,
+            **self._project_brief_fields(register["projectId"]),
+            "currentRevisionCode": (rows[-1].get("rev") if rows and isinstance(rows[-1], dict) else None) or None,
             "linkedEquipmentId": data.get("linkedEquipmentId"),
             "linkedEquipmentTag": data.get("linkedEquipmentTag"),
             "latestVersionNo": 1,
@@ -155,12 +253,25 @@ class MockService(DataAccessLayer):
             now = datetime.utcnow().isoformat()
             next_version_no = int(calculation.get("latestVersionNo") or 0) + 1
             version_id = str(uuid4())
+            register = self._lift_register_fields(data, calculation.get("areaId"))
+            register = {
+                "projectId": register["projectId"] or calculation.get("projectId"),
+                "calcNumber": register["calcNumber"] or calculation.get("calcNumber"),
+                "discipline": register["discipline"] or calculation.get("discipline"),
+            }
+            self._check_calc_number_unique(
+                register["projectId"], register["calcNumber"], exclude_id=calculation_id
+            )
+            rows = data.get("revisionHistory", calculation.get("revisionHistory") or [])
             updated = {
                 **calculation,
                 "name": data.get("name", calculation.get("name")),
                 "description": data.get("description", calculation.get("description") or ""),
                 "status": data.get("status", calculation.get("status") or "draft"),
                 "tag": data.get("tag", calculation.get("tag")),
+                **register,
+                **self._project_brief_fields(register["projectId"]),
+                "currentRevisionCode": (rows[-1].get("rev") if rows and isinstance(rows[-1], dict) else None) or None,
                 "linkedEquipmentId": data.get(
                     "linkedEquipmentId", calculation.get("linkedEquipmentId")
                 ),
@@ -1011,5 +1122,91 @@ class MockService(DataAccessLayer):
         for i, session in enumerate(sessions):
             if session.get("id") == session_id:
                 del sessions[i]
+                return True
+        return False
+
+    # --- Instrument Links ---
+
+    def _find_eo(self, object_id: str) -> Optional[dict]:
+        """Find a live engineering object by UUID."""
+        for obj in self._data.get("engineeringObjects", []):
+            if obj.get("uuid") == object_id or obj.get("id") == object_id:
+                if obj.get("deletedAt") is None:
+                    return obj
+        return None
+
+    async def list_instrument_links(
+        self,
+        *,
+        instrument_id: Optional[str] = None,
+        target_id: Optional[str] = None,
+        relationship_type: Optional[str] = None,
+        protective_system_id: Optional[str] = None,
+    ) -> List[dict]:
+        links = list(self._data.get("instrumentLinks", []))
+        if instrument_id:
+            links = [lk for lk in links if lk.get("instrumentId") == instrument_id]
+        if target_id:
+            links = [lk for lk in links if lk.get("targetId") == target_id]
+        if relationship_type:
+            links = [lk for lk in links if lk.get("relationshipType") == relationship_type]
+        if protective_system_id:
+            links = [lk for lk in links if lk.get("protectiveSystemId") == protective_system_id]
+        return sorted(links, key=lambda lk: lk.get("createdAt") or "", reverse=True)
+
+    async def create_instrument_link(self, data: dict) -> dict:
+        instrument = self._find_eo(data["instrumentId"])
+        if instrument is None:
+            raise ValueError(f"Engineering object '{data['instrumentId']}' not found")
+        if (instrument.get("object_type") or instrument.get("objectType") or "").strip().upper() != "INSTRUMENT":
+            raise TypeError(
+                f"instrument_id must reference an INSTRUMENT object; got '{instrument.get('object_type') or instrument.get('objectType')}'"
+            )
+        target = self._find_eo(data["targetId"])
+        if target is None:
+            raise ValueError(f"Target engineering object '{data['targetId']}' not found")
+        # Unique check
+        for lk in self._data.get("instrumentLinks", []):
+            if (
+                lk.get("instrumentId") == data["instrumentId"]
+                and lk.get("targetId") == data["targetId"]
+                and lk.get("relationshipType") == data["relationshipType"]
+            ):
+                from sqlalchemy.exc import IntegrityError
+                raise IntegrityError(
+                    "duplicate instrument link", params=None, orig=Exception("mock unique violation")
+                )
+        now = datetime.utcnow().isoformat()
+        link = {
+            "id": str(uuid4()),
+            "instrumentId": data["instrumentId"],
+            "targetId": data["targetId"],
+            "relationshipType": data["relationshipType"],
+            "protectiveSystemId": data.get("protectiveSystemId"),
+            "notes": data.get("notes"),
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        self._data.setdefault("instrumentLinks", []).append(link)
+        return link
+
+    async def update_instrument_link(self, link_id: str, data: dict) -> Optional[dict]:
+        links = self._data.get("instrumentLinks", [])
+        for i, lk in enumerate(links):
+            if lk.get("id") == link_id:
+                updated = {
+                    **lk,
+                    **{k: v for k, v in data.items() if k in ("relationshipType", "protectiveSystemId", "notes")},
+                    "updatedAt": datetime.utcnow().isoformat(),
+                }
+                links[i] = updated
+                return updated
+        return None
+
+    async def delete_instrument_link(self, link_id: str) -> bool:
+        links = self._data.get("instrumentLinks", [])
+        for i, lk in enumerate(links):
+            if lk.get("id") == link_id:
+                del links[i]
                 return True
         return False

@@ -17,6 +17,7 @@ class OverpressureScenario(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("protective_systems.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     cause: Mapped[str] = mapped_column(
         SQLEnum(
@@ -61,8 +62,9 @@ class OverpressureScenario(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("revision_history.id"),
         nullable=True,
+        index=True,
     )
-    
+
     # Relationships
     protective_system = relationship("ProtectiveSystem", back_populates="scenarios")
     sizing_cases = relationship("SizingCase", back_populates="scenario")

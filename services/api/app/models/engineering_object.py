@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID as PyUUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
@@ -17,6 +17,23 @@ class EngineeringObject(Base, TimestampMixin):
     """
 
     __tablename__ = "engineering_objects"
+    __table_args__ = (
+        # Tags are unique per area among live rows; objects without an area
+        # fall back to global uniqueness so upsert-by-tag stays unambiguous.
+        Index(
+            "uq_engineering_objects_area_tag_live",
+            "area_id",
+            "tag",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL AND area_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_engineering_objects_tag_global_live",
+            "tag",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL AND area_id IS NULL"),
+        ),
+    )
 
     # I-DDC Identity
     uuid: Mapped[PyUUID] = mapped_column(
@@ -26,7 +43,6 @@ class EngineeringObject(Base, TimestampMixin):
     )
     tag: Mapped[str] = mapped_column(
         String,
-        unique=True,
         index=True,
         nullable=False,
     )
@@ -70,6 +86,7 @@ class EngineeringObject(Base, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey('projects.id'),
         nullable=True,
+        index=True,
     )
     status: Mapped[Optional[str]] = mapped_column(
         String,

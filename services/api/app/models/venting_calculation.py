@@ -25,6 +25,7 @@ class VentingCalculation(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMi
         UUID(as_uuid=False),
         ForeignKey("engineering_objects.uuid", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     owner_id: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False),

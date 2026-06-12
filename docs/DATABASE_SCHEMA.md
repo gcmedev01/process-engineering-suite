@@ -1,5 +1,8 @@
 # Database Schema
 
+> Reflects the SQLAlchemy models as of 2026-06-12. The Alembic chain is a single
+> head (`202606120003`). See **Schema Maintenance Notes** at the end.
+
 ## Core Hierarchy
 - **Customer**: Root entity (e.g., "PTT", "Chevron").
 - **Plant**: Physical location (e.g., "Rayong Refinery").
@@ -12,28 +15,56 @@
 | Column | Type | Description |
 |---|---|---|
 | id | uuid | PK |
-| project_id | uuid | FK -> projects.id |
+| area_id | uuid | FK -> areas.id (CASCADE) |
+| owner_id | uuid | FK -> users.id |
 | tag | varchar | e.g. "PSV-1001" |
-| status | enum | draft, in_review, approved, issued |
-| ... | ... | (details in code) |
+| status | enum | draft, in_review, checked, approved, issued |
+| current_revision_id | uuid | FK -> revision_history.id, nullable |
+| is_active | boolean | Soft-delete flag |
+| deleted_at | timestamptz | Soft-delete timestamp |
+| ... | ... | (set_pressure, mawp, design_code, fluid_phase, networks — details in code) |
 
-### `scenarios`
+> **Projects link is many-to-many**, not a `project_id` FK. The join table
+> `protective_system_projects(protective_system_id, project_id)` associates a
+> PSV with one or more projects. The `project_ids` API field is derived from it.
+>
+> **Uniqueness:** `(area_id, tag)` is unique only among live rows via the
+> partial unique index `uq_protective_systems_area_id_tag WHERE deleted_at IS
+> NULL` (migration `202606110002`), so a tag freed by soft-delete can be reused.
+
+### `overpressure_scenarios`
+(Table name is `overpressure_scenarios`; the ORM model is `OverpressureScenario`.)
+
 | Column | Type | Description |
 |---|---|---|
 | id | uuid | PK |
-| psv_id | uuid | FK -> protective_systems.id |
+| protective_system_id | uuid | FK -> protective_systems.id |
+| current_revision_id | uuid | FK -> revision_history.id, nullable |
 | cause | varchar | blocked_outlet, fire_case, etc. |
 | required_capacity | decimal | calculated required flow |
+| is_active | boolean | Logical active flag |
 
 ### `sizing_cases`
 | Column | Type | Description |
 |---|---|---|
 | id | uuid | PK |
-| scenario_id | uuid | FK -> scenarios.id |
+| protective_system_id | uuid | FK -> protective_systems.id |
+| scenario_id | uuid | FK -> overpressure_scenarios.id |
+| current_revision_id | uuid | FK -> revision_history.id, nullable |
+| created_by | uuid | FK -> users.id |
+| approved_by | uuid | FK -> users.id, nullable |
 | standard | varchar | API-520, etc. |
 | status | enum | draft, calculated, verified |
+| is_active | boolean | Logical active flag |
 
 ## Pipeline Configuration
+
+> ⚠️ **Not yet implemented.** The tables below are a forward-looking design.
+> There are no SQLAlchemy models or migrations for `pipelines`,
+> `pipeline_segments`, `fittings_catalog`, or `pipe_schedule`. PSV inlet/outlet
+> hydraulics are currently stored as JSONB on `protective_systems`
+> (`inlet_network`, `outlet_network`). Keep this section as a design reference.
+
 ### `pipelines`
 | Column | Type | Description |
 |---|---|---|
@@ -70,8 +101,8 @@ Single source of truth for process equipment and calculator-linked objects.
 | Column | Type | Notes |
 |---|---|---|
 | uuid | uuid | PK (canonical object identity) |
-| tag | varchar | Unique plant tag, normalized uppercase |
-| object_type | varchar | Object discriminator, e.g. `TANK`, `VESSEL`, `PUMP`, `VESSEL_CALCULATION` |
+| tag | varchar | Plant tag, normalized uppercase. Uniqueness is scoped per area among live rows (see Uniqueness note below) |
+| object_type | varchar | Object discriminator, e.g. `TANK`, `VESSEL`, `PUMP`, `INSTRUMENT`, `VESSEL_CALCULATION` |
 | area_id | uuid | FK → areas.id (SET NULL), nullable |
 | owner_id | uuid | FK → users.id (SET NULL), nullable |
 | name | varchar(255) | Display name |
@@ -93,7 +124,33 @@ Single source of truth for process equipment and calculator-linked objects.
 - `designTemperature`
 - `designTempUnit`
 
-**Indexes:** `uq_engineering_objects_tag`, `ix_engineering_objects_area_id`, `ix_engineering_objects_owner_id`, `ix_engineering_objects_properties_gin`
+**Uniqueness (migration `202606120002`):** The old global `uq_engineering_objects_tag` was replaced with two partial indexes:
+- `uq_engineering_objects_area_tag_live ON (area_id, tag) WHERE deleted_at IS NULL AND area_id IS NOT NULL` — two areas may both have "V-100".
+- `uq_engineering_objects_tag_global_live ON (tag) WHERE deleted_at IS NULL AND area_id IS NULL` — unassigned objects keep global uniqueness so upsert-by-tag stays unambiguous.
+Soft-deleting a tag frees it for reuse in the same area.
+
+**INSTRUMENT object_type:** Use `object_type = 'INSTRUMENT'` with a required `properties.details.instrumentType` discriminator (`pressure_transmitter`, `temperature_transmitter`, `level_transmitter`, `flow_transmitter`, `flow_meter`, `control_valve`, `analyzer`, `switch`, `gauge`, `other`). Strict 422 validation is enforced for INSTRUMENT on PUT/PATCH. Relationships to other objects use the `instrument_links` table.
+
+**Property validation** (`app/services/object_properties.py`): INSTRUMENT payloads are always validated strictly (422 on error). Legacy types (TANK, VESSEL, PUMP) log warnings and proceed unless `EO_STRICT_PROPERTY_VALIDATION=true`.
+
+**Indexes:** `uq_engineering_objects_area_tag_live`, `uq_engineering_objects_tag_global_live`, `ix_engineering_objects_area_id`, `ix_engineering_objects_owner_id`, `ix_engineering_objects_properties_gin`
+
+### `instrument_links`
+Directed relationship from an `INSTRUMENT` engineering_object to any other engineering object. Hard-deleted (no `deleted_at`).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| instrument_id | uuid | FK → engineering_objects.uuid (CASCADE) — must be a live INSTRUMENT |
+| target_id | uuid | FK → engineering_objects.uuid (CASCADE) — any live object |
+| relationship_type | varchar(32) | `measures`, `controls`, `mounted_on`, `interlocked_with` — enforced by CHECK constraint |
+| protective_system_id | uuid | FK → protective_systems.id (SET NULL), optional |
+| notes | text | Optional free-text |
+| created_at, updated_at | timestamptz | Auto |
+
+**Uniqueness:** `uq_instrument_links_triple ON (instrument_id, target_id, relationship_type)` — duplicate (instrument, target, relationship) → 409.
+**Indexes:** `ix_instrument_links_instrument_id`, `ix_instrument_links_target_id`, `ix_instrument_links_protective_system_id`
+**API:** `GET /instrument-links?instrumentId=&targetId=&relationshipType=&protectiveSystemId=`, `POST /instrument-links` (validates INSTRUMENT type → 422), `PATCH /instrument-links/{id}`, `DELETE /instrument-links/{id}`.
 
 ### Compatibility Layer
 - `/legacy/equipment` is the documented compatibility path during transition.
@@ -134,11 +191,22 @@ Current, list-friendly record for each saved calculation.
 | current_input_snapshot | jsonb | Canonical saved input payload |
 | current_result_snapshot | jsonb | Latest calculated results payload |
 | current_metadata | jsonb | App-specific metadata |
-| current_revision_history | jsonb | Revision rows used by client UIs |
+| project_id | uuid | FK → projects.id (SET NULL), nullable — register field |
+| calc_number | varchar(64) | Register document number, e.g. "PRJ-001-PR-003" — nullable |
+| discipline | varchar(50) | Register discipline: process, mechanical, safety, instrumentation, electrical, civil, piping — nullable |
+| current_revision_id | uuid | FK → revision_history.id (SET NULL, use_alter), nullable — pointer to current normalized revision |
 | created_at | timestamptz | Auto |
 | updated_at | timestamptz | Auto |
 
-**Indexes:** `ix_calculations_app`, `ix_calculations_area_id`, `ix_calculations_owner_id`, `ix_calculations_linked_equipment_id`
+> **`current_revision_history` was dropped** (migration `202605040002`). Revision
+> history is no longer denormalized onto `calculations`; the canonical copy lives
+> in `calculation_versions.revision_history`. The `/calculations` API still
+> returns a `revisionHistory` field, sourced from the latest version.
+>
+> **Register fields** (migration `202606120001`): `project_id`, `calc_number`, `discipline`, and `current_revision_id` were added for the calculation register. `calc_number` is lifted from `current_metadata.documentNumber` server-side if not explicitly supplied. Partial unique index `uq_calculations_project_calc_number_live ON (project_id, calc_number) WHERE deleted_at IS NULL AND project_id IS NOT NULL AND calc_number IS NOT NULL` enforces uniqueness per project among live rows. Duplicate → 409.
+
+**Indexes:** `ix_calculations_app`, `ix_calculations_area_id`, `ix_calculations_owner_id`, `ix_calculations_tag`, `ix_calculations_linked_equipment_id`, `ix_calculations_project_id`, `ix_calculations_calc_number`, `ix_calculations_discipline`, `ix_calculations_current_revision_id`
+**Register API:** `GET /calculations/next-number?projectId=&discipline=` returns `{nextNumber, sequence, pattern}` for sequential numbering. `GET /calculations?projectId=&discipline=&calcNumber=&status=` filters the register list.
 
 ### `calculation_versions`
 Append-only version history for audit, compare, and restore.
@@ -155,12 +223,11 @@ Append-only version history for audit, compare, and restore.
 | revision_history | jsonb | Immutable revision history snapshot |
 | linked_equipment_id | uuid | FK → engineering_objects.uuid (SET NULL), nullable |
 | linked_equipment_tag | varchar(255) | Equipment tag at save time |
-| source_version_id | uuid | Optional lineage pointer for restore/import |
+| source_version_id | uuid | Optional lineage pointer for restore/import (FK -> calculation_versions.id, SET NULL) |
 | change_note | text | Optional user/system note |
-| created_by | uuid | Reserved for future auth/audit use, nullable |
 | created_at | timestamptz | Auto |
 
-**Indexes:** `ix_calculation_versions_calculation_id`, unique `(calculation_id, version_no)`
+**Indexes:** `ix_calculation_versions_calculation_id`, `ix_calculation_versions_source_version_id`, `ix_calculation_versions_linked_equipment_id` (last two added in migration `202606110003`), unique `(calculation_id, version_no)`
 
 ### Behavior
 - Every save creates a new row in `calculation_versions` and updates the cached current snapshot in `calculations`.
@@ -241,3 +308,47 @@ Stores saved design agent workflow sessions from `services/design-agents` (Pytho
 
 **Indexes:** `ix_design_agent_sessions_owner_id`
 **Delete:** Hard delete only.
+
+---
+
+## Schema Maintenance Notes
+
+### Migration chain
+- Working head: **`202606120003`** (the main engineering-objects + calc-register chain).
+- ⚠️ **Pre-existing orphan branches**: `add_project_notes` and `add_case_consideration` both diverge from `202412120001` and were never included in the `202606110001` merge. They are present in the migration graph but have not been applied in production. They are not part of the current development chain — avoid running `alembic upgrade head` (which upgrades ALL heads) until these orphan branches are triaged.
+- `202606110001` — merge node reconciling two branches that forked at
+  `202412150001`. No schema ops; each branch's migrations applied individually
+  with `IF [NOT] EXISTS` guards.
+- `202606110002` — replaces `uq_protective_systems_area_id_tag` with a partial
+  unique index (`WHERE deleted_at IS NULL`).
+- `202606110003` — adds 33 FK indexes. Idempotent (`IF NOT EXISTS`).
+- `202606120001` — calculation register: `project_id`, `calc_number`,
+  `discipline`, `current_revision_id` on `calculations`; `*_by_name` columns on
+  `revision_history`; backfill from JSONB; partial unique on `(project_id, calc_number)`.
+- `202606120002` — `engineering_objects.tag` scoped per area: drops global
+  unique, creates two partial unique indexes. **Downgrade fails** if cross-area
+  duplicate live tags were created after the upgrade.
+- `202606120003` — adds `instrument_links` table.
+
+### Foreign-key indexing
+FK columns are indexed either by `index=True` on the model column or by being
+the leading column of a composite index/constraint. After `202606110003`,
+every FK column has a covering index.
+
+### Legacy equipment tables — deprecation notice
+The following tables are kept for backward compatibility but **read-only going forward**. New equipment data should use `engineering_objects` directly.
+
+| Table | Notes |
+|---|---|
+| `equipment` | Legacy equipment master. Dual-written by API for non-INSTRUMENT objects during the transition period. **Not written for `object_type = INSTRUMENT`**. |
+| `equipment_vessels`, `equipment_tanks`, `equipment_pumps`, `equipment_compressors`, `equipment_columns`, `equipment_vendor_packages` | Subtype detail tables. Mirrored from `engineering_objects.properties.details` during dual-write. |
+
+Dropping these tables is deferred to a future migration once frontends are confirmed to read exclusively from `engineering_objects`.
+
+### Known model/migration drift (pre-existing, low impact)
+A few indexes created by older migrations are not declared on their models, so
+`alembic revision --autogenerate` may report spurious diffs:
+`ix_protective_systems_deleted_at`, `ix_revision_history_entity`,
+`ix_audit_logs_action`. The old `uq_engineering_objects_tag` is now replaced by
+partial indexes — autogenerate may still report a diff if the DB was migrated
+from a version that declared both. Reconcile when next touching those models.

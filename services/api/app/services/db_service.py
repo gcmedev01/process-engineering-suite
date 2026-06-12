@@ -33,6 +33,7 @@ from ..models import (
 )
 from .dal import DataAccessLayer
 from .equipment_subtypes import build_details_from_subtype_row, build_subtype_row_values
+from . import calculation_register
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,17 @@ class DatabaseService(DataAccessLayer):
             )
         return normalized
 
-    def _serialize_calculation(self, calculation: Calculation) -> dict[str, Any]:
+    def _serialize_calculation(
+        self,
+        calculation: Calculation,
+        revision_history: list[Any] | None = None,
+        project: tuple[str, str] | None = None,
+    ) -> dict[str, Any]:
+        # current_revision_history was dropped (migration 202605040002); the
+        # revision history now lives on the latest calculation_version and is
+        # passed in by the caller (see _latest_revision_history).
+        rows = revision_history or []
+        last_row = rows[-1] if rows else None
         return {
             'id': calculation.id,
             'app': calculation.app,
@@ -196,6 +207,12 @@ class DatabaseService(DataAccessLayer):
             'status': calculation.status,
             'tag': calculation.tag,
             'isActive': calculation.is_active,
+            'projectId': calculation.project_id,
+            'projectCode': project[0] if project else None,
+            'projectName': project[1] if project else None,
+            'calcNumber': calculation.calc_number,
+            'discipline': calculation.discipline,
+            'currentRevisionCode': (last_row.get('rev') or None) if isinstance(last_row, dict) else None,
             'linkedEquipmentId': calculation.linked_equipment_id,
             'linkedEquipmentTag': calculation.linked_equipment_tag,
             'latestVersionNo': calculation.latest_version_no,
@@ -203,11 +220,32 @@ class DatabaseService(DataAccessLayer):
             'inputs': calculation.current_input_snapshot or {},
             'results': calculation.current_result_snapshot,
             'metadata': calculation.current_metadata or {},
-            'revisionHistory': calculation.current_revision_history or [],
+            'revisionHistory': rows,
             'createdAt': calculation.created_at.isoformat() if calculation.created_at else None,
             'updatedAt': calculation.updated_at.isoformat() if calculation.updated_at else None,
             'deletedAt': calculation.deleted_at.isoformat() if calculation.deleted_at else None,
         }
+
+    async def _project_brief(self, project_id: str | None) -> tuple[str, str] | None:
+        if not project_id:
+            return None
+        stmt = select(Project.code, Project.name).where(Project.id == project_id)
+        row = (await self.session.execute(stmt)).first()
+        return (row.code, row.name) if row else None
+
+    async def _latest_revision_history(self, calculation: Calculation) -> list[Any]:
+        """Load just the revision_history of a calculation's latest version.
+
+        Selects only the JSONB revision_history column (not the full version
+        row) to keep serialization cheap.
+        """
+        if not calculation.latest_version_id:
+            return []
+        stmt = select(CalculationVersion.revision_history).where(
+            CalculationVersion.id == calculation.latest_version_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none() or []
 
     def _serialize_calculation_version(self, version: CalculationVersion) -> dict[str, Any]:
         return {
@@ -277,21 +315,71 @@ class DatabaseService(DataAccessLayer):
         self,
         include_inactive: bool = False,
         app: str | None = None,
+        *,
+        project_id: str | None = None,
+        discipline: str | None = None,
+        status: str | None = None,
+        calc_number: str | None = None,
     ) -> list[dict[str, Any]]:
         stmt = select(Calculation)
         if not include_inactive:
             stmt = stmt.where(Calculation.is_active.is_(True))
         if app:
             stmt = stmt.where(Calculation.app == app)
+        if project_id:
+            stmt = stmt.where(Calculation.project_id == project_id)
+        if discipline:
+            stmt = stmt.where(Calculation.discipline == discipline)
+        if status:
+            stmt = stmt.where(Calculation.status == status)
+        if calc_number:
+            stmt = stmt.where(Calculation.calc_number.ilike(f'%{calc_number}%'))
         stmt = stmt.order_by(desc(Calculation.updated_at))
         result = await self.session.execute(stmt)
-        return [self._serialize_calculation(item) for item in result.scalars().all()]
+        calculations = result.scalars().all()
+        # Batch-load latest-version revision histories in one query (avoids N+1).
+        version_ids = [c.latest_version_id for c in calculations if c.latest_version_id]
+        rh_map: dict[str, list[Any]] = {}
+        if version_ids:
+            rh_stmt = select(
+                CalculationVersion.id, CalculationVersion.revision_history
+            ).where(CalculationVersion.id.in_(version_ids))
+            for vid, rh in (await self.session.execute(rh_stmt)).all():
+                rh_map[vid] = rh or []
+        # Batch-load project code/name for register display.
+        project_ids = {c.project_id for c in calculations if c.project_id}
+        project_map: dict[str, tuple[str, str]] = {}
+        if project_ids:
+            p_stmt = select(Project.id, Project.code, Project.name).where(
+                Project.id.in_(project_ids)
+            )
+            for pid, code, pname in (await self.session.execute(p_stmt)).all():
+                project_map[pid] = (code, pname)
+        return [
+            self._serialize_calculation(
+                item,
+                rh_map.get(item.latest_version_id, []),
+                project_map.get(item.project_id),
+            )
+            for item in calculations
+        ]
+
+    async def get_next_calc_number(
+        self,
+        project_id: str,
+        discipline: str | None = None,
+    ) -> dict[str, Any] | None:
+        return await calculation_register.suggest_next_calc_number(
+            self.session, project_id, discipline
+        )
 
     async def get_calculation_by_id(self, calculation_id: str) -> dict[str, Any] | None:
         calculation = await self._get_by_id(Calculation, calculation_id)
         if not calculation:
             return None
-        return self._serialize_calculation(calculation)
+        revision_history = await self._latest_revision_history(calculation)
+        project = await self._project_brief(calculation.project_id)
+        return self._serialize_calculation(calculation, revision_history, project)
 
     async def create_calculation(self, data: dict[str, Any]) -> dict[str, Any]:
         state = self._build_calculation_state(data)
@@ -310,21 +398,25 @@ class DatabaseService(DataAccessLayer):
             current_input_snapshot=state['inputs'],
             current_result_snapshot=state['results'],
             current_metadata=state['metadata'],
-            current_revision_history=state['revisionHistory'],
         )
         self.session.add(calculation)
         await self.session.flush()
         version = await self._create_calculation_version(calculation.id, 1, 'save', state)
         calculation.latest_version_id = version.id
+        await calculation_register.apply_register_state(
+            self.session, calculation, data, state['revisionHistory']
+        )
         await self.session.commit()
         await self.session.refresh(calculation)
-        return self._serialize_calculation(calculation)
+        project = await self._project_brief(calculation.project_id)
+        return self._serialize_calculation(calculation, state['revisionHistory'], project)
 
     async def update_calculation(self, calculation_id: str, data: dict[str, Any]) -> dict[str, Any]:
         calculation = await self._get_by_id(Calculation, calculation_id)
         if not calculation:
             raise ValueError('Calculation not found')
-        current = self._serialize_calculation(calculation)
+        existing_revision_history = await self._latest_revision_history(calculation)
+        current = self._serialize_calculation(calculation, existing_revision_history)
         state = self._build_calculation_state(data, current)
         next_version_no = calculation.latest_version_no + 1
         version = await self._create_calculation_version(
@@ -345,10 +437,13 @@ class DatabaseService(DataAccessLayer):
         calculation.current_input_snapshot = state['inputs']
         calculation.current_result_snapshot = state['results']
         calculation.current_metadata = state['metadata']
-        calculation.current_revision_history = state['revisionHistory']
+        await calculation_register.apply_register_state(
+            self.session, calculation, data, state['revisionHistory']
+        )
         await self.session.commit()
         await self.session.refresh(calculation)
-        return self._serialize_calculation(calculation)
+        project = await self._project_brief(calculation.project_id)
+        return self._serialize_calculation(calculation, state['revisionHistory'], project)
 
     async def delete_calculation(self, calculation_id: str) -> bool:
         calculation = await self._get_by_id(Calculation, calculation_id)
@@ -426,14 +521,22 @@ class DatabaseService(DataAccessLayer):
         calculation.current_input_snapshot = state['inputs']
         calculation.current_result_snapshot = state['results']
         calculation.current_metadata = state['metadata']
-        calculation.current_revision_history = state['revisionHistory']
         calculation.linked_equipment_id = state['linkedEquipmentId']
         calculation.linked_equipment_tag = state['linkedEquipmentTag']
         calculation.is_active = True
         calculation.deleted_at = None
+        # Re-lift register fields from the restored metadata and re-mirror the
+        # restored sign-off rows.
+        await calculation_register.apply_register_state(
+            self.session,
+            calculation,
+            {'metadata': state['metadata']},
+            state['revisionHistory'],
+        )
         await self.session.commit()
         await self.session.refresh(calculation)
-        return self._serialize_calculation(calculation)
+        project = await self._project_brief(calculation.project_id)
+        return self._serialize_calculation(calculation, state['revisionHistory'], project)
 
     # --- Users & Auth ---
 
@@ -753,6 +856,7 @@ class DatabaseService(DataAccessLayer):
         'pump',
         'compressor',
         'piping',
+        'instrument',
         'vendor_package',
         'other',
     }
@@ -933,6 +1037,13 @@ class DatabaseService(DataAccessLayer):
             properties=properties,
         )
         self.session.add(obj)
+        if equipment_type == 'instrument':
+            # Instruments exist only in engineering_objects: the legacy
+            # equipment_type enum has no 'instrument' value and instruments
+            # never participate in the legacy dual-write.
+            await self.session.commit()
+            await self.session.refresh(obj)
+            return self._to_equipment_response(obj)
         legacy_equipment = Equipment(
             id=str(object_uuid),
             area_id=converted_data.get('area_id'),
@@ -1017,7 +1128,12 @@ class DatabaseService(DataAccessLayer):
             properties['design_parameters'] = design_parameters
 
         obj.properties = properties
-        legacy_equipment = await self._get_by_id(Equipment, equipment_id)
+        # Instruments are engineering_objects-only (legacy equipment_type enum
+        # has no 'instrument'); skip the legacy mirror for them.
+        is_instrument = self._normalize_equipment_type(obj.object_type) == 'instrument'
+        legacy_equipment = (
+            None if is_instrument else await self._get_by_id(Equipment, equipment_id)
+        )
         if legacy_equipment is not None:
             legacy_equipment.type = self._normalize_equipment_type(obj.object_type)
             legacy_equipment.tag = obj.tag
@@ -1867,3 +1983,34 @@ class DatabaseService(DataAccessLayer):
 
     async def delete_design_agent_session(self, session_id: str) -> bool:
         return await self._delete(DesignAgentSession, session_id)
+
+    # --- Instrument Links ---
+
+    async def list_instrument_links(
+        self,
+        *,
+        instrument_id=None,
+        target_id=None,
+        relationship_type=None,
+        protective_system_id=None,
+    ):
+        from . import instrument_links as il_svc
+        return await il_svc.list_instrument_links(
+            self.session,
+            instrument_id=instrument_id,
+            target_id=target_id,
+            relationship_type=relationship_type,
+            protective_system_id=protective_system_id,
+        )
+
+    async def create_instrument_link(self, data: dict) -> dict:
+        from . import instrument_links as il_svc
+        return await il_svc.create_instrument_link(self.session, data)
+
+    async def update_instrument_link(self, link_id: str, data: dict):
+        from . import instrument_links as il_svc
+        return await il_svc.update_instrument_link(self.session, link_id, data)
+
+    async def delete_instrument_link(self, link_id: str) -> bool:
+        from . import instrument_links as il_svc
+        return await il_svc.delete_instrument_link(self.session, link_id)

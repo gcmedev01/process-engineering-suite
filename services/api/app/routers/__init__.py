@@ -11,6 +11,7 @@ from .calculations import router as calculations_router
 from .venting import router as venting_router
 from .network import router as network_router
 from .engineering_objects import router as engineering_objects_router
+from .instrument_links import router as instrument_links_router
 
 try:
     from .vessels import router as vessels_router
@@ -32,4 +33,5 @@ __all__ = [
     "venting_router",
     "network_router",
     "engineering_objects_router",
+    "instrument_links_router",
 ]

@@ -50,6 +50,7 @@ class Equipment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
     # Soft delete flag
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)

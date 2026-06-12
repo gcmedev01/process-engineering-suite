@@ -40,6 +40,7 @@ class Project(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
 
     # Display preferences for PSV details/reports (engineering data stays in base units)

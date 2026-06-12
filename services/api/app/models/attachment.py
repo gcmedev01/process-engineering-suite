@@ -15,6 +15,7 @@ class Attachment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("protective_systems.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     file_uri: Mapped[str] = mapped_column(String(1000), nullable=False)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -24,7 +25,8 @@ class Attachment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
-    
+
     # Relationships
     protective_system = relationship("ProtectiveSystem", back_populates="attachments")

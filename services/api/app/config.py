@@ -19,6 +19,12 @@ class Settings:
         self.ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
             os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
         )
+        # Strict per-type validation of engineering_objects.properties for
+        # legacy object types (INSTRUMENT is always strict). Default lenient:
+        # frontends still send loose payloads; flip once they're clean.
+        self.EO_STRICT_PROPERTY_VALIDATION: bool = (
+            os.getenv("EO_STRICT_PROPERTY_VALIDATION", "false").lower() == "true"
+        )
         self.ALLOWED_ORIGINS: list[str] = [
             "http://localhost:3000",
             "http://localhost:3001",

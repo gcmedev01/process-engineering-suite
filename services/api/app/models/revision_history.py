@@ -26,20 +26,25 @@ class RevisionHistory(Base, UUIDPrimaryKeyMixin):
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)  # For ordering
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
-    # Lifecycle tracking
+    # Lifecycle tracking. The *_by_name columns capture display strings
+    # (initials/free text from calculation sign-off rows) when the value
+    # doesn't resolve to a user account; the FK stays NULL in that case.
     originated_by: Mapped[Optional[str]] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True, index=True
     )
+    originated_by_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     originated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+
     checked_by: Mapped[Optional[str]] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True, index=True
     )
+    checked_by_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+
     approved_by: Mapped[Optional[str]] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True, index=True
     )
+    approved_by_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     issued_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

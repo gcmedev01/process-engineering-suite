@@ -17,17 +17,20 @@ class EquipmentLink(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("protective_systems.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     equipment_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("engineering_objects.uuid", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     scenario_id: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("overpressure_scenarios.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     relationship_type: Mapped[str] = mapped_column(
         SQLEnum("protects", "inlet_from", "discharge_to", name="equipment_relationship"),

@@ -22,8 +22,9 @@ class Customer(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
-    
+
     # Relationships
     owner = relationship("User", back_populates="owned_customers")
     plants = relationship("Plant", back_populates="customer", cascade="all, delete-orphan")

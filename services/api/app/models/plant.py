@@ -31,8 +31,9 @@ class Plant(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
-    
+
     # Relationships
     customer = relationship("Customer", back_populates="plants")
     owner = relationship("User", back_populates="owned_plants")

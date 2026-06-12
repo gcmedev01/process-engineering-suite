@@ -31,8 +31,9 @@ class Unit(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=False),
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
-    
+
     # Relationships
     plant = relationship("Plant", back_populates="units")
     owner = relationship("User", back_populates="owned_units")

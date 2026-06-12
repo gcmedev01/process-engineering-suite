@@ -7,7 +7,23 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
 
+from ..config import get_settings
+from ..services.object_properties import is_strict_type, validate_properties
+
 router = APIRouter(prefix="/engineering-objects", tags=["engineering-objects"])
+
+
+def _validate_properties_or_422(object_type: str, properties: Dict[str, Any]) -> None:
+    """Strict types (INSTRUMENT, or all types when EO_STRICT_PROPERTY_VALIDATION
+    is on) get a 422 on invalid payloads; others log warnings and proceed."""
+    settings_strict = get_settings().EO_STRICT_PROPERTY_VALIDATION
+    strict = is_strict_type(object_type, settings_strict)
+    problems = validate_properties(object_type, properties, strict=strict)
+    if problems and strict:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Invalid properties payload", "problems": problems},
+        )
 
 
 class EngineeringObjectResponse(BaseModel):
@@ -196,6 +212,9 @@ async def update_engineering_object_by_id(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid engineering object id") from exc
 
+    if payload.object_type is not None and payload.properties is not None:
+        _validate_properties_or_422(payload.object_type, payload.properties)
+
     try:
         from ..database import is_db_available, get_db_optional
         from ..models.engineering_object import EngineeringObject
@@ -267,45 +286,30 @@ async def update_engineering_object_by_id(
         "is_active": payload.is_active if payload.is_active is not None else current["is_active"],
         "status": payload.status if payload.status is not None else current["status"],
     }
-    if updated_tag != current["tag"]:
-        del _fallback_store[target]
-    _fallback_store[updated_tag] = updated
+    del _fallback_store[target]
+    _fallback_store[_fallback_key(updated.get("area_id"), updated_tag)] = updated
     return EngineeringObjectResponse(**updated)
 
 
+def _fallback_key(area_id: Optional[str], tag: str) -> str:
+    return f"{area_id or ''}::{tag}"
+
+
+def _ambiguous_tag_error(tag: str, areas: List[Optional[str]]) -> HTTPException:
+    return HTTPException(
+        status_code=409,
+        detail={
+            "message": f"Ambiguous tag '{tag}': exists in multiple areas. "
+            "Pass areaId to disambiguate.",
+            "areas": areas,
+        },
+    )
+
+
 @router.get("/{tag}", response_model=EngineeringObjectResponse)
-async def get_engineering_object(tag: str) -> EngineeringObjectResponse:
-    tag_upper = tag.upper()
-
-    try:
-        from ..database import is_db_available, get_db_optional
-        from ..models.engineering_object import EngineeringObject
-        from sqlalchemy import select
-
-        if await is_db_available():
-            async for db in get_db_optional():
-                if db is None:
-                    continue
-                result = await db.execute(
-                    select(EngineeringObject).where(EngineeringObject.tag == tag_upper)
-                )
-                obj = result.scalar_one_or_none()
-                if obj is None:
-                    raise HTTPException(status_code=404, detail=f"Engineering object '{tag}' not found")
-                return _to_response(obj)
-    except ImportError:
-        pass
-
-    entry = _fallback_store.get(tag_upper)
-    if entry is None:
-        raise HTTPException(status_code=404, detail=f"Engineering object '{tag}' not found")
-    return EngineeringObjectResponse(**entry)
-
-
-@router.put("/{tag}", response_model=EngineeringObjectResponse)
-async def upsert_engineering_object(
+async def get_engineering_object(
     tag: str,
-    payload: EngineeringObjectUpsert,
+    areaId: Optional[str] = Query(default=None),
 ) -> EngineeringObjectResponse:
     tag_upper = tag.upper()
 
@@ -318,16 +322,84 @@ async def upsert_engineering_object(
             async for db in get_db_optional():
                 if db is None:
                     continue
-                result = await db.execute(
-                    select(EngineeringObject).where(EngineeringObject.tag == tag_upper)
+                # Live rows only: with per-area scoping a soft-deleted row must
+                # never shadow a live duplicate of the same tag.
+                stmt = select(EngineeringObject).where(
+                    EngineeringObject.tag == tag_upper,
+                    EngineeringObject.deleted_at.is_(None),
                 )
-                obj = result.scalar_one_or_none()
+                if areaId:
+                    stmt = stmt.where(EngineeringObject.area_id == areaId)
+                objects = (await db.execute(stmt)).scalars().all()
+                if not objects:
+                    raise HTTPException(status_code=404, detail=f"Engineering object '{tag}' not found")
+                if len(objects) > 1:
+                    raise _ambiguous_tag_error(tag, [o.area_id for o in objects])
+                return _to_response(objects[0])
+    except ImportError:
+        pass
+
+    matches = [
+        item for item in _fallback_store.values()
+        if item.get("tag") == tag_upper
+        and (not areaId or item.get("area_id") == areaId)
+    ]
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"Engineering object '{tag}' not found")
+    if len(matches) > 1:
+        raise _ambiguous_tag_error(tag, [m.get("area_id") for m in matches])
+    return EngineeringObjectResponse(**matches[0])
+
+
+@router.put("/{tag}", response_model=EngineeringObjectResponse)
+async def upsert_engineering_object(
+    tag: str,
+    payload: EngineeringObjectUpsert,
+    areaId: Optional[str] = Query(default=None),
+) -> EngineeringObjectResponse:
+    tag_upper = tag.upper()
+    _validate_properties_or_422(payload.object_type, payload.properties)
+    # Upsert key is (tag, area): payload.area_id wins, query areaId is the
+    # fallback for clients that can't change their body shape.
+    effective_area = payload.area_id or areaId
+
+    try:
+        from ..database import is_db_available, get_db_optional
+        from ..models.engineering_object import EngineeringObject
+        from sqlalchemy import select
+        from sqlalchemy.exc import IntegrityError
+
+        if await is_db_available():
+            async for db in get_db_optional():
+                if db is None:
+                    continue
+                stmt = select(EngineeringObject).where(
+                    EngineeringObject.tag == tag_upper,
+                    EngineeringObject.deleted_at.is_(None),
+                )
+                candidates = (await db.execute(stmt)).scalars().all()
+
+                obj = None
+                if effective_area:
+                    exact = [c for c in candidates if c.area_id == effective_area]
+                    if exact:
+                        obj = exact[0]
+                    elif len(candidates) == 1 and candidates[0].area_id is None:
+                        # Claim the unassigned row for this area (matches the
+                        # pre-scoping behavior of adopting payload.area_id).
+                        obj = candidates[0]
+                    # Otherwise: same tag in *other* areas is fine now — create.
+                elif len(candidates) == 1:
+                    obj = candidates[0]
+                elif len(candidates) > 1:
+                    raise _ambiguous_tag_error(tag, [c.area_id for c in candidates])
+
                 if obj is None:
                     obj = EngineeringObject(
                         tag=tag_upper,
                         object_type=payload.object_type,
                         properties=payload.properties,
-                        area_id=payload.area_id,
+                        area_id=effective_area,
                         owner_id=payload.owner_id,
                         name=payload.name,
                         description=payload.description,
@@ -339,7 +411,7 @@ async def upsert_engineering_object(
                 else:
                     obj.object_type = payload.object_type
                     obj.properties = payload.properties
-                    obj.area_id = payload.area_id
+                    obj.area_id = effective_area if effective_area else obj.area_id
                     obj.owner_id = payload.owner_id
                     obj.name = payload.name
                     obj.description = payload.description
@@ -347,18 +419,26 @@ async def upsert_engineering_object(
                     if payload.is_active is not None:
                         obj.is_active = payload.is_active
                     obj.status = payload.status
-                await db.commit()
+                try:
+                    await db.commit()
+                except IntegrityError:
+                    await db.rollback()
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Tag '{tag}' already exists in this area",
+                    )
                 await db.refresh(obj)
                 return _to_response(obj)
     except ImportError:
         pass
 
-    _fallback_store[tag_upper] = {
+    key = _fallback_key(effective_area, tag_upper)
+    _fallback_store[key] = {
         "id": None,
         "tag": tag_upper,
         "object_type": payload.object_type,
         "properties": payload.properties,
-        "area_id": payload.area_id,
+        "area_id": effective_area,
         "owner_id": payload.owner_id,
         "name": payload.name,
         "description": payload.description,
@@ -366,4 +446,4 @@ async def upsert_engineering_object(
         "is_active": payload.is_active if payload.is_active is not None else True,
         "status": payload.status,
     }
-    return EngineeringObjectResponse(**_fallback_store[tag_upper])
+    return EngineeringObjectResponse(**_fallback_store[key])
