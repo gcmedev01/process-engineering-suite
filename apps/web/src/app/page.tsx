@@ -11,6 +11,7 @@ import AirIcon from '@mui/icons-material/Air';
 import BoltIcon from '@mui/icons-material/Bolt';
 import { Timeline } from "@mui/icons-material";
 import { motion, Variants } from "framer-motion";
+import { ControlValveIcon } from "../components/ControlValveIcon";
 
 const tools = [
   {
@@ -73,7 +74,7 @@ const tools = [
     title: "Control Valve Sizing",
     description:
       "Cv/Kv sizing for liquid and gas/vapor per ISA-75.01.01 / IEC 60534-2-1. Choked-flow, fittings, Reynolds and multi-case support.",
-    icon: <TuneIcon fontSize="large" />,
+    icon: <ControlValveIcon width={35} height={35} />,
     href: "/control-valve-calculation/calculator",
     status: "active" as const,
   },

@@ -1,6 +1,6 @@
 "use client"
 
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
+import { useFieldArray, useFormContext, useWatch, type FieldPath } from "react-hook-form"
 import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SectionCard } from "./SectionCard"
@@ -45,8 +45,34 @@ function CaseCard({ index, onRemove, removable }: {
   onRemove: () => void
   removable: boolean
 }) {
-  const { control } = useFormContext<CalculationInput>()
+  const { control, setValue } = useFormContext<CalculationInput>()
   const mode = (useWatch({ control, name: `cases.${index}.flowMode` }) ?? "volumetric_actual") as FlowMode
+  const p2Raw = useWatch({ control, name: `cases.${index}.P2` })
+  const dpRaw = useWatch({ control, name: `cases.${index}.dP` })
+
+  const hasP2 = p2Raw != null && !Number.isNaN(p2Raw as number)
+  const hasDp = dpRaw != null && !Number.isNaN(dpRaw as number)
+
+  // Compute cross-field error locally — zodResolver doesn't reliably propagate
+  // superRefine errors to all paths in the issues array (first-path-wins dedup).
+  const p2DpError =
+    !hasP2 && !hasDp
+      ? "Provide outlet pressure (P2) or pressure drop (ΔP)."
+      : undefined
+
+  // Mutual exclusion: entering a value in one field clears the other so the
+  // user never needs to manually clear the sibling.
+  const p2Name = `cases.${index}.P2` as FieldPath<CalculationInput>
+  const dpName = `cases.${index}.dP` as FieldPath<CalculationInput>
+
+  const handleP2Change = (v: number) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!Number.isNaN(v)) setValue(dpName, NaN as any, { shouldValidate: true })
+  }
+  const handleDpChange = (v: number) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!Number.isNaN(v)) setValue(p2Name, NaN as any, { shouldValidate: true })
+  }
 
   return (
     <div className="rounded-md border p-3 space-y-3">
@@ -65,10 +91,10 @@ function CaseCard({ index, onRemove, removable }: {
       <UomInput name={`cases.${index}.flowRate`} category={flowCategory(mode)} label="Flow rate" required />
       <div className="grid grid-cols-2 gap-3">
         <UomInput name={`cases.${index}.P1`} category="pressure" label="Inlet pressure (P1)" required />
-        <UomInput name={`cases.${index}.P2`} category="pressure" label="Outlet pressure (P2)" hint="provide P2 or ΔP" />
+        <UomInput name={p2Name} category="pressure" label="Outlet pressure (P2)" hint="provide P2 or ΔP" errorOverride={p2DpError ?? ""} onValueChange={handleP2Change} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <UomInput name={`cases.${index}.dP`} category="absolutePressure" label="Pressure drop (ΔP)" hint="provide P2 or ΔP" />
+        <UomInput name={dpName} category="absolutePressure" label="Pressure drop (ΔP)" hint="provide P2 or ΔP" errorOverride={p2DpError ?? ""} onValueChange={handleDpChange} />
         <UomInput name={`cases.${index}.T1`} category="temperature" label="Inlet temperature (T1)" required />
       </div>
     </div>

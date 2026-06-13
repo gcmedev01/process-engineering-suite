@@ -285,6 +285,14 @@ const convert = configureMeasurements({
           name: { singular: "Cubic foot per hour", plural: "Cubic feet per hour" },
           to_anchor: 1 / 35.3146667,
         },
+        "ft3/s": {
+          name: { singular: "Cubic foot per second", plural: "Cubic feet per second" },
+          to_anchor: 3600 / 35.3146667,
+        },
+        GPM: {
+          name: { singular: "US gallon per minute", plural: "US gallons per minute" },
+          to_anchor: 0.22712470704,
+        },
         SCFD: {
           name: { singular: "Standard cubic foot per day", plural: "Standard cubic feet per day" },
           to_anchor: 1 / 847.552,

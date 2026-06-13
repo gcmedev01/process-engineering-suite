@@ -5,6 +5,21 @@
  */
 import { z } from "zod"
 
+// UomInput stores NaN (not undefined) when a field is cleared. RHF reverts to
+// defaultValues on undefined; NaN avoids that. These helpers preprocess NaN →
+// undefined so Zod shows "Required" / treats the field as absent.
+const nanToUndef = (v: unknown) =>
+  typeof v === "number" && Number.isNaN(v) ? undefined : v
+
+// Required numeric fields
+const reqNum = z.preprocess(nanToUndef, z.number({ message: "Required" }))
+const posNum = (msg: string) =>
+  z.preprocess(nanToUndef, z.number({ message: "Required" }).positive(msg))
+
+// Optional numeric fields — NaN (cleared) is treated as absent (undefined)
+const optNum = z.preprocess(nanToUndef, z.number().optional())
+const optPosNum = z.preprocess(nanToUndef, z.number().positive().optional())
+
 const metadataSchema = z
   .object({
     projectNumber: z.string().default(""),
@@ -25,13 +40,13 @@ const valveConfigSchema = z.object({
   unitSystem: z.enum(["US", "metric_bar", "metric_kpa"]),
   valveType: z.enum(["globe", "globe_angle", "ball", "butterfly", "rotary_plug", "special"]),
   flowCharacteristic: z.enum(["linear", "equal_percentage", "quick_opening"]),
-  valveSize: z.number().positive("Valve size must be > 0"),
-  lineSizeUpstream: z.number().positive("Upstream line size must be > 0"),
-  lineSizeDownstream: z.number().positive("Downstream line size must be > 0"),
+  valveSize: posNum("Valve size must be > 0"),
+  lineSizeUpstream: posNum("Upstream line size must be > 0"),
+  lineSizeDownstream: posNum("Downstream line size must be > 0"),
   fittings: z.enum(["none", "reducers", "expanders", "custom"]),
-  FL: z.number().gt(0).lte(1).optional(),
-  xT: z.number().gt(0).lte(1).optional(),
-  Fd: z.number().gt(0).lte(1).optional(),
+  FL: z.preprocess(nanToUndef, z.number().gt(0).lte(1).optional()),
+  xT: z.preprocess(nanToUndef, z.number().gt(0).lte(1).optional()),
+  Fd: z.preprocess(nanToUndef, z.number().gt(0).lte(1).optional()),
   flowBasis: z.enum(["Cv", "Kv"]),
   cvCurve: z.array(z.object({ travelPercent: z.number(), cv: z.number() })).optional(),
 })
@@ -46,29 +61,43 @@ const fluidPropsSchema = z.object({
     "slurry",
     "non_newtonian",
   ]),
-  Gf: z.number().positive().optional(),
-  Pv: z.number().positive().optional(),
-  Pc: z.number().positive().optional(),
-  kinematicViscosity: z.number().positive().optional(),
-  M: z.number().positive().optional(),
-  Z: z.number().positive().optional(),
-  k: z.number().gte(1).optional(),
-  upstreamDensity: z.number().positive().optional(),
+  Gf: optPosNum,
+  Pv: optPosNum,
+  Pc: optPosNum,
+  kinematicViscosity: optPosNum,
+  M: optPosNum,
+  Z: optPosNum,
+  k: z.preprocess(nanToUndef, z.number().gte(1).optional()),
+  upstreamDensity: optPosNum,
 })
 
-const operatingCaseSchema = z.object({
-  caseName: z.enum(["min", "normal", "max", "design", "custom"]),
-  label: z.string().optional(),
-  flowMode: z.enum(["volumetric_standard", "volumetric_actual", "mass"]),
-  flowRate: z.number().positive("Flow rate must be > 0"),
-  P1: z.number(),
-  P1Basis: z.enum(["absolute", "gauge"]),
-  P2: z.number().optional(),
-  P2Basis: z.enum(["absolute", "gauge"]).optional(),
-  dP: z.number().optional(),
-  T1: z.number(),
-  pAtm: z.number().positive().optional(),
-})
+const operatingCaseSchema = z
+  .object({
+    caseName: z.enum(["min", "normal", "max", "design", "custom"]),
+    label: z.string().optional(),
+    flowMode: z.enum(["volumetric_standard", "volumetric_actual", "mass"]),
+    flowRate: posNum("Flow rate must be > 0"),
+    P1: reqNum,
+    P1Basis: z.enum(["absolute", "gauge"]),
+    P2: optNum,
+    P2Basis: z.enum(["absolute", "gauge"]).optional(),
+    dP: optNum,
+    T1: reqNum,
+    pAtm: optPosNum,
+  })
+  .superRefine((c, ctx) => {
+    const hasP2 = c.P2 != null
+    const hasDp = c.dP != null
+    if (!hasP2 && !hasDp) {
+      const msg = "Provide outlet pressure (P2) or pressure drop (ΔP)."
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: msg, path: ["P2"] })
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: msg, path: ["dP"] })
+    } else if (hasP2 && hasDp) {
+      const msg = "Provide only one: clear P2 or clear ΔP."
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: msg, path: ["P2"] })
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: msg, path: ["dP"] })
+    }
+  })
 
 export const calculationInputSchema = z
   .object({
@@ -85,16 +114,6 @@ export const calculationInputSchema = z
     const isGas = fluidType === "gas" || fluidType === "vapor"
 
     data.cases.forEach((c, i) => {
-      // Exactly one of P2 / dP.
-      const hasP2 = c.P2 != null
-      const hasDp = c.dP != null
-      if (hasP2 === hasDp) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Provide exactly one of downstream pressure (P2) or pressure drop (dP).",
-          path: ["cases", i, "P2"],
-        })
-      }
       // Inlet density is needed for mass flow (any fluid) and for gas actual-volumetric
       // flow. Liquid volumetric flow is used directly and needs no density.
       const needsDensity =

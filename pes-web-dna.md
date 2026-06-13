@@ -312,8 +312,13 @@ const displayUnit = units[category]
     className="flex-1"
     type="number"
     step="any"
-    value={convertUnit(field.value, BASE_UNITS[category], displayUnit).toFixed(6)}
-    onChange={e => field.onChange(convertUnit(+e.target.value, displayUnit, BASE_UNITS[category]))}
+    value={Number.isFinite(field.value) ? convertUnit(field.value, BASE_UNITS[category], displayUnit).toFixed(6) : ""}
+    onChange={(e) => {
+      const raw = parseFloat(e.target.value)
+      // Pass NaN (not undefined) when cleared — RHF reverts the field to its
+      // defaultValues when it receives undefined, causing the input to snap back.
+      field.onChange(Number.isNaN(raw) ? NaN : convertUnit(raw, displayUnit, BASE_UNITS[category]))
+    }}
   />
   <Select value={displayUnit} onValueChange={u => setUnit(category, u)}>
     <SelectTrigger className="h-8 min-w-fit px-2 border-muted bg-muted/40 text-xs whitespace-nowrap">
@@ -455,10 +460,30 @@ return (
 ### 5.3 Validation schema (`inputSchema.ts`)
 
 ```ts
+// ── Helpers for numeric fields backed by UomInput ──────────────────────────
+//
+// UomInput calls field.onChange(NaN) when cleared (not undefined).
+// React Hook Form reverts a field to its defaultValues on undefined, causing
+// the input to snap back to the default number — NaN avoids that.
+// Zod sees NaN as an invalid type and would show "received NaN" without these
+// helpers. The preprocess converts NaN → undefined so Zod shows "Required".
+
+// Required numeric field (no range constraint):
+const reqNum = z.preprocess(
+  (v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v),
+  z.number({ message: "Required" }),
+)
+
+// Required positive numeric field:
+const posNum = (msg: string) => z.preprocess(
+  (v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v),
+  z.number({ message: "Required" }).positive(msg),
+)
+
 export const calculationInputSchema = z.object({
   // always in base units
-  diameter: z.number().positive(),
-  // NaN-tolerant optional pattern
+  diameter: posNum("Diameter must be > 0"),
+  // NaN-tolerant optional pattern (field is optional — NaN means "left blank")
   latentHeat: z.number().positive().optional().or(z.nan().transform(() => undefined)),
 }).superRefine((data, ctx) => {
   // cross-field validations here
@@ -467,7 +492,10 @@ export const calculationInputSchema = z.object({
 
 **Rules:**
 - All numeric fields validated in **base units**
-- Empty numeric inputs produce `NaN` via `valueAsNumber` — use `nanOptional*` helpers
+- `UomInput` stores `NaN` (not `undefined`) when cleared — prevents RHF defaultValues revert
+- **Required number fields**: use `reqNum` / `posNum` helpers (preprocess `NaN → undefined`, then `z.number({ message: "Required" })`)
+- **Optional number fields**: `.optional().or(z.nan().transform(() => undefined))`
+- Do not use `z.number({ invalid_type_error: ... })` — in Zod v4 the option is `message:` and does not intercept the NaN path without `z.preprocess`
 - Cross-field logic in `.superRefine()` (e.g., insulation fields required when insulated)
 
 ---

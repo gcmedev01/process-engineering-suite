@@ -28,9 +28,13 @@ interface UomInputProps {
   required?: boolean
   hint?: string
   placeholder?: string
+  /** Override the error message from fieldState — use for cross-field errors that zodResolver may not propagate to all paths. */
+  errorOverride?: string
+  /** Called with the new base-unit value (or NaN when cleared) after each change. */
+  onValueChange?: (value: number) => void
 }
 
-export function UomInput({ name, category, label, required, hint, placeholder }: UomInputProps) {
+export function UomInput({ name, category, label, required, hint, placeholder, errorOverride, onValueChange }: UomInputProps) {
   const { control } = useFormContext<CalculationInput>()
   const { units, setUnit } = useUomStore()
   const baseUnit = CV_BASE_UNITS[category]
@@ -64,7 +68,7 @@ export function UomInput({ name, category, label, required, hint, placeholder }:
             label={label}
             required={required}
             hint={hint}
-            error={fieldState.error?.message}
+            error={errorOverride ?? fieldState.error?.message}
             unit={unitSelect}
           >
             <Input
@@ -74,7 +78,9 @@ export function UomInput({ name, category, label, required, hint, placeholder }:
               value={display === "" ? "" : Number(display.toFixed(6))}
               onChange={(e) => {
                 const raw = parseFloat(e.target.value)
-                field.onChange(Number.isNaN(raw) ? undefined : convertUnit(raw, displayUnit, baseUnit))
+                const baseValue = Number.isNaN(raw) ? NaN : convertUnit(raw, displayUnit, baseUnit)
+                field.onChange(baseValue)
+                onValueChange?.(baseValue)
               }}
               onBlur={field.onBlur}
             />
