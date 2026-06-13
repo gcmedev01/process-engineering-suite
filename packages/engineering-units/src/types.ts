@@ -21,6 +21,7 @@ export const UOM_OPTIONS = {
   heatTransferCoeff:   ['W/(m²·K)', 'Btu/(h·ft²·°F)', 'kcal/(h·m²·K)'],
   density:             ['kg/m3', 'lb/ft3', 'g/cm3'],
   viscosity:           ['Pa.s', 'cP', 'mPa.s'],
+  kinematicViscosity:  ['cSt', 'mm2/s', 'm2/s'],
   volume:              ['m3', 'L', 'ft3'],
   area:                ['m2', 'ft2'],
   mass:                ['kg', 'lb'],
@@ -50,6 +51,7 @@ export const BASE_UNITS: Record<UomCategory, string> = {
   heatTransferCoeff:   'W/(m²·K)',
   density:             'kg/m3',
   viscosity:           'Pa.s',
+  kinematicViscosity:  'cSt',
   volume:              'm3',
   area:                'm2',
   mass:                'kg',
@@ -113,10 +115,14 @@ export const UOM_LABEL: Record<string, string> = {
   'kg/m3':  'kg/m³',
   'lb/ft3': 'lb/ft³',
   'g/cm3':  'g/cm³',
-  // Viscosity
+  // Viscosity (dynamic)
   'Pa.s':  'Pa·s',
   cP:      'cP',
   'mPa.s': 'mPa·s',
+  // Kinematic viscosity
+  cSt:     'cSt',
+  'mm2/s': 'mm²/s',
+  'm2/s':  'm²/s',
   // Volume
   'm3':  'm³',
   'L':   'L',

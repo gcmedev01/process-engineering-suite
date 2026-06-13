@@ -100,6 +100,27 @@ const viscosityMeasure = {
   },
 };
 
+// Kinematic viscosity — anchor is cSt (1 cSt = 1 mm²/s = 1e-6 m²/s).
+// Kept separate from the (dynamic) `viscosity` measure; the two never inter-convert.
+const kinematicViscosityMeasure = {
+  systems: {
+    metric: {
+      cSt: {
+        name: { singular: "Centistoke", plural: "Centistokes" },
+        to_anchor: 1,
+      },
+      "mm2/s": {
+        name: { singular: "Square millimeter per second", plural: "Square millimeters per second" },
+        to_anchor: 1,
+      },
+      "m2/s": {
+        name: { singular: "Square meter per second", plural: "Square meters per second" },
+        to_anchor: 1e6,
+      },
+    },
+  },
+};
+
 const massDensityMeasure = {
   systems: {
     metric: {
@@ -236,6 +257,7 @@ const convert = configureMeasurements({
   ...allMeasures,
   pressure: extendedPressure,
   viscosity: viscosityMeasure,
+  kinematicViscosity: kinematicViscosityMeasure,
   massDensity: massDensityMeasure,
   massFlowRate: massFlowRateMeasure,
   volumeFlowRate: {

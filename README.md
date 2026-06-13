@@ -17,6 +17,7 @@ Recent backend change: saved calculations now use a hybrid persistence model wit
 | `apps/vessels-calculation` | 3006 | Vessel & tank sizing |
 | `apps/pump-calculation` | 3007 | Pump sizing calculator |
 | `apps/heat-transfer-calculation` | 3008 | Heat transfer in storage tank |
+| `apps/control-valve-calculation` | 3009 | Control valve sizing calculator |
 | `apps/calculation-template` | 3900 | Template for new calculator apps |
 
 ## Backend

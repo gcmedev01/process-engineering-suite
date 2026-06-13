@@ -63,6 +63,11 @@ const pumpOrigin = createProxyTarget(
   "https://pes-pump-calculation.vercel.app",
   "http://localhost:3007",
 );
+const controlValveOrigin = createProxyTarget(
+  "CONTROL_VALVE_URL",
+  "https://pes-control-valve-calculation.vercel.app",
+  "http://localhost:3009",
+);
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -104,6 +109,10 @@ const nextConfig: NextConfig = {
       {
         source: "/pump-calculation/:path*",
         destination: `${pumpOrigin}/pump-calculation/:path*`,
+      },
+      {
+        source: "/control-valve-calculation/:path*",
+        destination: `${controlValveOrigin}/control-valve-calculation/:path*`,
       },
     ];
   },

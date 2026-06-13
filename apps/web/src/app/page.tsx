@@ -72,9 +72,10 @@ const tools = [
   {
     title: "Control Valve Sizing",
     description:
-      "CV sizing based on ISA 75.01. Includes cavitation checks.",
+      "Cv/Kv sizing for liquid and gas/vapor per ISA-75.01.01 / IEC 60534-2-1. Choked-flow, fittings, Reynolds and multi-case support.",
     icon: <TuneIcon fontSize="large" />,
-    status: "coming_soon" as const,
+    href: "/control-valve-calculation/calculator",
+    status: "active" as const,
   },
   {
     title: "Orifice Calculator",

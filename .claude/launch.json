@@ -49,6 +49,13 @@
       "runtimeArgs": ["run", "dev"],
       "cwd": "apps/pump-calculation",
       "port": 3007
+    },
+    {
+      "name": "control-valve-calculation",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "apps/control-valve-calculation",
+      "port": 3009
     }
   ]
 }
