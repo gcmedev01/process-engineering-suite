@@ -8,10 +8,10 @@ import TuneIcon from "@mui/icons-material/Tune";
 import ScienceIcon from "@mui/icons-material/Science";
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import AirIcon from '@mui/icons-material/Air';
-import BoltIcon from '@mui/icons-material/Bolt';
 import { Timeline } from "@mui/icons-material";
 import { motion, Variants } from "framer-motion";
 import { ControlValveIcon } from "../components/ControlValveIcon";
+import { PumpIcon } from "../components/PumpIcon";
 
 const tools = [
   {
@@ -58,7 +58,7 @@ const tools = [
     title: "Pump Sizing Calculator",
     description:
       "Differential head, NPSHa, shaft power and standard motor sizing per API 610. Includes orifice, control valve ΔP and minimum flow.",
-    icon: <BoltIcon fontSize="large" />,
+    icon: <PumpIcon width={35} height={35} />,
     href: "/pump-calculation/calculator",
     status: "active" as const,
   },

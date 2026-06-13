@@ -2,7 +2,7 @@
 
 import { useTheme } from "@mui/material";
 import { TopFloatingToolbar } from "@eng-suite/ui-kit";
-import BoltIcon from "@mui/icons-material/Bolt";
+import { PumpIcon } from "./PumpIcon";
 import { useColorMode } from "@/contexts/ColorModeContext";
 
 export function TopToolbar() {
@@ -14,7 +14,7 @@ export function TopToolbar() {
     <TopFloatingToolbar
       title="Pump Calculator"
       subtitle="Head · NPSHa · Motor Sizing"
-      icon={<BoltIcon fontSize="medium" />}
+      icon={<PumpIcon width={24} height={24} />}
       onToggleTheme={toggleColorMode}
       isDarkMode={isDark}
     />
