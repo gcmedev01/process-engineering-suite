@@ -18,13 +18,13 @@ import {
     FolderSpecial,
     Search,
     Shield,
-    Tune,
     ArrowRightAlt,
     Category,
     Settings,
     Close,
 } from "@mui/icons-material";
 import { useColorMode } from "@/contexts/ColorModeContext";
+import { PsvIcon } from "./PsvIcon";
 import { TopFloatingToolbar } from "@eng-suite/ui-kit";
 import { useRouter } from "next/navigation";
 import { UserMenu } from "@/components/UserMenu";
@@ -326,7 +326,7 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
         <TopFloatingToolbar
             title={title}
             subtitle={title === "PSV Sizing" ? "Pressure Safety Valve Sizing" : undefined}
-            icon={<Tune />}
+            icon={<PsvIcon width={24} height={24} />}
             actions={
                 <Box
                     sx={{

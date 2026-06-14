@@ -4,7 +4,6 @@ import { Box, Container, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { AppCard } from "../components/AppCard";
 import CalculateIcon from "@mui/icons-material/Calculate";
-import TuneIcon from "@mui/icons-material/Tune";
 import ScienceIcon from "@mui/icons-material/Science";
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import AirIcon from '@mui/icons-material/Air';
@@ -12,6 +11,9 @@ import { Timeline } from "@mui/icons-material";
 import { motion, Variants } from "framer-motion";
 import { ControlValveIcon } from "../components/ControlValveIcon";
 import { PumpIcon } from "../components/PumpIcon";
+import { VesselIcon } from "../components/VesselIcon";
+import { HeatIcon } from "../components/HeatIcon";
+import { PsvIcon } from "../components/PsvIcon";
 
 const tools = [
   {
@@ -26,7 +28,7 @@ const tools = [
     title: "Pressure Safety Valve Sizing",
     description:
       "PSV sizing based on ASME and EN standards. Includes data from vendor's catalog.",
-    icon: <TuneIcon fontSize="large" />,
+    icon: <PsvIcon width={35} height={35} />,
     href: "/psv",
     status: "active" as const,
   },
@@ -50,7 +52,7 @@ const tools = [
     title: "Vessel & Tank Sizing",
     description:
       "Volume, surface area, and mass calculations for vertical and horizontal vessels with multiple head types.",
-    icon: <CalculateIcon fontSize="large" />,
+    icon: <VesselIcon width={35} height={35} />,
     href: "/vessels-calculation/calculator",
     status: "active" as const,
   },
@@ -66,7 +68,7 @@ const tools = [
     title: "Heat Transfer Calculator",
     description:
       "Steady-state heat loss from storage tanks and pipes. Vertical tank, pipe, and horizontal tank modes with conduction, convection, and radiation analysis.",
-    icon: <ScienceIcon fontSize="large" />,
+    icon: <HeatIcon width={35} height={35} />,
     href: "/heat-transfer-calculation/calculator",
     status: "active" as const,
   },
