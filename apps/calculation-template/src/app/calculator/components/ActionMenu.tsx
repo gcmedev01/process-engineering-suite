@@ -4,6 +4,8 @@ import { type ChangeEvent, useRef, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import {
   Menu,
+  Database,
+  HardDriveDownload,
   FolderOpen,
   Save,
   RotateCcw,
@@ -19,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { buildCalculationFileEnvelope, downloadCalculationFile, readCalculationFile } from "@/lib/calculationFile"
+import { SaveCalculationButton } from "./SaveCalculationButton"
+import { LoadCalculationButton } from "./LoadCalculationButton"
 import type { CalculationInput, CalculationMetadata, RevisionRecord, CalculationResult } from "@/types"
 
 interface ActionMenuProps {
@@ -54,6 +58,8 @@ export function ActionMenu({
 }: ActionMenuProps) {
   const { getValues, reset } = useFormContext<CalculationInput>()
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [saveOpen, setSaveOpen] = useState(false)
+  const [loadOpen, setLoadOpen] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -150,6 +156,17 @@ export function ActionMenu({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSaveOpen(true)} className="gap-2">
+            <Database className="h-4 w-4" />
+            Save calculation…
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setLoadOpen(true)} className="gap-2">
+            <HardDriveDownload className="h-4 w-4" />
+            Load calculation…
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem onClick={handleSaveToFile} className="gap-2">
             <Save className="h-4 w-4" />
             Save to File…
@@ -178,6 +195,19 @@ export function ActionMenu({
       </DropdownMenu>
 
       {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+
+      <SaveCalculationButton
+        controlledOpen={saveOpen}
+        onControlledOpenChange={setSaveOpen}
+        calculationMetadata={calculationMetadata}
+        revisionHistory={revisionHistory}
+        calculationResult={calculationResult}
+      />
+      <LoadCalculationButton
+        controlledOpen={loadOpen}
+        onControlledOpenChange={setLoadOpen}
+        onCalculationLoaded={onCalculationLoaded}
+      />
     </>
   )
 }

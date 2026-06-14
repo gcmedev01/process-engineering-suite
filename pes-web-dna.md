@@ -700,29 +700,76 @@ const [open, setOpen] = useState(false)
 ## 8. Action Menu & Dialogs
 
 ### 8.1 Top-bar ActionMenu pattern
+
+All major actions live in a single dropdown. The canonical item order is:
+
+1. **Database save/load** (DB persistence) — `Database` + `HardDriveDownload` icons
+2. separator
+3. **File save/load + PDF** (local file I/O) — `Save` + `FolderOpen` + `FileDown` icons
+4. separator
+5. **Equipment actions** (app-specific, omit if not applicable) — `LinkIcon` + `Upload` icons
+6. separator
+7. **Clear** (destructive) — `RotateCcw` icon, `text-destructive`
+
 ```tsx
-// All major actions live in a single dropdown
+import { Menu, Database, HardDriveDownload, Save, FolderOpen, FileDown, RotateCcw, Loader2 } from "lucide-react"
+
 <DropdownMenu>
   <DropdownMenuTrigger asChild>
-    <Button variant="outline" size="sm" className="gap-2">
+    <Button type="button" variant="outline" size="sm" className="gap-2">
       <Menu className="h-4 w-4" />
       <span className="sr-only sm:not-sr-only">Actions</span>
     </Button>
   </DropdownMenuTrigger>
   <DropdownMenuContent align="end">
-    <DropdownMenuItem onClick={() => setLinkOpen(true)}>…</DropdownMenuItem>
+    {/* Group 1: database persistence */}
+    <DropdownMenuItem onClick={() => setSaveOpen(true)} className="gap-2">
+      <Database className="h-4 w-4" />
+      Save calculation…
+    </DropdownMenuItem>
+    <DropdownMenuItem onClick={() => setLoadOpen(true)} className="gap-2">
+      <HardDriveDownload className="h-4 w-4" />
+      Load calculation…
+    </DropdownMenuItem>
+
     <DropdownMenuSeparator />
-    <DropdownMenuItem onClick={() => setLoadOpen(true)}>…</DropdownMenuItem>
-    <DropdownMenuItem onClick={() => setSaveOpen(true)}>…</DropdownMenuItem>
+
+    {/* Group 2: file I/O + PDF */}
+    <DropdownMenuItem onClick={handleSaveToFile} className="gap-2">
+      <Save className="h-4 w-4" />
+      Save to File…
+    </DropdownMenuItem>
+    <DropdownMenuItem onClick={handleFilePick} className="gap-2">
+      <FolderOpen className="h-4 w-4" />
+      Load from File…
+    </DropdownMenuItem>
+    <DropdownMenuItem onClick={handleExportPdf} disabled={!result || pdfLoading} className="gap-2">
+      {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+      {pdfLoading ? "Generating PDF…" : "Export PDF…"}
+    </DropdownMenuItem>
+
+    {/* Group 3: equipment actions — omit for apps without equipment linking */}
     <DropdownMenuSeparator />
-    <DropdownMenuItem onClick={handleClear}>…</DropdownMenuItem>
-    <DropdownMenuItem onClick={handleExport} disabled={!result}>…</DropdownMenuItem>
+    <DropdownMenuItem onClick={() => setLinkOpen(true)} className="gap-2">
+      <LinkIcon className={`h-4 w-4 ${linkedId ? "text-green-600" : ""}`} />
+      {linkedTag ? `Linked: ${linkedTag}` : "Link equipment…"}
+    </DropdownMenuItem>
+
+    <DropdownMenuSeparator />
+
+    {/* Group 4: destructive */}
+    <DropdownMenuItem onClick={onClear} className="text-destructive focus:text-destructive">
+      <RotateCcw className="h-4 w-4 mr-2" />
+      Clear all inputs
+    </DropdownMenuItem>
   </DropdownMenuContent>
 </DropdownMenu>
 
 {/* Render dialogs in controlled mode outside the dropdown */}
 <SaveCalculationButton controlledOpen={saveOpen} onControlledOpenChange={setSaveOpen} ... />
 <LoadCalculationButton controlledOpen={loadOpen} onControlledOpenChange={setLoadOpen} ... />
+{/* Hidden file input for Load from File */}
+<input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={...} />
 ```
 
 ### 8.2 Dialog sizing

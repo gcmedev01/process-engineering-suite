@@ -1,8 +1,20 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { type ChangeEvent, useMemo, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { Menu, RotateCcw, FileDown, Loader2, LinkIcon, Upload, Check } from 'lucide-react'
+import {
+  Menu,
+  Database,
+  HardDriveDownload,
+  Save,
+  FolderOpen,
+  RotateCcw,
+  FileDown,
+  Loader2,
+  LinkIcon,
+  Upload,
+  Check,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { buildCalculationFileEnvelope, downloadCalculationFile, readCalculationFile } from '@/lib/calculationFile'
 import { SaveCalculationButton } from './SaveCalculationButton'
 import { LoadCalculationButton } from './LoadCalculationButton'
 import { EquipmentLinkButton } from './EquipmentLinkButton'
@@ -34,10 +47,7 @@ function latestRevisionValue(revisions: RevisionRecord[]): string | null {
       const rev = item.rev?.trim()
       const rawDate = item.byDate?.trim() || item.checkedDate?.trim() || item.approvedDate?.trim() || ''
       const dateValue = rawDate ? Date.parse(rawDate) : Number.NaN
-      return {
-        rev,
-        dateValue,
-      }
+      return { rev, dateValue }
     })
     .filter((item) => item.rev && Number.isFinite(item.dateValue))
     .sort((a, b) => b.dateValue - a.dateValue)
@@ -57,15 +67,17 @@ export function ActionMenu({
   linkedEquipmentTag,
   onEquipmentLinked,
 }: Props) {
-  const { getValues } = useFormContext<CalculationInput>()
+  const { getValues, reset } = useFormContext<CalculationInput>()
 
   const [saveOpen, setSaveOpen] = useState(false)
   const [loadOpen, setLoadOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [fileError, setFileError] = useState<string | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const [updated, setUpdated] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleExportPdf = async () => {
     if (!calculationResult) return
@@ -99,6 +111,39 @@ export function ActionMenu({
     }
   }
 
+  const handleSaveToFile = () => {
+    const input = getValues()
+    const fileBase = (calculationMetadata.documentNumber?.trim() || input.tag?.trim() || 'report')
+      .replace(/[^a-zA-Z0-9-_]/g, '_')
+    const latestRev = latestRevisionValue(revisionHistory)
+    const revSuffix = latestRev ? `_Rev.${latestRev.replace(/[^a-zA-Z0-9-_]/g, '_')}` : ''
+    const envelope = buildCalculationFileEnvelope({
+      name: fileBase,
+      inputs: input as unknown as Record<string, unknown>,
+      metadata: calculationMetadata,
+      revisionHistory,
+    })
+    downloadCalculationFile(envelope, `${fileBase}${revSuffix}`)
+  }
+
+  const handleFilePick = () => {
+    setFileError(null)
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      const payload = await readCalculationFile(file)
+      reset(payload.inputs as unknown as CalculationInput, { keepDefaultValues: false })
+      onCalculationLoaded(payload.metadata, payload.revisionHistory)
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : 'Could not load file.')
+    }
+  }
+
   const resolveLinkedTag = async (): Promise<string | null> => {
     if (linkedEquipmentTag) return linkedEquipmentTag
     if (!linkedEquipmentId) return null
@@ -125,13 +170,12 @@ export function ActionMenu({
 
       const details: Record<string, unknown> = {
         ...existingDetails,
-        // Keys aligned with equipment_pumps DB columns (snake_case → camelCase)
         pumpType: values.pumpType,
         ratedFlowM3h: values.flowDesign ?? null,
         ratedHeadM: calculationResult?.differentialHead ?? null,
         maxDischargePressureBarg: kpaToBarg(calculationResult?.dischargePressureKpa),
         shutoffHeadM: calculationResult?.shutoffHead ?? null,
-        npshRequiredM: null, // NPSHr is not calculated — NPSHa is the output
+        npshRequiredM: null,
         efficiencyPct: values.efficiency ?? null,
         motorPowerKw: calculationResult?.recommendedMotorKw ?? null,
         maxViscosityCp: values.viscosity ?? null,
@@ -139,7 +183,6 @@ export function ActionMenu({
         dischargePressureBarg: kpaToBarg(calculationResult?.dischargePressureKpa),
         fluidTemperatureC: values.temperature ?? null,
         fluidDensityKgm3: values.sg != null ? values.sg * 1000 : null,
-        // Extended data stored in extra
         npsha: calculationResult?.npsha ?? null,
         sg: values.sg ?? null,
         pumpCalculation: {
@@ -177,6 +220,13 @@ export function ActionMenu({
 
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(event) => { void handleFileChange(event) }}
+      />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
@@ -185,11 +235,24 @@ export function ActionMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setSaveOpen(true)}>
+          <DropdownMenuItem onClick={() => setSaveOpen(true)} className="gap-2">
+            <Database className="h-4 w-4" />
             Save calculation…
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setLoadOpen(true)}>
+          <DropdownMenuItem onClick={() => setLoadOpen(true)} className="gap-2">
+            <HardDriveDownload className="h-4 w-4" />
             Load calculation…
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem onClick={handleSaveToFile} className="gap-2">
+            <Save className="h-4 w-4" />
+            Save to File…
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleFilePick} className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Load from File…
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleExportPdf}
@@ -202,6 +265,9 @@ export function ActionMenu({
             }
             {pdfLoading ? 'Generating PDF…' : 'Export PDF…'}
           </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem onClick={() => setLinkOpen(true)} className="gap-2">
             <LinkIcon className={`h-4 w-4 ${linkedEquipmentId ? 'text-green-600' : ''}`} />
             {linkedEquipmentTag
@@ -220,7 +286,9 @@ export function ActionMenu({
               {updateLabel}
             </DropdownMenuItem>
           )}
+
           <DropdownMenuSeparator />
+
           <DropdownMenuItem onClick={onClear} className="text-destructive focus:text-destructive">
             <RotateCcw className="h-4 w-4 mr-2" />
             Clear all inputs
@@ -228,6 +296,7 @@ export function ActionMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {fileError && <p className="text-xs text-destructive">{fileError}</p>}
       {updateError && <p className="text-xs text-destructive">{updateError}</p>}
 
       <SaveCalculationButton

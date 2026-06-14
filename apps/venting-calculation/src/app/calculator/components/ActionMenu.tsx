@@ -1,9 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { type ChangeEvent, useMemo, useRef, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import {
   Menu,
+  Database,
+  HardDriveDownload,
+  Save,
+  FolderOpen,
   Link2,
   FileDown,
   Upload,
@@ -19,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { buildCalculationFileEnvelope, downloadCalculationFile, readCalculationFile } from "@/lib/calculationFile"
 import { apiClient } from "@/lib/apiClient"
 import { convertUnit } from "@eng-suite/physics"
 import { TankConfiguration, type CalculationInput, type CalculationMetadata, type RevisionRecord, type CalculationResult, type DerivedGeometry } from "@/types"
@@ -73,20 +78,17 @@ export function ActionMenu({
   calculationResult,
   derivedGeometry,
 }: ActionMenuProps) {
-  const { getValues } = useFormContext<CalculationInput>()
+  const { getValues, reset } = useFormContext<CalculationInput>()
 
-  // Dialog open states for controlled-mode components
   const [linkOpen, setLinkOpen] = useState(false)
   const [loadOpen, setLoadOpen] = useState(false)
   const [saveOpen, setSaveOpen] = useState(false)
-
-  // Export state
   const [isExporting, setIsExporting] = useState(false)
-
-  // Update equipment state
+  const [fileError, setFileError] = useState<string | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const [updated, setUpdated] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const canExport = !!calculationResult && !isExporting
   const canUpdate = !!linkedEquipmentId && !isUpdating
@@ -125,18 +127,43 @@ export function ActionMenu({
     }
   }
 
-  const resolveLinkedTankTag = async (): Promise<string | null> => {
-    if (linkedTag) {
-      return linkedTag
-    }
-    if (!linkedEquipmentId) {
-      return null
-    }
-
-    const tanks = await apiClient.engineeringObjects.list({
-      objectType: 'TANK',
-      includeInactive: true,
+  const handleSaveToFile = () => {
+    const input = getValues()
+    const fileBase = (calculationMetadata.documentNumber || input.tankNumber || "venting-calc")
+      .replace(/[^a-zA-Z0-9-_]/g, "_")
+    const latestRev = latestRevisionValue(revisionHistory)
+    const revSuffix = latestRev ? `_Rev.${latestRev.replace(/[^a-zA-Z0-9-_]/g, "_")}` : ""
+    const envelope = buildCalculationFileEnvelope({
+      name: fileBase,
+      inputs: input as unknown as Record<string, unknown>,
+      metadata: calculationMetadata,
+      revisionHistory,
     })
+    downloadCalculationFile(envelope, `${fileBase}${revSuffix}`)
+  }
+
+  const handleFilePick = () => {
+    setFileError(null)
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+    try {
+      const payload = await readCalculationFile(file)
+      reset(payload.inputs as unknown as CalculationInput, { keepDefaultValues: false })
+      onCalculationLoaded(payload.metadata, payload.revisionHistory)
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : "Could not load file.")
+    }
+  }
+
+  const resolveLinkedTankTag = async (): Promise<string | null> => {
+    if (linkedTag) return linkedTag
+    if (!linkedEquipmentId) return null
+    const tanks = await apiClient.engineeringObjects.list({ objectType: 'TANK', includeInactive: true })
     const found = tanks.find((item) => (item as { id?: string | null }).id === linkedEquipmentId)
     return found?.tag ?? null
   }
@@ -148,9 +175,7 @@ export function ActionMenu({
     setIsUpdating(true)
     try {
       const resolvedTag = await resolveLinkedTankTag()
-      if (!resolvedTag) {
-        throw new Error('Linked engineering object tag could not be resolved')
-      }
+      if (!resolvedTag) throw new Error('Linked engineering object tag could not be resolved')
 
       const current = await apiClient.engineeringObjects.get(resolvedTag)
       if (current.object_type !== 'TANK') throw new Error('Linked object is not a tank')
@@ -238,7 +263,6 @@ export function ActionMenu({
     }
   }
 
-  // Build the Update Equipment label based on state
   const updateLabel = useMemo(() => {
     if (isUpdating) return "Updating..."
     if (updated) return "Updated"
@@ -249,6 +273,13 @@ export function ActionMenu({
 
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(event) => { void handleFileChange(event) }}
+      />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button type="button" variant="outline" size="sm" className="gap-2">
@@ -258,30 +289,45 @@ export function ActionMenu({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setSaveOpen(true)}>
+          <DropdownMenuItem onClick={() => setSaveOpen(true)} className="gap-2">
+            <Database className="h-4 w-4" />
             Save calculation…
           </DropdownMenuItem>
-
-          <DropdownMenuItem onClick={() => setLoadOpen(true)}>
+          <DropdownMenuItem onClick={() => setLoadOpen(true)} className="gap-2">
+            <HardDriveDownload className="h-4 w-4" />
             Load calculation…
           </DropdownMenuItem>
 
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem onClick={handleSaveToFile} className="gap-2">
+            <Save className="h-4 w-4" />
+            Save to File…
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleFilePick} className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Load from File…
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExport} disabled={!canExport} className="gap-2">
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown className="h-4 w-4" />
-            )}
+            {isExporting
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <FileDown className="h-4 w-4" />
+            }
             {isExporting ? "Generating PDF…" : "Export PDF…"}
           </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={() => setLinkOpen(true)} className="gap-2">
             <Link2 className={`h-4 w-4 ${linkedEquipmentId ? "text-green-600" : ""}`} />
             {linkedTag ? `Linked: ${linkedTag}` : "Link Tank…"}
           </DropdownMenuItem>
-
           {linkedEquipmentId && (
-            <DropdownMenuItem onClick={() => { void handleUpdateEquipment() }} className="gap-2" disabled={!canUpdate}>
+            <DropdownMenuItem
+              onClick={() => { void handleUpdateEquipment() }}
+              className="gap-2"
+              disabled={!canUpdate}
+            >
               <UpdateIcon className={`h-4 w-4 ${isUpdating ? "animate-spin" : ""}`} />
               {updateLabel}
             </DropdownMenuItem>
@@ -296,12 +342,9 @@ export function ActionMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Update equipment error toast */}
-      {updateError && (
-        <p className="text-xs text-destructive">{updateError}</p>
-      )}
+      {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+      {updateError && <p className="text-xs text-destructive">{updateError}</p>}
 
-      {/* Dialog-based components rendered outside the dropdown in controlled mode */}
       <LinkTankButton
         onTankLinked={onTankLinked}
         linkedTag={linkedTag}
@@ -309,14 +352,12 @@ export function ActionMenu({
         controlledOpen={linkOpen}
         onControlledOpenChange={setLinkOpen}
       />
-
       <LoadCalculationButton
         onTankLinked={onTankLinked}
         onCalculationLoaded={onCalculationLoaded}
         controlledOpen={loadOpen}
         onControlledOpenChange={setLoadOpen}
       />
-
       <SaveCalculationButton
         equipmentId={linkedEquipmentId}
         calculationMetadata={calculationMetadata}
