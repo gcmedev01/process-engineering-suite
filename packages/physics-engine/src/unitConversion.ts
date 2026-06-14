@@ -1,7 +1,6 @@
 import configureMeasurements from "convert-units";
 import pressure from "convert-units/definitions/pressure";
 import allMeasures from "convert-units/definitions/all";
-import { i } from "framer-motion/client";
 
 export type UnitFamily = string;
 

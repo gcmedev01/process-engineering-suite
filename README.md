@@ -29,29 +29,46 @@ Recent backend change: saved calculations now use a hybrid persistence model wit
 
 ## Quick Start
 
-### Docker (Recommended)
-
-```bash
-# 1. Set PostgreSQL password
-cd infra
-echo "POSTGRES_PASSWORD=change-me" > .env
-
-# 2. Start all services
-docker compose up -d --build
-
-# 3. Open in browser
-open http://localhost:3000      # Dashboard
-open http://localhost:8000/docs # API docs
-```
-
 ### Local Development (Bun)
 
 ```bash
-# Install dependencies
 bun install
-
-# Run all apps
 bun run dev
+```
+
+### Docker — dev stack (hot reload, local DB)
+
+```bash
+cd infra
+echo "POSTGRES_PASSWORD=change-me" > .env
+docker compose up -d --build
+open http://localhost:3000       # Dashboard
+open http://localhost:8000/docs  # API docs
+```
+
+### Docker — AWS production images (local smoke test)
+
+Builds the same images that ship to ECS/Fargate and runs them against a local Postgres:
+
+```bash
+# 1. Build all five production images (from repo root)
+API_URL=http://localhost:8000 \
+  docker compose -f infra/docker-compose.aws-local.yml build
+
+# 2. Create env file for secrets
+cp infra/.env.aws-local.example infra/.env.aws-local
+# edit infra/.env.aws-local — set POSTGRES_PASSWORD etc.
+
+# 3. Start the stack
+docker compose -f infra/docker-compose.aws-local.yml \
+  --env-file infra/.env.aws-local up -d
+
+# 4. Open in browser
+open http://localhost:3000                    # Web dashboard
+open http://localhost:3003/psv               # PSV sizing
+open http://localhost:3002/network-editor    # Network editor
+open http://localhost:3004/design-agents/    # Design agents (Vite/Nginx)
+open http://localhost:8000/docs              # API docs
 ```
 
 ## Common Commands
@@ -110,6 +127,10 @@ packages/       # Shared libraries
 └── ...
 
 infra/          # Docker & deployment config
+├── docker-compose.yml            # Dev stack (hot-reload)
+├── docker-compose.aws-local.yml  # AWS image smoke-test
+├── docker/                       # Dockerfiles (api, frontend, vite/nginx)
+└── aws/                          # ECS task definitions + build-and-push script
 docs/           # Architecture documentation
 ```
 
@@ -126,4 +147,4 @@ docs/           # Architecture documentation
 - **Frontend**: Next.js, Vite, TypeScript, Tailwind, Bun, Material UI
 - **Backend**: Python, FastAPI, SQLAlchemy, Alembic, LangGraph
 - **Database**: PostgreSQL
-- **Deployment**: Docker, Vercel
+- **Deployment**: Docker, Vercel, AWS ECS/Fargate

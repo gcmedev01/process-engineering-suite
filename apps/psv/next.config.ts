@@ -1,3 +1,4 @@
+import path from "path";
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
@@ -9,6 +10,10 @@ const apiProxyTarget = stripTrailingSlash(
 );
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  turbopack: {
+    root: path.resolve(__dirname, "../.."),
+  },
   transpilePackages: [
     "@eng-suite/physics",
     "@eng-suite/ui-kit",

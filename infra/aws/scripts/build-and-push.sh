@@ -10,6 +10,12 @@ AWS_ACCOUNT_ID="${2:-$(aws sts get-caller-identity --query Account --output text
 ECR_BASE="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 PROJECT_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
+# Build-time API target for the frontends. Next.js inlines NEXT_PUBLIC_* and
+# resolves rewrite proxy targets at BUILD time, so this must be set here, not
+# in the ECS task definition. Override via the API_URL env var, e.g.
+#   API_URL=https://api.example.com ./build-and-push.sh
+API_URL="${API_URL:-}"
+
 echo "=========================================="
 echo "Building and Pushing Docker Images to ECR"
 echo "=========================================="
@@ -59,6 +65,8 @@ echo "Building Web (Next.js)"
 echo "=========================================="
 docker build \
     --build-arg APP_NAME=web \
+    --build-arg NEXT_PUBLIC_API_URL="${API_URL}" \
+    --build-arg API_PROXY_TARGET="${API_URL}" \
     -f infra/docker/Dockerfile.frontend \
     -t "${ECR_BASE}/process-engineering/web:latest" \
     .
@@ -72,6 +80,9 @@ echo "Building Network Editor (Next.js)"
 echo "=========================================="
 docker build \
     --build-arg APP_NAME=network-editor \
+    --build-arg BASE_PATH=/network-editor \
+    --build-arg NEXT_PUBLIC_API_URL="${API_URL}" \
+    --build-arg API_PROXY_TARGET="${API_URL}" \
     -f infra/docker/Dockerfile.frontend \
     -t "${ECR_BASE}/process-engineering/network-editor:latest" \
     .
@@ -85,6 +96,9 @@ echo "Building PSV (Next.js)"
 echo "=========================================="
 docker build \
     --build-arg APP_NAME=psv \
+    --build-arg BASE_PATH=/psv \
+    --build-arg NEXT_PUBLIC_API_URL="${API_URL}" \
+    --build-arg API_PROXY_TARGET="${API_URL}" \
     -f infra/docker/Dockerfile.frontend \
     -t "${ECR_BASE}/process-engineering/psv:latest" \
     .

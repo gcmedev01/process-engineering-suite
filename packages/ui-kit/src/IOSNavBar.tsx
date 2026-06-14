@@ -1,4 +1,4 @@
-import { Box, Typography, IconButton, useTheme, Stack } from "@mui/material";
+import { Box, Typography, IconButton, useTheme } from "@mui/material";
 import { ArrowBackIosNew, Close } from "@mui/icons-material";
 import { ReactNode } from "react";
 
@@ -11,7 +11,7 @@ type Props = {
     titleOpacity?: number;
 };
 
-export function IOSNavBar({ title, onBack, onClose, backLabel = "Back", rightAction, titleOpacity = 1 }: Props) {
+export function IOSNavBar({ title, onBack, onClose, rightAction, titleOpacity = 1 }: Props) {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
 

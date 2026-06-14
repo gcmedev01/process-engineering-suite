@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { Check } from "@mui/icons-material";
 import { IOSTextField } from "./IOSTextField";
 import { IOSListGroup } from "./IOSListGroup";
@@ -54,7 +54,7 @@ export function IOSQuantityPage({
     const [warning, setWarning] = useState<string | null>(null);
     const [isUnitSelectionActive, setIsUnitSelectionActive] = useState(false);
     const [highlightedUnitIndex, setHighlightedUnitIndex] = useState(() => Math.max(0, units.indexOf(unit)));
-    const [isInputFocused, setIsInputFocused] = useState(false);
+    const [_isInputFocused, setIsInputFocused] = useState(false);
 
     // Refs to track latest values for cleanup/commit
     const valueRef = useRef<number | undefined>(typeof value === 'number' ? value : undefined);

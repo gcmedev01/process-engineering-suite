@@ -91,8 +91,69 @@ onBack={() => navigator.pop()}  // or nav.pop() in render functions
 3.  Run `bun run build` to ensure no TypeScript or build errors.
 4.  Submit a Pull Request.
 
+## AWS / Docker Production Images
+
+Five images ship to AWS ECS/Fargate:
+
+| Image | Dockerfile | ECS task definition |
+|-------|-----------|-------------------|
+| `process-engineering/api` | `infra/docker/Dockerfile.api` | `infra/aws/task-definitions/api.json` |
+| `process-engineering/web` | `infra/docker/Dockerfile.frontend` (`APP_NAME=web`) | `infra/aws/task-definitions/web.json` |
+| `process-engineering/psv` | `infra/docker/Dockerfile.frontend` (`APP_NAME=psv`) | `infra/aws/task-definitions/psv.json` |
+| `process-engineering/network-editor` | `infra/docker/Dockerfile.frontend` (`APP_NAME=network-editor`) | `infra/aws/task-definitions/network-editor.json` |
+| `process-engineering/design-agents` | `infra/docker/Dockerfile.vite` | `infra/aws/task-definitions/design-agents.json` |
+
+### Building images locally
+
+```bash
+# API
+docker build -f infra/docker/Dockerfile.api -t pes-api:test .
+
+# Next.js frontends — pass APP_NAME and optionally BASE_PATH and API_URL
+docker build --build-arg APP_NAME=psv --build-arg BASE_PATH=/psv \
+  -f infra/docker/Dockerfile.frontend -t pes-psv:test .
+
+# Vite/Nginx (design-agents)
+docker build -f infra/docker/Dockerfile.vite -t pes-design-agents:test .
+```
+
+**Important:** `NEXT_PUBLIC_API_URL` is baked into the Next.js bundle at build time.
+Pass the real API URL as `API_URL=https://api.your-domain.com` when calling
+`build-and-push.sh`, or as `--build-arg` when building individually.
+
+### Smoke-testing images locally
+
+```bash
+cp infra/.env.aws-local.example infra/.env.aws-local  # set POSTGRES_PASSWORD
+docker compose -f infra/docker-compose.aws-local.yml \
+  --env-file infra/.env.aws-local up -d
+# web → http://localhost:3000
+# api → http://localhost:8000/docs
+# psv → http://localhost:3003/psv
+# network-editor → http://localhost:3002/network-editor
+# design-agents → http://localhost:3004/design-agents/
+```
+
+### Building and pushing to ECR
+
+```bash
+API_URL=https://api.your-domain.com \
+  ./infra/aws/scripts/build-and-push.sh [REGION] [ACCOUNT_ID]
+```
+
+After pushing, substitute `ACCOUNT_ID` and `REGION` placeholders in each
+`infra/aws/task-definitions/*.json` before registering with ECS.
+
+### Monorepo build notes
+
+- **Bun lockfile** is `bun.lock` (text format, not the old binary `bun.lockb`).
+- **Next.js `output: "standalone"`** must be set in each deployed app's `next.config.ts`.
+- **`turbopack.root`** must point to the repo root in each deployed Next.js app — Next.js 16 + Turbopack won't find hoisted `node_modules` without it.
+- **Vite apps** (`design-agents`) must pre-build `./packages/*` before `vite build` because Vite/Rollup resolves package entry points from `dist/`, not raw TypeScript.
+- **Alembic migrations** run automatically at API container start; `script_location = alembic` in `alembic.ini` is CWD-relative, so the CMD changes into `services/api/` first.
+
 ## Troubleshooting
 
 - **Hydration Errors**: If you see hydration mismatch errors, check for browser extensions injecting code. We use `suppressHydrationWarning` in `layout.tsx` to mitigate this.
 - **Type Errors**: If you encounter type mismatches between packages, ensure you have rebuilt the packages or that the types are correctly exported and imported.
-- **Docker Issues**: Use `infra/docker-compose.yml` for running services locally
+- **Docker Issues**: Use `infra/docker-compose.yml` for dev hot-reload; use `infra/docker-compose.aws-local.yml` to test production images.

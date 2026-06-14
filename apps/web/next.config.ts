@@ -1,3 +1,4 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const stripTrailingSlash = (url: string) => url.replace(/\/+$/, "");
@@ -71,6 +72,10 @@ const controlValveOrigin = createProxyTarget(
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: "standalone",
+  turbopack: {
+    root: path.resolve(__dirname, "../.."),
+  },
   transpilePackages: ["@eng-suite/physics", "@eng-suite/ui-kit"],
 
 

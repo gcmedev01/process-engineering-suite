@@ -484,7 +484,7 @@ export function getInnerDiameterMm(nps: number | undefined, schedule: string | P
     }
 
     // Fall back to nearest NPS
-    let best = entries[0];
+    let best = entries[0]!;
     let bestDiff = Math.abs(best.nps - nps);
     for (let i = 1; i < entries.length; i += 1) {
         const entry = entries[i];

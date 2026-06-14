@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { Check } from "@mui/icons-material";
 import { IOSListGroup } from "./IOSListGroup";
 import { IOSListItem } from "./IOSListItem";

@@ -1,7 +1,10 @@
 # Multi-stage build for Next.js frontends (AWS ECS/Fargate)
 # Supports building: web, docs, network-editor, psv,
 #   venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation
-# Usage: docker build --build-arg APP_NAME=web -f Dockerfile.frontend .
+# Usage: docker build --build-arg APP_NAME=psv --build-arg BASE_PATH=/psv -f Dockerfile.frontend .
+#
+# NEXT_PUBLIC_* and proxy targets are baked at BUILD time (Next.js inlines them),
+# so pass them as --build-arg, not as ECS task environment variables.
 
 # ============================================================================
 # Stage 1: Dependencies
@@ -10,10 +13,11 @@ FROM oven/bun:1 AS deps
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lockb ./
+# Copy everything the workspace resolver needs. All workspace package.json files
+# (apps/* and packages/*) must be present for `bun install --frozen-lockfile`.
+COPY package.json bun.lock turbo.json ./
 COPY packages ./packages
-COPY turbo.json ./
+COPY apps ./apps
 
 # Install dependencies
 RUN bun install --frozen-lockfile
@@ -29,17 +33,23 @@ WORKDIR /app
 ARG APP_NAME
 ENV APP_NAME=${APP_NAME}
 
-# Copy dependencies from deps stage
+# Build-time API/proxy targets (Next.js inlines these at build time)
+ARG NEXT_PUBLIC_API_URL
+ARG API_PROXY_TARGET
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV API_PROXY_TARGET=${API_PROXY_TARGET}
+
+# Copy installed dependencies and full workspace sources from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
-
-# Copy application code
-COPY apps/${APP_NAME} ./apps/${APP_NAME}
-COPY turbo.json ./
-COPY package.json ./
+COPY --from=deps /app/apps ./apps
+COPY turbo.json package.json ./
 
 # Build the specific app
 RUN bun run build --filter=${APP_NAME}
+
+# Ensure public dir exists so the runner stage COPY always succeeds
+RUN mkdir -p /app/apps/${APP_NAME}/public
 
 # ============================================================================
 # Stage 3: Production - Standalone Next.js
@@ -56,6 +66,11 @@ RUN addgroup --system --gid 1001 nodejs && \
 ARG APP_NAME
 ENV APP_NAME=${APP_NAME}
 
+# basePath the app is served under (e.g. /psv). Empty for the root web app.
+# Used by the health check below.
+ARG BASE_PATH=""
+ENV BASE_PATH=${BASE_PATH}
+
 COPY --from=builder --chown=nextjs:nodejs /app/apps/${APP_NAME}/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/${APP_NAME}/.next/static ./apps/${APP_NAME}/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/${APP_NAME}/public ./apps/${APP_NAME}/public
@@ -67,10 +82,13 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV PORT=3000
+# Bind to all interfaces so health checks over localhost work inside the container
+ENV HOSTNAME=0.0.0.0
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
+# Health check — probe the app root under its basePath (returns 200).
+# Hitting /api/health would be intercepted by the app's API proxy rewrite.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000'+(process.env.BASE_PATH||''), (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))"
 
 # Start the app (use shell form for variable expansion)
 CMD node apps/$APP_NAME/server.js

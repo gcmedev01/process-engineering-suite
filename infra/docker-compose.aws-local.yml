@@ -1,0 +1,84 @@
+# Local smoke-test compose for the AWS production images.
+#
+# Starts the five ECR-destined containers plus a local PostgreSQL instance
+# so you can verify the images before pushing to AWS.
+#
+# Usage:
+#   1. Copy .env.aws-local.example to .env.aws-local and fill in secrets.
+#   2. Build all images first (from repo root):
+#        API_URL=http://localhost:8000 \
+#          docker compose -f infra/docker-compose.aws-local.yml build
+#      or use the pre-built test images:
+#        docker tag pes-api:test <account>.dkr.ecr...  (etc.)
+#   3. Start:
+#        docker compose -f infra/docker-compose.aws-local.yml --env-file infra/.env.aws-local up -d
+#   4. Open http://localhost:3000  (web dashboard)
+#      Open http://localhost:8000/docs  (API)
+#      Open http://localhost:3003/psv   (PSV)
+#      Open http://localhost:3002/network-editor
+#      Open http://localhost:3004/design-agents/
+
+services:
+  # ── PostgreSQL (local stand-in for RDS) ──────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: engsuite
+    volumes:
+      - aws_local_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── FastAPI backend ───────────────────────────────────────────────────────
+  api:
+    image: pes-api:test
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@postgres:5432/engsuite
+      SECRET_KEY: ${SECRET_KEY:-local-dev-secret-change-me}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3003,http://localhost:3002}
+      DEPLOYMENT_ENV: aws
+      LOG_LEVEL: INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # migrations run automatically at container start (see Dockerfile.api CMD)
+
+  # ── Web dashboard (root app, no basePath) ────────────────────────────────
+  web:
+    image: pes-web:test
+    ports:
+      - "3000:3000"
+    # NEXT_PUBLIC_API_URL is baked at build time; no env needed at runtime.
+    # Sub-app URLs are also baked; override here if you remapped ports.
+
+  # ── PSV sizing ───────────────────────────────────────────────────────────
+  psv:
+    image: pes-psv:test
+    ports:
+      - "3003:3000"
+    # Access at http://localhost:3003/psv
+
+  # ── Network editor ───────────────────────────────────────────────────────
+  network-editor:
+    image: pes-network-editor:test
+    ports:
+      - "3002:3000"
+    # Access at http://localhost:3002/network-editor
+
+  # ── Design agents (Vite/Nginx) ───────────────────────────────────────────
+  design-agents:
+    image: pes-design-agents:test
+    ports:
+      - "3004:80"
+    # Access at http://localhost:3004/design-agents/
+
+volumes:
+  aws_local_pgdata:
