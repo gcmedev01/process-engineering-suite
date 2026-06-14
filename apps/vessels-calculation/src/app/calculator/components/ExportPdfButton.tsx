@@ -40,12 +40,12 @@ export function ExportPdfButton({ input, result, metadata, revisions }: Props) {
     if (!input || !result) return
     setLoading(true)
     try {
-      const [{ pdf }, { VesselReport }] = await Promise.all([
+      const [{ pdf }, { CalculationReport }] = await Promise.all([
         import("@react-pdf/renderer"),
-        import("../pdf/VesselReport"),
+        import("../pdf/CalculationReport"),
       ])
       const blob = await pdf(
-        <VesselReport
+        <CalculationReport
           input={input}
           result={result}
           metadata={metadata}

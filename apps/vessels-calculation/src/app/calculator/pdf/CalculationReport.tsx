@@ -45,7 +45,7 @@ import {
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
-export interface VesselReportProps {
+export interface CalculationReportProps {
   input: CalculationInput
   result: CalculationResult
   metadata: CalculationMetadata
@@ -866,7 +866,7 @@ function SchematicFigure({
 
 // ─── Main document ────────────────────────────────────────────────────────────
 
-export function VesselReport({ input, result, metadata, revisions, units }: VesselReportProps) {
+export function CalculationReport({ input, result, metadata, revisions, units }: CalculationReportProps) {
   const vol  = units.volume
   const area = units.area
   const mass = units.mass

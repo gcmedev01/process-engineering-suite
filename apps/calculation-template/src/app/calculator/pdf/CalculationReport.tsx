@@ -46,7 +46,7 @@ const GUIDE     = '#374151'
 const MUTED     = '#6b7280'
 const BW        = 0.5   // light row border
 const HB        = 1     // heavy section border
-const DOCUMENT_CODE = 'CA-PR-1050-0101'
+const DOCUMENT_CODE = 'CA-PR-XXXX-XXXX'
 const DISCLAIMER =
   'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
 

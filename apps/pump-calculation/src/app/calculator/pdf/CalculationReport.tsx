@@ -1022,7 +1022,7 @@ interface Props {
   revisions: RevisionRecord[]
 }
 
-export function PumpReport({ input, result, metadata, revisions }: Props) {
+export function CalculationReport({ input, result, metadata, revisions }: Props) {
   const isPd = input.pumpType === PumpType.POSITIVE_DISPLACEMENT
   const suctionStaticKpa = input.sg * G * input.suctionElevation
   const dischargeStaticKpa = input.sg * G * input.dischargeElevation

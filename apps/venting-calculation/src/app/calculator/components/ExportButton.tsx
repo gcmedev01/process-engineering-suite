@@ -48,7 +48,7 @@ export function ExportButton({
       // Dynamic import keeps the heavy PDF library out of the initial bundle
       const [{ pdf }, { CalculationReport }] = await Promise.all([
         import("@react-pdf/renderer"),
-        import("@/lib/pdf/CalculationReport"),
+        import("../pdf/CalculationReport"),
       ])
 
       const input = getValues()

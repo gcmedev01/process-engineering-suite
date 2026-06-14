@@ -92,13 +92,13 @@ export function ActionMenu({
     if (!calculationResult) return;
     setPdfLoading(true);
     try {
-      const [{ pdf }, { VesselReport }] = await Promise.all([
+      const [{ pdf }, { CalculationReport }] = await Promise.all([
         import('@react-pdf/renderer'),
-        import('../pdf/VesselReport'),
+        import('../pdf/CalculationReport'),
       ]);
       const input = getValues();
       const blob = await pdf(
-        <VesselReport
+        <CalculationReport
           input={input}
           result={calculationResult}
           metadata={calculationMetadata}

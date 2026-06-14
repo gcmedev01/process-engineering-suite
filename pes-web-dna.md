@@ -901,7 +901,7 @@ src/app/calculator/
 ```ts
 const NAVY = '#1f3864'
 const VALUE_BG = '#dbeafe'
-const DOCUMENT_CODE = 'CA-PR-1050-0101'
+const DOCUMENT_CODE = 'CA-PR-XXXX-XXXX'
 const DISCLAIMER =
   'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
 
@@ -997,7 +997,7 @@ bottomReportBar: {
 - PDF sketch source: reuse the same schematic model as the web SVG and match the web renderer as closely as React PDF supports
 - Disclaimer text color: `#dc2626` red
 - Section header: navy blue (`NAVY`) with white bold text — not light gray
-- `DOCUMENT_CODE = 'CA-PR-1050-0101'` — GCME form number, shown in the top code and bottom navy bar
+- `DOCUMENT_CODE = 'CA-PR-XXXX-XXXX'` — GCME form number, shown in the top code and bottom navy bar, code will provided by user or set to 0000-0000.
 - Footer: do not add a separate floating footer; the bottom title/revision block and navy ID bar are the footer
 
 **Testing expectations:**

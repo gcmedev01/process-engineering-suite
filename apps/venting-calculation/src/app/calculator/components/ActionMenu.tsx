@@ -99,7 +99,7 @@ export function ActionMenu({
     try {
       const [{ pdf }, { CalculationReport }] = await Promise.all([
         import("@react-pdf/renderer"),
-        import("@/lib/pdf/CalculationReport"),
+        import("../pdf/CalculationReport"),
       ])
       const input = getValues()
       const blob = await pdf(
