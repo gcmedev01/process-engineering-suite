@@ -16,12 +16,12 @@ This application enables engineers to:
 
 ```bash
 # From monorepo root
-npm install
-npm run dev
+bun install
+bun run dev
 
 # Or run Network Editor directly
 cd apps/network-editor
-npm run dev
+bun run dev
 ```
 
 The app runs on `http://localhost:3002` and is accessible via the dashboard at `http://localhost:3000/network-editor`.

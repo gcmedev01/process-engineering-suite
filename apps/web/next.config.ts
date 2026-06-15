@@ -121,6 +121,10 @@ const nextConfig: NextConfig = {
         destination: `${pumpOrigin}/pump-calculation/:path*`,
       },
       {
+        source: "/heat-transfer-calculation/:path*",
+        destination: `${heatTransferOrigin}/heat-transfer-calculation/:path*`,
+      },
+      {
         source: "/control-valve-calculation/:path*",
         destination: `${controlValveOrigin}/control-valve-calculation/:path*`,
       },

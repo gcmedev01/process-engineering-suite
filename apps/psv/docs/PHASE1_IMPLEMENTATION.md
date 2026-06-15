@@ -283,8 +283,8 @@ interface ScenarioTemplate {
 
 **Dependencies:**
 ```bash
-npm install jspdf jspdf-autotable xlsx
-npm install --save-dev @types/jspdf
+bun add jspdf jspdf-autotable xlsx
+bun add -d @types/jspdf
 ```
 
 **Implementation Steps:**
@@ -445,21 +445,21 @@ Phase 1 is complete when:
 
 **Required Software:**
 - Node.js 18+
-- npm 9+
+- Bun
 - Git
 
 **Setup:**
 ```bash
 cd /Users/maetee/Code/process-engineering-suite
-npm install
+bun install
 cd apps/psv
-npm run dev
+bun run dev
 ```
 
 **Testing:**
 ```bash
-npm run test
-npm run lint
+bun run test
+bun run lint
 npm run build
 ```
 

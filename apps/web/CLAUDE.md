@@ -28,10 +28,13 @@ From repo root: `bun turbo run dev --filter=web`
 |------|-----|------|
 | `/network-editor/*` | network-editor | 3002 |
 | `/psv/*` | psv | 3003 |
+| `/design-agents/*` | design-agents | 3004 |
 | `/venting-calculation/*` | venting-calculation | 3005 |
 | `/vessels-calculation/*` | vessels-calculation | 3006 |
 | `/pump-calculation/*` | pump-calculation | 3007 |
-| `/docs/*` | docs | (docs app) |
+| `/heat-transfer-calculation/*` | heat-transfer-calculation | 3008 |
+| `/control-valve-calculation/*` | control-valve-calculation | 3009 |
+| `/docs/*` | docs | 3001 |
 
 All other apps must be running for their routes to work under `web`.
 

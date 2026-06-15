@@ -1,7 +1,7 @@
 # Plan: Rebuild Process Design Agents
 
 ## 1. Project Initialization (Frontend)
-- [ ] **Scaffold Vite App:** Initialize a new React + TypeScript app using Vite in `services/design-agents`.
+- [ ] **Scaffold Vite App:** Initialize a new React + TypeScript app using Vite in `apps/design-agents`.
 - [ ] **Turborepo Config:** Update `turbo.json` and root `package.json` to include the new app.
 - [ ] **Dependencies:** Install necessary packages:
     - `react`, `react-dom`

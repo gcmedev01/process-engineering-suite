@@ -15,18 +15,24 @@ The dashboard serves as the central hub for the Process Engineering Suite, offer
 
 ```bash
 # From monorepo root
-npm install
-npm run dev
+bun install
+bun run dev
 
 # Or run dashboard directly
 cd apps/web
-npm run dev
+bun run dev
 ```
 
 The dashboard runs on `http://localhost:3000` and provides navigation to:
 
 - PSV Sizing: http://localhost:3000/psv
 - Network Editor: http://localhost:3000/network-editor
+- Design Agents: http://localhost:3000/design-agents/
+- Venting Calculation: http://localhost:3000/venting-calculation
+- Vessels Calculation: http://localhost:3000/vessels-calculation
+- Pump Calculation: http://localhost:3000/pump-calculation
+- Heat Transfer Calculation: http://localhost:3000/heat-transfer-calculation
+- Control Valve Calculation: http://localhost:3000/control-valve-calculation
 - API Documentation: http://localhost:3000/api-docs
 
 ## Tech Stack
@@ -119,6 +125,12 @@ const themeOptions = {
 / (Dashboard Home)
 ├── /psv (PSV Sizing Application)
 ├── /network-editor (Network Editor)
+├── /design-agents (Design Agents)
+├── /venting-calculation (Venting Calculation)
+├── /vessels-calculation (Vessels Calculation)
+├── /pump-calculation (Pump Calculation)
+├── /heat-transfer-calculation (Heat Transfer Calculation)
+├── /control-valve-calculation (Control Valve Calculation)
 └── /api-docs (API Documentation)
 ```
 

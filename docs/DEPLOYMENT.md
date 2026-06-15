@@ -67,14 +67,15 @@ curl http://localhost:8000/health
 
 # Open frontends in browser
 open http://localhost:3000  # Dashboard
-open http://localhost:3002  # Network Editor
-open http://localhost:3003  # PSV
-open http://localhost:3004  # Design Agents
-open http://localhost:3005  # Venting Calculation
-open http://localhost:3006  # Vessels Calculation
-open http://localhost:3007  # Pump Calculation
-open http://localhost:3008  # Heat Transfer Calculation
-open http://localhost:3009  # Control Valve Sizing
+open http://localhost:3001/docs                       # Docs
+open http://localhost:3002/network-editor             # Network Editor
+open http://localhost:3003/psv                        # PSV
+open http://localhost:3004/design-agents/             # Design Agents
+open http://localhost:3005/venting-calculation        # Venting Calculation
+open http://localhost:3006/vessels-calculation        # Vessels Calculation
+open http://localhost:3007/pump-calculation           # Pump Calculation
+open http://localhost:3008/heat-transfer-calculation  # Heat Transfer Calculation
+open http://localhost:3009/control-valve-calculation  # Control Valve Sizing
 ```
 
 ### Development Workflow

@@ -176,7 +176,7 @@ pytest -k "pattern"       # Run tests matching pattern
 
 ## Repository Structure
 
-- `apps/`: Frontend applications (web, docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, calculation-template)
+- `apps/`: Frontend applications (web, docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, control-valve-calculation, calculation-template)
 - `packages/`: Shared packages (api-client, api-std, engineering-units, eslint-config, physics-engine, types, typescript-config, ui, ui-kit, unit-converter). Note: `unit-converter` is a standalone Python package (currently unused); the rest are JS/TS workspaces.
 - `infra/`: Docker and infrastructure configs
 - `services/`: Backend services (api, calc-engine)
@@ -315,7 +315,7 @@ process-engineering-suite/
 │  ├─ vessels-calculation/ # Vessel & tank sizing (port 3006)
 │  ├─ pump-calculation/  # Pump sizing calculator (port 3007)
 │  ├─ heat-transfer-calculation/ # Heat transfer in storage tank (port 3008)
-|  ├─ control-valve-calculation/ # Control Valve Sizing (port 3009)
+│  ├─ control-valve-calculation/ # Control Valve Sizing (port 3009)
 │  └─ calculation-template/ # Template for new calculator apps (port 3900)
 │
 ├─ services/             # Backend services (Python)

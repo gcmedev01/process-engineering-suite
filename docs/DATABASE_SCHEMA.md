@@ -291,7 +291,7 @@ Stores saved hydraulic network editor designs from `apps/network-editor` (port 3
 ---
 
 ### `design_agent_sessions`
-Stores saved design agent workflow sessions from `services/design-agents` (Python backend).
+Stores saved workflow sessions for `apps/design-agents`.
 
 | Column | Type | Notes |
 |---|---|---|

@@ -12,15 +12,15 @@
     bun run dev
     ```
     - Dashboard: [http://localhost:3000](http://localhost:3000)
-    - Docs: [http://localhost:3001](http://localhost:3001)
-    - Network Editor: [http://localhost:3002](http://localhost:3002)
-    - PSV: [http://localhost:3003](http://localhost:3003)
-    - Design Agents: [http://localhost:3004](http://localhost:3004)
-    - Venting Calculation: [http://localhost:3005](http://localhost:3005)
-    - Vessels Calculation: [http://localhost:3006](http://localhost:3006)
-    - Pump Calculation: [http://localhost:3007](http://localhost:3007)
-    - Heat Transfer Calculation: [http://localhost:3008](http://localhost:3008)
-    - Control Valve Calculation: [http://localhost:3009](http://localhost:3009)
+    - Docs: [http://localhost:3001/docs](http://localhost:3001/docs)
+    - Network Editor: [http://localhost:3002/network-editor](http://localhost:3002/network-editor)
+    - PSV: [http://localhost:3003/psv](http://localhost:3003/psv)
+    - Design Agents: [http://localhost:3004/design-agents/](http://localhost:3004/design-agents/)
+    - Venting Calculation: [http://localhost:3005/venting-calculation](http://localhost:3005/venting-calculation)
+    - Vessels Calculation: [http://localhost:3006/vessels-calculation](http://localhost:3006/vessels-calculation)
+    - Pump Calculation: [http://localhost:3007/pump-calculation](http://localhost:3007/pump-calculation)
+    - Heat Transfer Calculation: [http://localhost:3008/heat-transfer-calculation](http://localhost:3008/heat-transfer-calculation)
+    - Control Valve Calculation: [http://localhost:3009/control-valve-calculation](http://localhost:3009/control-valve-calculation)
 
 3.  **Build**:
     ```bash
@@ -29,7 +29,7 @@
 
 ## Project Structure
 
-- **`apps/`**: Frontend applications — web (dashboard), docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, calculation-template
+- **`apps/`**: Frontend applications — web (dashboard), docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, control-valve-calculation, calculation-template
 - **`services/`**: Backend services — api (FastAPI), calc-engine (Python)
 - **`packages/`**: Shared packages — api-client, api-std, engineering-units, eslint-config, physics-engine, types, typescript-config, ui, ui-kit, and unit-converter (a standalone Python package, currently unused)
 - **`infra/`**: Docker and deployment config
@@ -129,10 +129,16 @@ cp infra/.env.aws-local.example infra/.env.aws-local  # set POSTGRES_PASSWORD
 docker compose -f infra/docker-compose.aws-local.yml \
   --env-file infra/.env.aws-local up -d
 # web → http://localhost:3000
+# docs → http://localhost:3001/docs
 # api → http://localhost:8000/docs
 # psv → http://localhost:3003/psv
 # network-editor → http://localhost:3002/network-editor
 # design-agents → http://localhost:3004/design-agents/
+# venting-calculation → http://localhost:3005/venting-calculation
+# vessels-calculation → http://localhost:3006/vessels-calculation
+# pump-calculation → http://localhost:3007/pump-calculation
+# heat-transfer-calculation → http://localhost:3008/heat-transfer-calculation
+# control-valve-calculation → http://localhost:3009/control-valve-calculation
 ```
 
 ### Building and pushing to ECR

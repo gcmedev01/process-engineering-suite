@@ -16,12 +16,12 @@ This application helps engineers manage PSV/RD (Pressure Safety Valve / Rupture 
 
 ```bash
 # From monorepo root
-npm install
-npm run dev
+bun install
+bun run dev
 
 # Or run PSV app directly
 cd apps/psv
-npm run dev
+bun run dev
 ```
 
 The app runs on `http://localhost:3003` and is accessible via the dashboard at `http://localhost:3000/psv`.
@@ -109,14 +109,14 @@ The app supports a **localStorage-based demo mode** for offline use or deploymen
 **Option 1: Environment Variable**
 
 ```bash
-NEXT_PUBLIC_USE_LOCAL_STORAGE=true npm run dev
+NEXT_PUBLIC_USE_LOCAL_STORAGE=true bun run dev
 ```
 
 **Option 2: Create `.env.local`**
 
 ```bash
 echo "NEXT_PUBLIC_USE_LOCAL_STORAGE=true" > .env.local
-npm run dev
+bun run dev
 ```
 
 **Option 3: Vercel Deployment**
@@ -143,10 +143,10 @@ All demo users can login with their username as password:
 
 ```bash
 # Run all tests
-npm run test:run
+bun run test:run
 
 # Run with coverage
-npm run test:run -- --coverage
+bun run test:run -- --coverage
 ```
 
 The application includes comprehensive tests covering:

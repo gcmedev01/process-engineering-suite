@@ -4,14 +4,14 @@
 
 ### Prerequisites
 - Node.js 18+
-- npm 9+
+- Bun
 
 ### Running Locally
 
 ```bash
 # From monorepo root
-npm install
-npm run dev
+bun install
+bun run dev
 
 # PSV app runs on http://localhost:3003
 # Dashboard runs on http://localhost:3000
@@ -22,7 +22,7 @@ npm run dev
 
 ```bash
 cd apps/psv
-npm run build
+bun run build
 ```
 
 ## Architecture

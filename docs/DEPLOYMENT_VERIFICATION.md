@@ -44,9 +44,15 @@ docker-compose -f infra/docker-compose.yml exec postgres psql -U postgres -d eng
 ```bash
 # Open in browser:
 open http://localhost:3000  # Dashboard
-open http://localhost:3002  # Network Editor
-open http://localhost:3003  # PSV
-open http://localhost:3004  # Design Agents
+open http://localhost:3001/docs  # Docs
+open http://localhost:3002/network-editor  # Network Editor
+open http://localhost:3003/psv  # PSV
+open http://localhost:3004/design-agents/  # Design Agents
+open http://localhost:3005/venting-calculation  # Venting Calculation
+open http://localhost:3006/vessels-calculation  # Vessels Calculation
+open http://localhost:3007/pump-calculation  # Pump Calculation
+open http://localhost:3008/heat-transfer-calculation  # Heat Transfer Calculation
+open http://localhost:3009/control-valve-calculation  # Control Valve Calculation
 
 # All should load without errors
 ```
@@ -61,7 +67,7 @@ s = get_settings()
 print(f'DEPLOYMENT_ENV: {s.DEPLOYMENT_ENV}')
 print(f'Allowed Origins: {s.allowed_origins}')
 assert s.DEPLOYMENT_ENV == 'local', 'Should be local'
-assert len(s.allowed_origins) == 5, 'Should have 5 localhost origins'
+assert 'http://localhost:3000' in s.allowed_origins, 'Dashboard origin should be allowed'
 print('✓ Backend config correct')
 "
 ```
@@ -94,6 +100,11 @@ docker-compose -f infra/docker-compose.yml exec api env | grep -E "DEPLOYMENT_EN
 - [ ] Network Editor can create nodes and edges
 - [ ] PSV app loads and can perform calculations
 - [ ] Design Agents interface is responsive
+- [ ] Venting Calculation app loads and can perform calculations
+- [ ] Vessels Calculation app loads and can perform calculations
+- [ ] Pump Calculation app loads and can perform calculations
+- [ ] Heat Transfer Calculation app loads and can perform calculations
+- [ ] Control Valve Calculation app loads and can perform calculations
 - [ ] API documentation accessible at http://localhost:8000/docs
 
 ### Cleanup

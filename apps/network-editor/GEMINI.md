@@ -32,15 +32,15 @@ The application has recently undergone a major refactor to move state management
 ## Setup Instructions
 1.  **Install Dependencies**:
     ```bash
-    npm install
+    bun install
     ```
 2.  **Run Development Server**:
     ```bash
-    npm run dev
+    bun run dev
     ```
 3.  **Build**:
     ```bash
-    npm run build
+    bun run build
     ```
 
 ## Next Steps / Pending Tasks

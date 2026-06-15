@@ -35,6 +35,12 @@ These variables apply to the entire suite or multiple applications.
 - `NETWORK_EDITOR_URL`: network-editor app origin used by web rewrites
 - `PSV_URL`: PSV app origin used by web rewrites
 - `DESIGN_AGENTS_URL`: design-agents app origin used by web rewrites
+- `VENTING_URL`: venting-calculation app origin used by web rewrites
+- `VESSELS_CALCULATION_URL`: vessels-calculation app origin used by web rewrites
+  - Legacy aliases: `VESSEL_CALCULATION_URL`, `VESSEL_URL`
+- `PUMP_URL`: pump-calculation app origin used by web rewrites
+- `HEAT_TRANSFER_URL`: heat-transfer-calculation app origin used by web rewrites
+- `CONTROL_VALVE_URL`: control-valve-calculation app origin used by web rewrites
 
 ## Application-Specific Variables
 
@@ -57,7 +63,7 @@ These variables apply to the entire suite or multiple applications.
 
 - `NEXT_PUBLIC_API_URL`: Backend API base URL (default: `http://localhost:8000`)
   - Required to connect the Save/Load feature to the central PostgreSQL database
-  - App runs on port 3004; CORS for this port is registered in the FastAPI backend
+  - App runs on port 3005; CORS for this port is registered in the FastAPI backend
 
 ### Network Editor (apps/network-editor)
 
@@ -70,7 +76,7 @@ These variables apply to the entire suite or multiple applications.
   - Values: `light` or `dark`
   - Default: `light`
 
-### Design Agents (services/design-agents)
+### Design Agents (apps/design-agents)
 
 - `VITE_API_URL`: Backend API base URL for this **Vite** application (default: `http://localhost:8000`)
   - Note: Uses Vite's `import.meta.env.VITE_API_URL` convention, **not** `NEXT_PUBLIC_API_URL`
@@ -108,6 +114,11 @@ DOCS_URL=https://docs.your-domain.com
 NETWORK_EDITOR_URL=https://network-editor.your-domain.com
 PSV_URL=https://psv.your-domain.com
 DESIGN_AGENTS_URL=https://design-agents.your-domain.com
+VENTING_URL=https://venting.your-domain.com
+VESSELS_CALCULATION_URL=https://vessels.your-domain.com
+PUMP_URL=https://pump.your-domain.com
+HEAT_TRANSFER_URL=https://heat-transfer.your-domain.com
+CONTROL_VALVE_URL=https://control-valve.your-domain.com
 EOF
 
 # Run with docker-compose
@@ -144,6 +155,11 @@ DOCS_URL=https://your-docs-app.vercel.app
 NETWORK_EDITOR_URL=https://your-network-editor-app.vercel.app
 PSV_URL=https://your-psv-app.vercel.app
 DESIGN_AGENTS_URL=https://your-design-agents-app.vercel.app
+VENTING_URL=https://your-venting-app.vercel.app
+VESSELS_CALCULATION_URL=https://your-vessels-app.vercel.app
+PUMP_URL=https://your-pump-app.vercel.app
+HEAT_TRANSFER_URL=https://your-heat-transfer-app.vercel.app
+CONTROL_VALVE_URL=https://your-control-valve-app.vercel.app
 ```
 
 ## Security Considerations
