@@ -64,6 +64,11 @@ const pumpOrigin = createProxyTarget(
   "https://pes-pump-calculation.vercel.app",
   "http://localhost:3007",
 );
+const heatTransferOrigin = createProxyTarget(
+  "HEAT_TRANSFER_URL",
+  "https://pes-heat-transfer-calculation.vercel.app",
+  "http://localhost:3008",
+);
 const controlValveOrigin = createProxyTarget(
   "CONTROL_VALVE_URL",
   "https://pes-control-valve-calculation.vercel.app",

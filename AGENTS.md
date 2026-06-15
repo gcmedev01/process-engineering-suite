@@ -315,6 +315,7 @@ process-engineering-suite/
 │  ├─ vessels-calculation/ # Vessel & tank sizing (port 3006)
 │  ├─ pump-calculation/  # Pump sizing calculator (port 3007)
 │  ├─ heat-transfer-calculation/ # Heat transfer in storage tank (port 3008)
+|  ├─ control-valve-calculation/ # Control Valve Sizing (port 3009)
 │  └─ calculation-template/ # Template for new calculator apps (port 3900)
 │
 ├─ services/             # Backend services (Python)

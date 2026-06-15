@@ -53,6 +53,11 @@ This will start:
 - Network Editor on port 3002
 - PSV on port 3003
 - Design Agents on port 3004
+- Venting Calculation on port 3005
+- Vessels Calculation on port 3006
+- Pump Calculation on port 3007
+- Heat Transfer Calculation on port 3008
+- Control Valve Sizing on port 3009
 
 4. **Verify deployment**
 
@@ -65,6 +70,11 @@ open http://localhost:3000  # Dashboard
 open http://localhost:3002  # Network Editor
 open http://localhost:3003  # PSV
 open http://localhost:3004  # Design Agents
+open http://localhost:3005  # Venting Calculation
+open http://localhost:3006  # Vessels Calculation
+open http://localhost:3007  # Pump Calculation
+open http://localhost:3008  # Heat Transfer Calculation
+open http://localhost:3009  # Control Valve Sizing
 ```
 
 ### Development Workflow

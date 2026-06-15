@@ -15,6 +15,7 @@ services:
       - /app/apps/vessels-calculation/.next
       - /app/apps/pump-calculation/.next
       - /app/apps/heat-transfer-calculation/.next
+      - /app/apps/control-valve-calculation/.next
     # Install dependencies if missing, then run all apps with turbo
     command: sh -c "bun install && bun run dev"
     ports:
@@ -27,6 +28,7 @@ services:
       - "3006:3006" # Vessels Calculation
       - "3007:3007" # Pump Calculation
       - "3008:3008" # Heat Transfer Calculation
+      - "3009:3009" # Control Valve Calculation
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:

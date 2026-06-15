@@ -88,15 +88,16 @@ The calc engine is accessed via `sys.path.insert` in `main.py`, not as a proper 
 | App | Port | Purpose |
 |-----|------|---------|
 | `web` | 3000 | Dashboard hub — reverse-proxies all others |
-| `psv` | 3003 | Pressure relief valve management (heaviest app) |
+| `docs` | — | Documentation portal |
 | `network-editor` | 3002 | Piping network editor |
+| `psv` | 3003 | Pressure relief valve management (heaviest app) |
+| `design-agents` | 3004 | AI design agents UI |
+| `venting-calculation` | 3005 | Venting/relief system |
 | `vessels-calculation` | 3006 | Vessel sizing |
 | `pump-calculation` | 3007 | Pump sizing |
-| `venting-calculation` | 3005 | Venting/relief system |
 | `heat-transfer-calculation` | 3008 | Heat exchanger design |
-| `design-agents` | 3004 | AI design agents UI |
+| `control-valve-calculation` | 3009 | Control valve sizing |
 | `calculation-template` | — | Starter/template app |
-| `docs` | — | Documentation portal |
 
 ### Common app pattern
 

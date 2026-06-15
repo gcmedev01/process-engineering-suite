@@ -64,11 +64,16 @@ docker compose -f infra/docker-compose.aws-local.yml \
   --env-file infra/.env.aws-local up -d
 
 # 4. Open in browser
-open http://localhost:3000                    # Web dashboard
-open http://localhost:3003/psv               # PSV sizing
-open http://localhost:3002/network-editor    # Network editor
-open http://localhost:3004/design-agents/    # Design agents (Vite/Nginx)
-open http://localhost:8000/docs              # API docs
+open http://localhost:3000                            # Web dashboard
+open http://localhost:3002/network-editor             # Network editor
+open http://localhost:3003/psv                        # PSV sizing
+open http://localhost:3004/design-agents/             # Design agents (Vite/Nginx)
+open http://localhost:3005/venting-calculation        # Venting Calculation
+open http://localhost:3006/vessel-calculation         # Vessels Calculation
+open http://localhost:3007/pump-calculation           # Pump Calculation
+open http://localhost:3008/heat-transfer-calculation  # Heat Transfer Calculation
+open http://localhost:3009/control-valve-calculation  # Contrtol Valve Calculation
+open http://localhost:8000/docs                       # API docs
 ```
 
 ## Common Commands
@@ -109,6 +114,7 @@ apps/           # Frontend applications (Next.js / Vite)
 ├── vessels-calculation/
 ├── pump-calculation/
 ├── heat-transfer-calculation/
+├── control-valve-calculation/
 └── calculation-template/
 
 services/       # Backend services (Python)
