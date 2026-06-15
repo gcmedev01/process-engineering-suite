@@ -49,7 +49,7 @@ import { getWorkflowStatusColor, getWorkflowStatusLabel, isWorkflowStatus } from
 import type { Customer, Plant, Unit, Area, Project } from "@/data/types";
 import { sortByGetter, type SortConfig } from "@/lib/sortUtils";
 import { usePagination } from "@/hooks/usePagination";
-import { GitHubFooter, PaginationControls } from "./shared";
+import { PaginationControls } from "./shared";
 
 export function HierarchyBrowser() {
     const theme = useTheme();
@@ -671,8 +671,6 @@ export function HierarchyBrowser() {
                     />
                 </Paper>
 
-                {/* Footer */}
-                <GitHubFooter />
             </Box>
 
             {/* Dialogs */}

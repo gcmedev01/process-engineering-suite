@@ -39,7 +39,7 @@ vi.mock("../shared", () => ({
   NumericInput: vi.fn(() => null),
   StepperInput: vi.fn(() => null),
   EquipmentTypeIcon: vi.fn(() => null),
-  GitHubFooter: vi.fn(() => null),
+  Footer: vi.fn(() => null),
 }));
 
 // Mock status color utilities

@@ -2,7 +2,7 @@
 
 import { Box, Link, Typography, useTheme } from "@mui/material";
 
-export function GitHubFooter() {
+export function Footer() {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
 

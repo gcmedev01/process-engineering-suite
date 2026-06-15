@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { TopToolbar } from "@/components/TopToolbar";
 import { GlobalConflictHandler } from "@/components/GlobalConflictHandler";
+import { Footer } from "@/components/shared/Footer";
 import { Box } from "@mui/material";
 
 const inter = localFont({
@@ -28,8 +29,10 @@ export default function RootLayout({
                 <Providers>
                     <Box
                         sx={{
-                            position: "sticky",
+                            position: "fixed",
                             top: 0,
+                            left: 0,
+                            right: 0,
                             zIndex: 1000,
                             boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
                             backdropFilter: "blur(4px)",
@@ -38,7 +41,9 @@ export default function RootLayout({
                     >
                         <TopToolbar />
                     </Box>
+                    <Box sx={{ minHeight: "83px", "@media print": { display: "none" } }} />
                     {children}
+                    <Footer />
                     {/* Global conflict detection dialogs */}
                     <GlobalConflictHandler />
                 </Providers>

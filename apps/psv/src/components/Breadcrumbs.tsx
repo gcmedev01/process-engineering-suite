@@ -154,7 +154,7 @@ export function Breadcrumbs() {
                     </Typography>
 
                     {/* Breadcrumb Label with Tooltip */}
-                    <Tooltip title={item.label} arrow enterDelay={300}>
+                    <Tooltip title={item.label} arrow placement="bottom">
                         {item.onClick ? (
                             <Link
                                 onClick={item.onClick}

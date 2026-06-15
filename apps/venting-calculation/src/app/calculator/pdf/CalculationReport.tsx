@@ -23,6 +23,7 @@ const GUIDE = '#4b5563'
 const MUTED = '#6b7280'
 const BW = 0.5
 const HB = 1
+const VALIDATION_REPORT = 'RPT-PR-XXXX-XXXX'
 
 const S = StyleSheet.create({
   page: {
@@ -517,7 +518,7 @@ function TitleBlock({
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: NAVY, paddingHorizontal: 4, paddingVertical: 2 }}>
         <Text style={{ fontSize: 5.5, color: WHITE }}>CAL-PR-1050.0201</Text>
-        <Text style={{ fontSize: 5.5, color: WHITE }}>VALIDATION REPORT</Text>
+        <Text style={{ fontSize: 5.5, color: WHITE }}>VALIDATION REPORT : {VALIDATION_REPORT}</Text>
       </View>
     </View>
   )

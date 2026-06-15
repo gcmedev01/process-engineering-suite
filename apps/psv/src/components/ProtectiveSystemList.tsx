@@ -43,7 +43,7 @@ import { useProjectUnitSystem } from "@/lib/useProjectUnitSystem";
 import { formatPressureGauge } from "@/lib/projectUnits";
 import { PsvCreationWizard } from "./PsvCreationWizard";
 import { usePagination } from "@/hooks/usePagination";
-import { GitHubFooter, PaginationControls } from "./shared";
+import { PaginationControls } from "./shared";
 
 export function ProtectiveSystemList() {
     const theme = useTheme();
@@ -502,9 +502,6 @@ export function ProtectiveSystemList() {
                     hasPrevPage={pagination.hasPrevPage}
                 />
             </Paper>
-
-            {/* Footer */}
-            <GitHubFooter />
 
             {/* PSV Creation Wizard */}
             {selectedProject && (

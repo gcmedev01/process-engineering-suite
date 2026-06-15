@@ -47,6 +47,7 @@ const MUTED     = '#6b7280'
 const BW        = 0.5   // light row border
 const HB        = 1     // heavy section border
 const DOCUMENT_CODE = 'CA-PR-XXXX-XXXX'
+const VALIDATION_REPORT = 'RPT-PR-XXXX-XXXX'
 const DISCLAIMER =
   'This document is confidential proprietary and/or legally privileged, intended to be used within GCME Co.,Ltd. Unintended recipients are not allowed to distribute, copy, modify, retransmit, disseminate or use this document and/or information.'
 
@@ -449,7 +450,7 @@ function TitleBlock({
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: NAVY, paddingHorizontal: 4, paddingVertical: 2 }}>
         <Text style={{ fontSize: 5.5, color: WHITE }}>{DOCUMENT_CODE}</Text>
-        <Text style={{ fontSize: 5.5, color: WHITE }}>VALIDATION REPORT : {DOCUMENT_CODE}</Text>
+        <Text style={{ fontSize: 5.5, color: WHITE }}>VALIDATION REPORT : {VALIDATION_REPORT}</Text>
       </View>
     </View>
   )
