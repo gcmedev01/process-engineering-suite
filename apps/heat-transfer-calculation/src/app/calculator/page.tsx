@@ -10,7 +10,7 @@ import type { Resolver } from "react-hook-form"
 import { InputPanel } from "./components/InputPanel"
 import { ResultsPanel } from "./components/ResultsPanel"
 import { ActionMenu } from "./components/ActionMenu"
-import { ModeHeader } from "./components/ModeHeader"
+import { CalculatorToolbar } from "./components/CalculatorToolbar"
 
 const createDefaultValues = (): Partial<CalculationInput> => ({
   tag: "",
@@ -86,9 +86,8 @@ export default function CalculatorPage() {
   return (
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        <ModeHeader
-          activeMode="storage"
-          action={(
+        <CalculatorToolbar
+          actions={(
             <ActionMenu
               linkedEquipmentId={linkedEquipmentId}
               linkedEquipmentTag={linkedEquipmentTag}

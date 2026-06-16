@@ -10,6 +10,7 @@ import type { CalculationInput, CalculationMetadata, RevisionRecord } from "@/ty
 import { InputPanel } from "./components/InputPanel"
 import { ResultsPanel } from "./components/ResultsPanel"
 import { ActionMenu } from "./components/ActionMenu"
+import { CalculatorToolbar } from "./components/CalculatorToolbar"
 
 const createDefaultValues = (): CalculationInput => ({
   tag: "",
@@ -78,26 +79,20 @@ export default function CalculatorPage() {
   return (
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        {/* Secondary action bar */}
-        <div className="border-b bg-card/50 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-2">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-muted-foreground">
-                ISA-75.01.01 / IEC 60534-2-1 · liquid &amp; gas/vapor
-              </p>
-              <ActionMenu
-                onClear={handleClear}
-                calculationMetadata={calculationMetadata}
-                revisionHistory={revisionHistory}
-                onCalculationLoaded={(metadata, loadedRevisionHistory) => {
-                  setCalculationMetadata(metadata)
-                  setRevisionHistory(loadedRevisionHistory)
-                }}
-                calculationResult={calculationResult}
-              />
-            </div>
-          </div>
-        </div>
+        <CalculatorToolbar
+          actions={(
+            <ActionMenu
+              onClear={handleClear}
+              calculationMetadata={calculationMetadata}
+              revisionHistory={revisionHistory}
+              onCalculationLoaded={(metadata, loadedRevisionHistory) => {
+                setCalculationMetadata(metadata)
+                setRevisionHistory(loadedRevisionHistory)
+              }}
+              calculationResult={calculationResult}
+            />
+          )}
+        />
 
         {/* Two-column layout */}
         <div className="container mx-auto px-4 py-6">

@@ -1,11 +1,17 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useTheme } from "@mui/material"
 import { TopFloatingToolbar } from "@eng-suite/ui-kit"
 import { VesselIcon } from "./VesselIcon";
 import { useColorMode } from "@/app/providers"
 
-export function TopToolbar() {
+interface TopToolbarProps {
+  actions?: ReactNode
+  homeHref?: string
+}
+
+export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
   const theme = useTheme()
   const { mode, toggleColorMode } = useColorMode()
   // Ensure we check MUI's theme in addition to ours to sync both
@@ -16,6 +22,8 @@ export function TopToolbar() {
       title="Vessel Calculator"
       subtitle="Volume & Surface Area · Pressure Vessels & Tanks"
       icon={<VesselIcon width={24} height={24} />}
+      actions={actions}
+      homeHref={homeHref}
       onToggleTheme={toggleColorMode}
       isDarkMode={isDark}
     />

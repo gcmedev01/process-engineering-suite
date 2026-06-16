@@ -11,6 +11,7 @@ import type { Resolver } from "react-hook-form"
 import { InputPanel } from "./components/InputPanel"
 import { ResultsPanel } from "./components/ResultsPanel"
 import { ActionMenu } from "./components/ActionMenu"
+import { CalculatorToolbar } from "./components/CalculatorToolbar"
 
 // ─── Default form values ───────────────────────────────────────────────────────
 
@@ -90,31 +91,25 @@ export default function CalculatorPage() {
     // can access form values via useFormContext.
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        {/* Secondary action bar */}
-        <div className="border-b bg-card/50 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-2">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-muted-foreground">
-                API 2000 (5th / 6th / 7th Edition)
-              </p>
-              <ActionMenu
-                onTankLinked={handleTankLinked}
-                linkedTag={linkedTankTag}
-                linkedEquipmentId={linkedEquipmentId}
-                clearToken={clearToken}
-                onClear={handleClear}
-                calculationMetadata={calculationMetadata}
-                revisionHistory={revisionHistory}
-                onCalculationLoaded={(metadata, loadedRevisionHistory) => {
-                  setCalculationMetadata(metadata)
-                  setRevisionHistory(loadedRevisionHistory)
-                }}
-                calculationResult={calculationResult}
-                derivedGeometry={derivedGeometry}
-              />
-            </div>
-          </div>
-        </div>
+        <CalculatorToolbar
+          actions={(
+            <ActionMenu
+              onTankLinked={handleTankLinked}
+              linkedTag={linkedTankTag}
+              linkedEquipmentId={linkedEquipmentId}
+              clearToken={clearToken}
+              onClear={handleClear}
+              calculationMetadata={calculationMetadata}
+              revisionHistory={revisionHistory}
+              onCalculationLoaded={(metadata, loadedRevisionHistory) => {
+                setCalculationMetadata(metadata)
+                setRevisionHistory(loadedRevisionHistory)
+              }}
+              calculationResult={calculationResult}
+              derivedGeometry={derivedGeometry}
+            />
+          )}
+        />
 
         {/* Two-column layout */}
         <div className="container mx-auto px-4 py-6">

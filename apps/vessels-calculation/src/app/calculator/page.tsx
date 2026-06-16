@@ -17,6 +17,7 @@ import type {
 import { InputPanel } from "./components/InputPanel"
 import { ResultsPanel } from "./components/ResultsPanel"
 import { ActionMenu } from "./components/ActionMenu"
+import { CalculatorToolbar } from "./components/CalculatorToolbar"
 
 const EMPTY_METADATA: CalculationMetadata = {
   projectNumber: "",
@@ -86,11 +87,8 @@ export default function VesselCalculatorPage() {
   return (
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        <div className="border-b bg-card/50 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              Vessel &amp; Tank · Volume, Surface Area &amp; Mass
-            </p>
+        <CalculatorToolbar
+          actions={(
             <ActionMenu
               onClear={handleClear}
               calculationMetadata={metadata}
@@ -104,8 +102,8 @@ export default function VesselCalculatorPage() {
                 setLinkedEquipmentTag(equipmentTag ?? null)
               }}
             />
-          </div>
-        </div>
+          )}
+        />
 
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">

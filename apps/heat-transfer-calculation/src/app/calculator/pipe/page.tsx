@@ -14,7 +14,7 @@ import { calculatePipe } from "@/lib/calculations/pipe"
 import { PipeInputPanel } from "./PipeInputPanel"
 import { PipeResultsPanel } from "./PipeResultsPanel"
 import { ActionMenu } from "../components/ActionMenu"
-import { ModeHeader } from "../components/ModeHeader"
+import { CalculatorToolbar } from "../components/CalculatorToolbar"
 
 const defaultPipeValues: PipeCalculationInput = {
   tag: "",
@@ -109,9 +109,8 @@ export default function PipeCalculator() {
   return (
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        <ModeHeader
-          activeMode="pipe"
-          action={(
+        <CalculatorToolbar
+          actions={(
             <ActionMenu
               onClear={handleClear}
               calculationMetadata={calculationMetadata}
@@ -134,6 +133,10 @@ export default function PipeCalculator() {
                 onTagChange={setTag}
                 description={description}
                 onDescriptionChange={setDescription}
+                metadata={calculationMetadata}
+                onMetadataChange={setCalculationMetadata}
+                revisionHistory={revisionHistory}
+                onRevisionHistoryChange={setRevisionHistory}
               />
             </div>
             <div>

@@ -3,6 +3,7 @@
 import { useFormContext, Controller } from "react-hook-form"
 import { SectionCard } from "./SectionCard"
 import { CalculationMetadataSection } from "./CalculationMetadataSection"
+import { CalculationModeSection } from "./CalculationModeSection"
 import { FieldRow } from "./FieldRow"
 import { UomInput } from "./UomInput"
 import type { CalculationInput, CalculationMetadata, RevisionRecord } from "@/types"
@@ -61,9 +62,11 @@ export function InputPanel({
         onRevisionHistoryChange={onRevisionHistoryChange}
       />
 
-      {/* ── Tank Identification ── */}
-      <SectionCard title="Tank Identification">
-        <FieldRow label="Tag" htmlFor="tag" required error={errors.tag?.message}>
+      <CalculationModeSection activeMode="storage" />
+
+      {/* ── Tank Details ── */}
+      <SectionCard title="Tank Details">
+        <FieldRow label="Tag / Equipment No." htmlFor="tag" required error={errors.tag?.message}>
           <Input id="tag" {...register("tag")} placeholder="e.g. T-101" />
         </FieldRow>
         <FieldRow label="Description" htmlFor="description">

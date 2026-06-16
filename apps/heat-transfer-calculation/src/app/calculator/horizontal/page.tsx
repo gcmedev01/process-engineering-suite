@@ -14,7 +14,7 @@ import { calculateHorizontalTank } from "@/lib/calculations/horizontal-tank"
 import { HorizontalInputPanel } from "./HorizontalInputPanel"
 import { HorizontalResultsPanel } from "./HorizontalResultsPanel"
 import { ActionMenu } from "../components/ActionMenu"
-import { ModeHeader } from "../components/ModeHeader"
+import { CalculatorToolbar } from "../components/CalculatorToolbar"
 
 const defaults: HorizontalTankInput = {
   tag: "", description: "",
@@ -73,9 +73,8 @@ export default function HorizontalCalculatorPage() {
   return (
     <FormProvider {...form}>
       <main className="min-h-screen bg-background">
-        <ModeHeader
-          activeMode="horizontal"
-          action={(
+        <CalculatorToolbar
+          actions={(
             <ActionMenu
               onClear={handleClear}
               calculationMetadata={calculationMetadata}
@@ -92,7 +91,16 @@ export default function HorizontalCalculatorPage() {
         />
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <HorizontalInputPanel tag={tag} onTagChange={setTag} desc={desc} onDescChange={setDesc} />
+            <HorizontalInputPanel
+              tag={tag}
+              onTagChange={setTag}
+              desc={desc}
+              onDescChange={setDesc}
+              metadata={calculationMetadata}
+              onMetadataChange={setCalculationMetadata}
+              revisionHistory={revisionHistory}
+              onRevisionHistoryChange={setRevisionHistory}
+            />
             <HorizontalResultsPanel result={result} />
           </div>
         </div>

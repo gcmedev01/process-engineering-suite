@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "bun turbo run build",
-    "dev": "bun turbo run dev --parallel --filter=!calculation-template",
+    "dev": "bun turbo run dev --parallel --filter='./apps/*' --filter=!calculation-template",
     "lint": "bun turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "bun turbo run check-types",

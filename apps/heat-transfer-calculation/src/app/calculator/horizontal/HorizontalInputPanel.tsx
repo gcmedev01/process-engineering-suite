@@ -7,17 +7,46 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { WALL_MATERIALS, INSULATION_MATERIALS } from "@/lib/materials"
 import { HeadType } from "@/types"
-import type { HorizontalTankInput } from "@/types"
+import type { CalculationMetadata, HorizontalTankInput, RevisionRecord } from "@/types"
+import { CalculationMetadataSection } from "../components/CalculationMetadataSection"
+import { CalculationModeSection } from "../components/CalculationModeSection"
 
-interface Props { tag: string; onTagChange: (v: string) => void; desc: string; onDescChange: (v: string) => void }
+interface Props {
+  tag: string
+  onTagChange: (v: string) => void
+  desc: string
+  onDescChange: (v: string) => void
+  metadata: CalculationMetadata
+  onMetadataChange: (metadata: CalculationMetadata) => void
+  revisionHistory: RevisionRecord[]
+  onRevisionHistoryChange: (revisionHistory: RevisionRecord[]) => void
+}
 
-export function HorizontalInputPanel({ tag, onTagChange, desc, onDescChange }: Props) {
+export function HorizontalInputPanel({
+  tag,
+  onTagChange,
+  desc,
+  onDescChange,
+  metadata,
+  onMetadataChange,
+  revisionHistory,
+  onRevisionHistoryChange,
+}: Props) {
   const { control, setValue } = useFormContext<HorizontalTankInput>()
 
   return (
     <div className="space-y-4">
-      <SectionCard title="Tank Identification">
-        <FieldRow label="Tag" required>
+      <CalculationMetadataSection
+        metadata={metadata}
+        onMetadataChange={onMetadataChange}
+        revisionHistory={revisionHistory}
+        onRevisionHistoryChange={onRevisionHistoryChange}
+      />
+
+      <CalculationModeSection activeMode="horizontal" />
+
+      <SectionCard title="Tank Details">
+        <FieldRow label="Tag / Equipment No." required>
           <Input value={tag} onChange={e => onTagChange(e.target.value)} placeholder="e.g. T-201" />
         </FieldRow>
         <FieldRow label="Description">

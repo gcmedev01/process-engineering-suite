@@ -8,6 +8,9 @@ import { UomInput } from "../components/UomInput"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { PIPE_SIZES, WALL_MATERIALS, INSULATION_MATERIALS } from "@/lib/materials"
+import type { CalculationMetadata, RevisionRecord } from "@/types"
+import { CalculationMetadataSection } from "../components/CalculationMetadataSection"
+import { CalculationModeSection } from "../components/CalculationModeSection"
 import type { PipeInput } from "./page"
 
 interface PipeInputPanelProps {
@@ -15,19 +18,38 @@ interface PipeInputPanelProps {
   onTagChange: (v: string) => void
   description: string
   onDescriptionChange: (v: string) => void
+  metadata: CalculationMetadata
+  onMetadataChange: (metadata: CalculationMetadata) => void
+  revisionHistory: RevisionRecord[]
+  onRevisionHistoryChange: (revisionHistory: RevisionRecord[]) => void
 }
 
 export function PipeInputPanel({
-  tag, onTagChange, description, onDescriptionChange,
+  tag,
+  onTagChange,
+  description,
+  onDescriptionChange,
+  metadata,
+  onMetadataChange,
+  revisionHistory,
+  onRevisionHistoryChange,
 }: PipeInputPanelProps) {
   const { control, setValue, formState: { errors } } = useFormContext<PipeInput>()
   const [nps, setNps] = useState<string>("")
 
   return (
     <div className="space-y-4">
-      {/* ── Identification ── */}
-      <SectionCard title="Pipe Identification">
-        <FieldRow label="Tag" htmlFor="pipe-tag" required>
+      <CalculationMetadataSection
+        metadata={metadata}
+        onMetadataChange={onMetadataChange}
+        revisionHistory={revisionHistory}
+        onRevisionHistoryChange={onRevisionHistoryChange}
+      />
+
+      <CalculationModeSection activeMode="pipe" />
+
+      <SectionCard title="Pipe Details">
+        <FieldRow label="Line No." htmlFor="pipe-tag" required>
           <Input id="pipe-tag" value={tag}
             onChange={(e) => onTagChange(e.target.value)} placeholder="e.g. P-101" />
         </FieldRow>

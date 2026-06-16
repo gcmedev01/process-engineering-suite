@@ -23,15 +23,12 @@
 
 ## 2. Page Layout
 
-Every calculator app uses a **three-tier layout**:
+Every calculator app uses a **two-tier layout**:
 
 ```
-┌─ TopToolbar (layout.tsx) ─────────────────────────────────────────┐
-│  [Icon]  App Title                              [☀/🌙 toggle]     │
+┌─ CalculatorToolbar (calculator/page.tsx) ─────────────────────────┐
+│  [Icon]  App Title                         [≡ Actions ▾] [☀/🌙]  │
 │          Subtitle                                                   │
-└────────────────────────────────────────────────────────────────────┘
-┌─ secondary action bar (page.tsx) ─────────────────────────────────┐
-│  Descriptor Label                                      [≡ Actions ▾]│
 └────────────────────────────────────────────────────────────────────┘
 ┌─ left panel (inputs) ────────┬─ right panel (results) ─────────────┐
 │  CalculationMetadataSection  │  Empty/ValidationIssues/Results      │
@@ -42,30 +39,16 @@ Every calculator app uses a **three-tier layout**:
 └──────────────────────────────┴──────────────────────────────────────┘
 ```
 
-**layout.tsx** — TopToolbar lives here, wrapped in the sticky MUI Box:
+**layout.tsx** — root providers only:
 ```tsx
 // app/layout.tsx
-import { Box } from "@mui/material"
 import { Providers } from "./providers"
-import { TopToolbar } from "@/components/TopToolbar"
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>
-          <Box
-            sx={{
-              position: "sticky",
-              top: 0,
-              zIndex: 1000,
-              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-              backdropFilter: "blur(4px)",
-              "@media print": { display: "none" },
-            }}
-          >
-            <TopToolbar />
-          </Box>
           {children}
         </Providers>
       </body>
@@ -74,18 +57,12 @@ export default function RootLayout({ children }) {
 }
 ```
 
-**page.tsx** — secondary action bar + two-column grid:
+**page.tsx** — floating toolbar with actions + two-column grid:
 ```tsx
 // calculator/page.tsx
 <FormProvider {...form}>
   <main className="min-h-screen bg-background">
-    {/* Secondary action bar — left descriptor + Actions menu */}
-    <div className="border-b bg-card/50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">Descriptor Text</p>
-        <ActionMenu ... />
-      </div>
-    </div>
+    <CalculatorToolbar actions={<ActionMenu ... />} />
 
     {/* Two-column grid */}
     <div className="container mx-auto px-4 py-6">
@@ -99,8 +76,10 @@ export default function RootLayout({ children }) {
 ```
 
 **Rules:**
-- `TopToolbar` always in `layout.tsx`, not `page.tsx`; wrapped in the sticky MUI `Box` (see §3.0)
-- Secondary action bar contains a left descriptor label and `<ActionMenu>` on the right
+- `layout.tsx` contains providers only; do not render `TopToolbar` globally from layout
+- `calculator/page.tsx` renders `CalculatorToolbar` inside `FormProvider` so `<ActionMenu>` can access form context
+- `CalculatorToolbar` owns the sticky MUI `Box`; `TopToolbar` only renders `<TopFloatingToolbar />`
+- All major actions live in the floating top toolbar action slot, not in a second toolbar
 - Single column on mobile, two columns at `xl` (1280 px)
 - `items-start` prevents stretching of shorter panel
 - Inputs always left, results always right
@@ -112,23 +91,29 @@ export default function RootLayout({ children }) {
 
 ### 3.0 `TopToolbar` — Sticky branding + theme toggle
 
-`TopToolbar.tsx` renders `<TopFloatingToolbar />` directly — **no wrapper div**. The sticky Box lives in `layout.tsx` (see §2 above). This matches the `apps/web` pattern exactly.
+`TopToolbar.tsx` renders `<TopFloatingToolbar />` directly — **no wrapper div**. The sticky Box lives in `calculator/components/CalculatorToolbar.tsx` so page-level actions can be passed while the toolbar remains inside `FormProvider`.
 
 `TopFloatingToolbar` (from `@eng-suite/ui-kit`) provides the visual spec built-in:
 - Left — gradient icon box (40×40, `border-radius: 12px`, `linear-gradient(#00C4F9, #0076F0)`)
 - Left — title (`h6`, `fontWeight: 700`) + subtitle (`caption`, `text.secondary`)
-- Right — glassmorphism theme toggle button
+- Right — app actions slot + glassmorphism theme toggle button
 - Bottom border + `boxShadow` + `backdropFilter: blur(10px)`
 
 ```tsx
 // src/components/TopToolbar.tsx
 "use client"
+import type { ReactNode } from "react"
 import { useTheme } from "@mui/material"
 import { TopFloatingToolbar } from "@eng-suite/ui-kit"
 import CalculateIcon from "@mui/icons-material/Calculate"  // TODO: replace per app
 import { useColorMode } from "@/contexts/ColorModeContext"
 
-export function TopToolbar() {
+interface TopToolbarProps {
+  actions?: ReactNode
+  homeHref?: string
+}
+
+export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
   const theme = useTheme()
   const { toggleColorMode } = useColorMode()
   const isDark = theme.palette.mode === "dark"
@@ -138,6 +123,8 @@ export function TopToolbar() {
       title="App Title"    // TODO: replace per app
       subtitle="Subtitle"  // TODO: replace per app
       icon={<CalculateIcon fontSize="medium" />}  // TODO: replace per app
+      actions={actions}
+      homeHref={homeHref}
       onToggleTheme={toggleColorMode}
       isDarkMode={isDark}
     />
@@ -145,7 +132,9 @@ export function TopToolbar() {
 }
 ```
 
-**Per-app TODO:** replace icon, title, subtitle. Do **not** add a wrapper div — sticky/print/shadow are owned by the `Box` in `layout.tsx`.
+**Per-app TODO:** replace icon, title, subtitle. Do **not** add a wrapper div — sticky/print/shadow are owned by `calculator/components/CalculatorToolbar.tsx`.
+
+`CalculatorToolbar` defaults the left branding link to `process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3000"` so the app icon, app name, and subtitle return to the `apps/web` landing page. Configure `NEXT_PUBLIC_WEB_URL` in deployed calculator apps.
 
 ---
 
@@ -246,6 +235,22 @@ interface SectionCardProps {
 - `shadow-sm` always present on Cards
 - `space-y-4` for content spacing
 - Separator after every header
+
+### 3.1a Equipment details section — first domain input card
+
+After `CalculationMetadataSection`, the first domain-specific input `SectionCard` must be the equipment or instrument details card. Do not title this card "Identification" in the UI.
+
+Use the specific equipment family in the card title:
+
+| App/domain | SectionCard title | Tag field label | Example |
+|---|---|---|---|
+| Tank / venting / heat transfer tank | `Tank Details` | `Tag / Equipment No.` | `T-101` |
+| Vessel / separator / drum | `Vessel Details` | `Tag / Equipment No.` | `V-101` |
+| Pump / rotating equipment | `Pump Details` | `Tag / Equipment No.` | `P-101A` |
+| Pipe / line calculation | `Pipe Details` or `Line Details` | `Line No.` | `6"-P-10101-A1A` |
+| Control valve / instrument | `Valve Details` | `Tag / Instrument No.` | `FCV-101` |
+
+The details card owns the tag number and description/service fields. Put this card before geometry, process, fluid, or operating-condition sections. Validation schemas and types may still group these fields internally as identification, but visible UI labels should follow the details naming above.
 
 ---
 
@@ -1201,14 +1206,15 @@ When adding UoM categories, the `migrate` function in `uomStore` fills them in a
 apps/{app-name}/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx            # root layout: Providers + TopToolbar
+│   │   ├── layout.tsx            # root layout: Providers only
 │   │   ├── providers.tsx         # ColorModeContext + Providers wrapper
 │   │   └── calculator/
-│   │       ├── page.tsx          # form setup, secondary action bar, two-column grid
+│   │       ├── page.tsx          # form setup, CalculatorToolbar, two-column grid
 │   │       ├── components/
 │   │       │   ├── SectionCard.tsx
 │   │       │   ├── FieldRow.tsx
 │   │       │   ├── UomInput.tsx
+│   │       │   ├── CalculatorToolbar.tsx
 │   │       │   ├── ActionMenu.tsx
 │   │       │   ├── InputPanel.tsx
 │   │       │   ├── ResultsPanel.tsx
@@ -1217,14 +1223,14 @@ apps/{app-name}/
 │   │       │   ├── LoadCalculationButton.tsx
 │   │       │   └── ExportButton.tsx
 │   │       ├── sections/         # form input sections (one per SectionCard)
-│   │       │   ├── DetailsSection.tsx
+│   │       │   ├── DetailsSection.tsx   # Tank/Vessel/Pump/Valve Details; first domain input card
 │   │       │   ├── FluidPropertiesSection.tsx
 │   │       │   └── ...
 │   │       └── results/          # result display components
 │   │           ├── SummaryResult.tsx
 │   │           └── ...
 │   ├── components/
-│   │   └── TopToolbar.tsx        # sticky top bar with icon, title, theme toggle
+│   │   └── TopToolbar.tsx        # floating toolbar content with icon, title, actions, theme toggle
 │   ├── lib/
 │   │   ├── uom.ts                # BASE_UNITS, UOM_OPTIONS, UOM_LABEL, UomCategory
 │   │   ├── calculations/         # pure calculation functions (no React)
@@ -1247,10 +1253,13 @@ apps/{app-name}/
 
 ## 13. Checklist — New App Setup
 
-- [ ] Start from `apps/calculation-template` (already has TopToolbar, CalculationMetadataSection)
+- [ ] Start from `apps/calculation-template` (already has TopToolbar, CalculatorToolbar, CalculationMetadataSection)
 - [ ] **CRITICAL — basePath in `next.config.ts`:** Replace `/venting-calculation` with your actual app name (e.g., `/heat-transfer-calculation`, `/pipe-sizer`). This is the #1 cause of broken Vercel deployments. The template ships with a placeholder — always verify before deploying.
 - [ ] Update `TopToolbar`: replace icon (lucide), title, subtitle
+- [ ] Configure `NEXT_PUBLIC_WEB_URL` for deployed calculator apps so the toolbar branding links back to `apps/web`
 - [ ] Update `layout.tsx` metadata: `title`, `description`
+- [ ] Replace the placeholder input section with a domain-specific details card (`Tank Details`, `Vessel Details`, `Pump Details`, `Valve Details`, etc.) immediately after `CalculationMetadataSection`
+- [ ] Use `Tag / Equipment No.` for equipment tags and `Tag / Instrument No.` for control valves/instruments
 - [ ] Update `uomStore` localStorage key to `{app-name}-uom-prefs`
 - [ ] Define `BASE_UNITS` for the new app's unit categories
 - [ ] Build Zod input schema with base-unit validation

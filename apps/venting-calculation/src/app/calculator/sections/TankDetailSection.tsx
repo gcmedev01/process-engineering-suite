@@ -19,7 +19,7 @@ export function TankDetailSection() {
       {/* Identification */}
       <div className="grid grid-cols-2 gap-3">
         <FieldRow
-          label="Tank Number"
+          label="Tag / Equipment No."
           htmlFor="tankNumber"
           required
           error={errors.tankNumber?.message}

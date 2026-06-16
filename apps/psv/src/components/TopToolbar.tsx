@@ -45,6 +45,7 @@ type GlobalSearchOption = {
 };
 
 export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
+    const homeHref = process.env.NEXT_PUBLIC_WEB_URL?.trim() || "http://localhost:3000";
     const theme = useTheme();
     const { toggleColorMode } = useColorMode();
     const isDark = theme.palette.mode === 'dark';
@@ -327,6 +328,7 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
             title={title}
             subtitle={title === "PSV Sizing" ? "Pressure Safety Valve Sizing" : undefined}
             icon={<PsvIcon width={24} height={24} />}
+            homeHref={homeHref}
             actions={
                 <Box
                     sx={{

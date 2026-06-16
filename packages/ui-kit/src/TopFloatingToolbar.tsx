@@ -10,6 +10,7 @@ export interface TopFloatingToolbarProps {
     icon?: ReactNode;
     leadingAction?: ReactNode;
     actions?: ReactNode;
+    homeHref?: string;
     onToggleTheme?: () => void;
     isDarkMode?: boolean;
 }
@@ -20,10 +21,58 @@ export const TopFloatingToolbar = ({
     icon,
     leadingAction,
     actions,
+    homeHref,
     onToggleTheme,
     isDarkMode = false,
 }: TopFloatingToolbarProps) => {
     const theme = useTheme();
+
+    const branding = (
+        <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            component={homeHref ? 'a' : 'div'}
+            href={homeHref}
+            sx={{
+                color: 'inherit',
+                textDecoration: 'none',
+                borderRadius: 1.5,
+                outline: 'none',
+                '&:focus-visible': {
+                    boxShadow: `0 0 0 3px ${theme.palette.primary.main}`,
+                },
+            }}
+        >
+            {icon && (
+                <Box
+                    sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '12px',
+                        background: 'linear-gradient(#00C4F9,#0076F0)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        boxShadow: "0px 0px 2px 1px rgba(255, 255, 255, 0.3) inset, 2px 2px 3px -2px rgba(255,255,255,0.7) inset, -2px -2px 3px -2px rgba(255,255,255,0.7) inset",
+                    }}
+                >
+                    {icon}
+                </Box>
+            )}
+            <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                    {title}
+                </Typography>
+                {subtitle && (
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1 }}>
+                        {subtitle}
+                    </Typography>
+                )}
+            </Box>
+        </Stack>
+    );
 
     return (
         <Box
@@ -45,34 +94,7 @@ export const TopFloatingToolbar = ({
             {/* Left Side: Branding */}
             <Stack direction="row" alignItems="center" spacing={1.5}>
                 {leadingAction}
-                {icon && (
-                    <Box
-                        sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '12px',
-                            background: 'linear-gradient(#00C4F9,#0076F0)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            boxShadow: "0px 0px 2px 1px rgba(255, 255, 255, 0.3) inset, 2px 2px 3px -2px rgba(255,255,255,0.7) inset, -2px -2px 3px -2px rgba(255,255,255,0.7) inset"
-                            // boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
-                        }}
-                    >
-                        {icon}
-                    </Box>
-                )}
-                <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                        {title}
-                    </Typography>
-                    {subtitle && (
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1 }}>
-                            {subtitle}
-                        </Typography>
-                    )}
-                </Box>
+                {branding}
             </Stack>
 
             {/* Right Side: Actions */}

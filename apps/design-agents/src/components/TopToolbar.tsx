@@ -44,6 +44,8 @@ interface TopToolbarProps {
   onMenuClick?: () => void;
 }
 
+const HOME_HREF = import.meta.env.VITE_WEB_URL || "http://localhost:3000";
+
 export const TopToolbar = ({ onToggleTheme, isDarkMode, onMenuClick }: TopToolbarProps) => {
   const theme = useTheme();
   const { activeStepId, steps, designState, setActiveStep, setDesignState, updateDesignState, clearProject } = useDesignStore();
@@ -175,26 +177,44 @@ export const TopToolbar = ({ onToggleTheme, isDarkMode, onMenuClick }: TopToolba
               </IconButton>
             )}
             <Box
+              component="a"
+              href={HOME_HREF}
               sx={{
-                width: 38,
-                height: 38,
-                borderRadius: 2,
-                display: 'grid',
-                placeItems: 'center',
-                background: `linear-gradient(160deg, ${alpha(theme.palette.primary.main, 0.3)} 0%, ${alpha(theme.palette.secondary.main, 0.35)} 100%)`,
-                border: `1px solid ${alpha(theme.palette.primary.light, 0.35)}`,
-                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                minWidth: 0,
+                color: 'inherit',
+                textDecoration: 'none',
+                borderRadius: 1.5,
+                outline: 'none',
+                '&:focus-visible': {
+                  boxShadow: `0 0 0 3px ${theme.palette.primary.main}`,
+                },
               }}
             >
-              <AgentIcon sx={{ color: '#38bdf8', fontSize: 24 }} />
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" sx={{ lineHeight: 1.1, fontWeight: 700 }}>
-                Process Design Agents
-              </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                {activeStep ? `Current Stage: ${activeStep.label}` : 'Workflow Control Center'}
-              </Typography>
+              <Box
+                sx={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 2,
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: `linear-gradient(160deg, ${alpha(theme.palette.primary.main, 0.3)} 0%, ${alpha(theme.palette.secondary.main, 0.35)} 100%)`,
+                  border: `1px solid ${alpha(theme.palette.primary.light, 0.35)}`,
+                  flexShrink: 0,
+                }}
+              >
+                <AgentIcon sx={{ color: '#38bdf8', fontSize: 24 }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle1" sx={{ lineHeight: 1.1, fontWeight: 700 }}>
+                  Process Design Agents
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {activeStep ? `Current Stage: ${activeStep.label}` : 'Workflow Control Center'}
+                </Typography>
+              </Box>
             </Box>
           </Stack>
 

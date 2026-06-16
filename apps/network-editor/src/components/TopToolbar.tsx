@@ -23,6 +23,7 @@ export function TopToolbar({
     onReset,
     onImportExcel,
 }: Props) {
+    const homeHref = process.env.NEXT_PUBLIC_WEB_URL?.trim() || "http://localhost:3000";
     const theme = useTheme();
     const { toggleColorMode } = useColorMode();
     const isDark = theme.palette.mode === 'dark';
@@ -89,6 +90,7 @@ export function TopToolbar({
                 //     </Tooltip>
                 // }
                 icon={<Timeline />}
+                homeHref={homeHref}
                 actions={
                     isMobile ? (
                         // Mobile: Single More button

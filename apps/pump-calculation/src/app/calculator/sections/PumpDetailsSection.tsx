@@ -27,7 +27,7 @@ export function PumpDetailsSection() {
 
   return (
     <SectionCard title="Pump Details" collapsible defaultOpen={false}>
-      <FieldRow label="Equipment Tag" htmlFor="tag" required error={errors.tag?.message}>
+      <FieldRow label="Tag / Equipment No." htmlFor="tag" required error={errors.tag?.message}>
         <Input id="tag" {...register('tag')} placeholder="e.g. P-101A" />
       </FieldRow>
 
