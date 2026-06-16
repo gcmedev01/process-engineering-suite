@@ -71,7 +71,7 @@ yarn-error.log*
 *.swo
 
 # user set
-assets/
+!assets/gcmeLogo.ts
 .agent/
 conductor/
 # TypeScript build info
