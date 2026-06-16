@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthGuard } from "@eng-suite/ui-kit";
 import { ThemeProvider, createTheme, CssBaseline, Theme, Components } from "@mui/material";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ReactNode, useState, useMemo, useEffect } from "react";
@@ -200,7 +201,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          {children}
+          <AuthGuard>{children}</AuthGuard>
         </ThemeProvider>
       </ColorModeContext.Provider>
     </AppRouterCacheProvider>

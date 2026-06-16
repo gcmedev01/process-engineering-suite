@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthGuard } from "@eng-suite/ui-kit";
 import {
   ThemeProvider,
   createTheme,
@@ -119,7 +120,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
           <CssBaseline enableColorScheme />
-          {children}
+          <AuthGuard>{children}</AuthGuard>
         </ThemeProvider>
       </ColorModeContext.Provider>
     </AppRouterCacheProvider>

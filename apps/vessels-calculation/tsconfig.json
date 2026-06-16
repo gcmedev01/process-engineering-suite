@@ -27,6 +27,8 @@
       "@/*": [
         "./src/*"
       ],
+      "@eng-suite/ui-kit": ["../../packages/ui-kit/src/index.ts"],
+      "@eng-suite/ui-kit/*": ["../../packages/ui-kit/src/*"],
       "@eng-suite/physics": [
         "../../packages/physics-engine/src/index.ts"
       ],

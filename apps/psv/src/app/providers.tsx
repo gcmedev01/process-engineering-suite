@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthGuard } from "@eng-suite/ui-kit";
 import { ThemeProvider, createTheme, CssBaseline, Theme, Components } from "@mui/material";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ReactNode, useState, useMemo, useEffect } from "react";
@@ -207,9 +208,11 @@ export function Providers({ children }: { children: ReactNode }) {
                     <CssBaseline />
                     <Toaster theme={mode} position="top-right" closeButton />
                     <SharedAuthBridge />
-                    <SessionGuard>
-                        {children}
-                    </SessionGuard>
+                    <AuthGuard>
+                        <SessionGuard>
+                            {children}
+                        </SessionGuard>
+                    </AuthGuard>
                 </ThemeProvider>
             </ColorModeContext.Provider>
         </AppRouterCacheProvider>

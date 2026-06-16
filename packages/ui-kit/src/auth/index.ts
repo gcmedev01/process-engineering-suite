@@ -1,4 +1,6 @@
+export * from './apiFetch';
 export * from './authClient';
+export * from './AuthGuard';
 export * from './AuthInteractionGuard';
 export * from './BackendStatusDot';
 export * from './fallbackUsers';

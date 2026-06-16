@@ -18,7 +18,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@eng-suite/ui-kit": ["../../packages/ui-kit/src/index.ts"],
+      "@eng-suite/ui-kit/*": ["../../packages/ui-kit/src/*"]
     }
   },
   "include": ["src"]
