@@ -139,9 +139,7 @@ function ProfileTab() {
                     Profile
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                    <Avatar src={currentUser?.avatarUrl} sx={{ width: 56, height: 56, bgcolor: getRoleColor(currentUser?.role), fontSize: '1.25rem', fontWeight: 700 }}>
-                        {getInitials(currentUser?.name, initials)}
-                    </Avatar>
+                    <Avatar src={currentUser?.avatarUrl} sx={{ width: 56, height: 56, bgcolor: getRoleColor(currentUser?.role) }} />
                     <Box>
                         <Typography fontWeight={600}>{currentUser?.name}</Typography>
                         <Chip label={roleLabel(currentUser?.role ?? '')} size="small" sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }} />
@@ -423,9 +421,7 @@ function AdminTab() {
                         <Box key={u.id}>
                             {idx > 0 && <Divider />}
                             <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5, gap: 1.5 }}>
-                                <Avatar sx={{ width: 36, height: 36, bgcolor: getRoleColor(u.role), fontSize: '0.8rem', fontWeight: 700 }}>
-                                    {getInitials(u.name, u.initials)}
-                                </Avatar>
+                                <Avatar sx={{ width: 36, height: 36, bgcolor: getRoleColor(u.role) }} />
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                     <Typography variant="body2" fontWeight={600} noWrap>{u.name}</Typography>
                                     <Typography variant="caption" color="text.secondary" noWrap>{u.email}</Typography>

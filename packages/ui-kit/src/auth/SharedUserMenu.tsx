@@ -176,9 +176,7 @@ export function SharedUserMenu({
                                 height: 40,
                                 bgcolor: roleColor,
                             }}
-                        >
-                            {getInitials(currentUser ?? undefined)}
-                        </Avatar>
+                        />
                     </IconButton>
                 </Tooltip>
                 <BackendStatusDot apiBaseUrl={backendStatusApiBaseUrl ?? apiBaseUrl} />
@@ -195,9 +193,7 @@ export function SharedUserMenu({
                 {currentUser && (
                     <Box sx={{ px: 2, py: 1.5, pb: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                            <Avatar src={currentUser.avatarUrl} sx={{ width: 42, height: 42, bgcolor: roleColor }}>
-                                {getInitials(currentUser)}
-                            </Avatar>
+                            <Avatar src={currentUser.avatarUrl} sx={{ width: 42, height: 42, bgcolor: roleColor }} />
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                                 <Typography variant="subtitle2" fontWeight={600} noWrap>
                                     {currentUser.name}
