@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Alert,
@@ -26,7 +26,6 @@ import {
     TextField,
     Tooltip,
     Typography,
-    useTheme,
 } from '@mui/material';
 import { Add, Delete, Edit, Lock } from '@mui/icons-material';
 import {
@@ -346,7 +345,6 @@ function AdminTab() {
     const [err, setErr] = useState<string | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editUser, setEditUser] = useState<ApiUser | null>(null);
-    const theme = useTheme();
     const isOffline = isFallbackSession();
 
     const load = async () => {
@@ -468,7 +466,7 @@ function AdminTab() {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function AccountSettingsPage() {
+function AccountSettingsContent() {
     const { isAuthenticated, isRestored, currentUser } = useSharedAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -506,5 +504,19 @@ export default function AccountSettingsPage() {
             {tab === 0 && <ProfileTab />}
             {tab === 1 && isAdmin && <AdminTab />}
         </Container>
+    );
+}
+
+export default function AccountSettingsPage() {
+    return (
+        <Suspense
+            fallback={(
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                    <CircularProgress />
+                </Box>
+            )}
+        >
+            <AccountSettingsContent />
+        </Suspense>
     );
 }
