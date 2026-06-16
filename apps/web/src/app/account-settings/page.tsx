@@ -48,6 +48,23 @@ function roleLabel(r: string) {
     return { engineer: 'Engineer', lead: 'Lead', approver: 'Approver', division_manager: 'Division Manager', admin: 'Admin', viewer: 'Viewer' }[r] ?? r;
 }
 
+function getRoleColor(role: string | undefined): string {
+    switch (role) {
+        case 'admin': return '#f59e0b';
+        case 'division_manager': return '#0284c7';
+        case 'approver': return '#9333ea';
+        case 'lead': return '#059669';
+        case 'engineer': return '#0ea5e9';
+        default: return '#64748b';
+    }
+}
+
+function getInitials(name?: string, initials?: string): string {
+    if (initials?.trim()) return initials.trim().toUpperCase();
+    if (!name) return '?';
+    return name.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase();
+}
+
 // ---------------------------------------------------------------------------
 // Profile tab
 // ---------------------------------------------------------------------------
@@ -122,8 +139,8 @@ function ProfileTab() {
                     Profile
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                    <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontSize: '1.25rem', fontWeight: 700 }}>
-                        {(initials || name || '?').slice(0, 2).toUpperCase()}
+                    <Avatar src={currentUser?.avatarUrl} sx={{ width: 56, height: 56, bgcolor: getRoleColor(currentUser?.role), fontSize: '1.25rem', fontWeight: 700 }}>
+                        {getInitials(currentUser?.name, initials)}
                     </Avatar>
                     <Box>
                         <Typography fontWeight={600}>{currentUser?.name}</Typography>
@@ -406,8 +423,8 @@ function AdminTab() {
                         <Box key={u.id}>
                             {idx > 0 && <Divider />}
                             <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5, gap: 1.5 }}>
-                                <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: '0.8rem', fontWeight: 700 }}>
-                                    {(u.initials || u.name || '?').slice(0, 2).toUpperCase()}
+                                <Avatar sx={{ width: 36, height: 36, bgcolor: getRoleColor(u.role), fontSize: '0.8rem', fontWeight: 700 }}>
+                                    {getInitials(u.name, u.initials)}
                                 </Avatar>
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                     <Typography variant="body2" fontWeight={600} noWrap>{u.name}</Typography>

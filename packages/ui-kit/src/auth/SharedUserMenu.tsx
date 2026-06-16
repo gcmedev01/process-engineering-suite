@@ -176,7 +176,9 @@ export function SharedUserMenu({
                                 height: 40,
                                 bgcolor: roleColor,
                             }}
-                        />
+                        >
+                            {getInitials(currentUser ?? undefined)}
+                        </Avatar>
                     </IconButton>
                 </Tooltip>
                 <BackendStatusDot apiBaseUrl={backendStatusApiBaseUrl ?? apiBaseUrl} />
