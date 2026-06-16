@@ -11,7 +11,7 @@ export function FluidSection() {
   const { register, formState: { errors } } = useFormContext<CalculationInput>()
 
   return (
-    <SectionCard title="Fluid Data" collapsible defaultOpen={false}>
+    <SectionCard title="Fluid Data" collapsible defaultOpen={true}>
       <FieldRow label="Fluid Name" htmlFor="fluidName">
         <Input id="fluidName" {...register('fluidName')} placeholder="e.g. Crude Oil, Water" />
       </FieldRow>

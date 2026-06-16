@@ -15,7 +15,7 @@ export function DischargeSection() {
   const destType = watch('dischargeDestType') ?? EquipmentType.VESSEL
 
   return (
-    <SectionCard title="Discharge Conditions" collapsible defaultOpen={false}>
+    <SectionCard title="Discharge Conditions" collapsible defaultOpen={true}>
       <FieldRow label="Destination Equipment Type" htmlFor="dischargeDestType">
         <Select
           value={destType}

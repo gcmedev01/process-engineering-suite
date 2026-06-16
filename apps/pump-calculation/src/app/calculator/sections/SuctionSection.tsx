@@ -13,7 +13,7 @@ export function SuctionSection() {
   const sourceType = watch('suctionSourceType') ?? EquipmentType.VESSEL
 
   return (
-    <SectionCard title="Suction Conditions" collapsible defaultOpen={false}>
+    <SectionCard title="Suction Conditions" collapsible defaultOpen={true}>
       <FieldRow label="Source Equipment Type" htmlFor="suctionSourceType">
         <Select
           value={sourceType}
