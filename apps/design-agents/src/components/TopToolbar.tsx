@@ -33,6 +33,7 @@ import {
   Settings as SettingsIcon,
   UploadFile as LoadIcon,
 } from '@mui/icons-material';
+import { SharedUserMenu } from '@eng-suite/ui-kit';
 import { useDesignStore } from '../store/useDesignStore';
 import { DesignState } from '../types';
 import { StatusIndicator } from './common/StatusIndicator';
@@ -299,6 +300,11 @@ export const TopToolbar = ({ onToggleTheme, isDarkMode, onMenuClick }: TopToolba
                 {isDarkMode ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
+            <SharedUserMenu
+              homeHref={HOME_HREF}
+              apiBaseUrl={import.meta.env.VITE_AUTH_API_URL}
+              backendStatusApiBaseUrl={import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}
+            />
           </Stack>
         </Stack>
       </Box>

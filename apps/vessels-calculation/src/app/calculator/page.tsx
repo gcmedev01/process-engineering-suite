@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { AuthInteractionGuard } from "@eng-suite/ui-kit"
 import type { Resolver } from "react-hook-form"
 import { calculationInputSchema } from "@/lib/validation/inputSchema"
 import { computeVesselResult } from "@/lib/calculations"
@@ -105,17 +106,19 @@ export default function VesselCalculatorPage() {
           )}
         />
 
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <InputPanel
-              metadata={metadata}
-              onMetadataChange={setMetadata}
-              revisionHistory={revisionHistory}
-              onRevisionHistoryChange={setRevisionHistory}
-            />
-            <ResultsPanel calculationResult={calculationResult} />
+        <AuthInteractionGuard notice>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <InputPanel
+                metadata={metadata}
+                onMetadataChange={setMetadata}
+                revisionHistory={revisionHistory}
+                onRevisionHistoryChange={setRevisionHistory}
+              />
+              <ResultsPanel calculationResult={calculationResult} />
+            </div>
           </div>
-        </div>
+        </AuthInteractionGuard>
       </main>
     </FormProvider>
   )

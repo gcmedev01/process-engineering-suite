@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { AuthInteractionGuard } from "@eng-suite/ui-kit"
 import type { Resolver } from "react-hook-form"
 import { calculationInputSchema } from "@/lib/validation/inputSchema"
 import { useCalculation } from "@/lib/hooks/useCalculation"
@@ -94,26 +95,26 @@ export default function CalculatorPage() {
           )}
         />
 
-        {/* Two-column layout */}
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <div>
-              <InputPanel
-                metadata={calculationMetadata}
-                onMetadataChange={setCalculationMetadata}
-                revisionHistory={revisionHistory}
-                onRevisionHistoryChange={setRevisionHistory}
-              />
-            </div>
-            <div className="space-y-4">
-              <ResultsPanel
-                calculationResult={calculationResult}
-                validationIssues={validationIssues}
-              />
-              {/* Schematic hidden for now — not required for valve sizing. */}
+        <AuthInteractionGuard notice>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <div>
+                <InputPanel
+                  metadata={calculationMetadata}
+                  onMetadataChange={setCalculationMetadata}
+                  revisionHistory={revisionHistory}
+                  onRevisionHistoryChange={setRevisionHistory}
+                />
+              </div>
+              <div className="space-y-4">
+                <ResultsPanel
+                  calculationResult={calculationResult}
+                  validationIssues={validationIssues}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </AuthInteractionGuard>
       </main>
     </FormProvider>
   )

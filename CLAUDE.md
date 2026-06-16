@@ -16,8 +16,45 @@ This is a **Turborepo + Bun monorepo** for web-based process engineering calcula
 - **Python calc engine** at `services/calc-engine/` — the real hydraulics engine plus stubs
 - **8+ shared packages** under `packages/` with the `@eng-suite/*` npm scope
 - **Always use `bun`** — never `npm` or `yarn`
+- **Docker dev stack** is `infra/docker-compose.yml`: Postgres, API, and all frontend apps with hot reload
+- **API Docker runtime is Python 3.11+**; do not use Python 3.10 images for `services/api`
 
 See `AGENTS.md` § "Repository Structure" for the full authoritative directory tree.
+
+---
+
+## Docker Workflow
+
+Use Docker when you need the full suite with API and Postgres:
+
+```bash
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
+```
+
+This starts:
+
+- `postgres` on port `5432`
+- `api` on port `8000`
+- `apps` on ports `3000-3009`
+
+Useful checks:
+
+```bash
+docker compose -f infra/docker-compose.yml --env-file infra/.env ps
+docker compose -f infra/docker-compose.yml --env-file infra/.env logs --tail=120 api
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec -T api python - <<'PY'
+from urllib.request import urlopen
+print(urlopen('http://127.0.0.1:8000/health', timeout=5).read().decode())
+PY
+```
+
+Use the AWS-local compose only for production-style image smoke tests:
+
+```bash
+docker compose -f infra/docker-compose.aws-local.yml --env-file infra/.env.aws-local up -d --build
+```
+
+See `docs/DOCKER_DEVELOPMENT.md` for the full procedure.
 
 ---
 
@@ -175,6 +212,7 @@ When cloning from `apps/calculation-template`:
 - [ ] Update `basePath` in `next.config.ts` to the correct deployed path (e.g. `/pump`). A wrong `basePath` causes 404s on all routes. See `pes-web-dna.md` §14.
 - [ ] Add UoM wiring if the app has unit-bearing inputs (see above)
 - [ ] Register the app's port in `apps/web` rewrites
+- [ ] Add Docker build args/service wiring in `infra/docker-compose.aws-local.yml` when the app should be smoke-tested as a standalone image
 - [ ] Use shared calculation persistence (`/calculations` endpoints), not a local DB table
 - [ ] Wire `DEPLOY_TARGET` environment variables for both Vercel and AWS lanes
 
@@ -214,6 +252,7 @@ Key patterns:
 | `AGENTS.md`                     | **Authoritative** — architecture, build commands, style rules, execution model |
 | `HANDOFF.md`                    | Deep structural analysis, known issues, decomposition plans                    |
 | `DEVELOPING.md`                 | Getting started, coding standards, troubleshooting                             |
+| `docs/DOCKER_DEVELOPMENT.md`    | Docker dev stack, AWS-local smoke stack, health checks, troubleshooting        |
 | `docs/DATABASE_SCHEMA.md`       | Database schema reference                                                      |
 | `docs/ENVIRONMENT_VARIABLES.md` | All environment variables                                                      |
 | `pes-web-dna.md`                | Web app deployment rules including `basePath`                                  |

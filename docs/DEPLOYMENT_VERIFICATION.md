@@ -6,16 +6,15 @@ This document provides verification steps for both local and AWS deployments.
 
 ### Pre-Start Checklist
 
-- [ ] `.env.local` file exists in `infra/` directory
-- [ ] `POSTGRES_PASSWORD` is set in `.env.local`
-- [ ] `DATABASE_URL` is configured in `.env.local`
+- [ ] `infra/.env` exists
+- [ ] `POSTGRES_PASSWORD` is set in `infra/.env`
 - [ ] Docker and Docker Compose are installed
 
 ### Startup Verification
 
 ```bash
 # Start services
-docker-compose -f infra/docker-compose.yml up
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 
 # Expected output:
 # ✓ postgres container starts
@@ -35,7 +34,7 @@ curl http://localhost:8000/health
 
 **Database Connectivity:**
 ```bash
-docker-compose -f infra/docker-compose.yml exec postgres psql -U postgres -d engsuite -c "\dt"
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec postgres psql -U postgres -d engsuite -c "\dt"
 
 # Expected: List of tables (projects, networks, etc.)
 ```
@@ -61,15 +60,13 @@ open http://localhost:3009/control-valve-calculation  # Control Valve Calculatio
 
 **Backend Config:**
 ```bash
-docker-compose -f infra/docker-compose.yml exec api python -c "
-from apps.api.app.config import get_settings
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec -T api python - <<'PY'
+from services.api.app.config import get_settings
 s = get_settings()
-print(f'DEPLOYMENT_ENV: {s.DEPLOYMENT_ENV}')
-print(f'Allowed Origins: {s.allowed_origins}')
-assert s.DEPLOYMENT_ENV == 'local', 'Should be local'
-assert 'http://localhost:3000' in s.allowed_origins, 'Dashboard origin should be allowed'
-print('✓ Backend config correct')
-"
+print(f'DATABASE_URL configured: {bool(s.DATABASE_URL)}')
+assert s.is_db_configured, 'Database should be configured'
+print('Backend config correct')
+PY
 ```
 
 **CORS Verification:**
@@ -86,10 +83,9 @@ fetch('http://localhost:8000/health')
 
 **Environment Variables:**
 ```bash
-docker-compose -f infra/docker-compose.yml exec api env | grep -E "DEPLOYMENT_ENV|DATABASE_URL"
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec api env | grep -E "DATABASE_URL|SEED_FROM_MOCK"
 
 # Expected:
-# DEPLOYMENT_ENV=local
 # DATABASE_URL=postgresql+asyncpg://postgres:...
 ```
 
@@ -111,11 +107,11 @@ docker-compose -f infra/docker-compose.yml exec api env | grep -E "DEPLOYMENT_EN
 
 ```bash
 # Stop services
-docker-compose -f infra/docker-compose.yml down
+docker compose -f infra/docker-compose.yml --env-file infra/.env down
 
 # Clean restart (removes volumes)
-docker-compose -f infra/docker-compose.yml down -v
-docker-compose -f infra/docker-compose.yml up
+docker compose -f infra/docker-compose.yml --env-file infra/.env down -v
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 ```
 
 ---
@@ -275,7 +271,8 @@ aws ecs describe-tasks \
 # Should include:
 # - DEPLOYMENT_ENV=aws
 # - AWS_REGION=us-east-1
-# - NEXT_PUBLIC_API_URL=http://api:8000 (for frontends)
+# - NEXT_PUBLIC_API_URL=https://api.your-domain.com (browser-facing frontend build arg)
+# - API_PROXY_TARGET=https://api.your-domain.com (server-side rewrite build arg)
 ```
 
 ### ALB and Routing Verification
@@ -448,7 +445,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md#troubleshooting) for common issues and solut
 
 **Local:**
 ```bash
-docker-compose -f infra/docker-compose.yml logs --tail=100
+docker compose -f infra/docker-compose.yml --env-file infra/.env logs --tail=100
 ```
 
 **AWS:**
@@ -492,8 +489,8 @@ done
 ```bash
 # Rollback to previous version
 git checkout <previous-commit>
-docker-compose -f infra/docker-compose.yml down
-docker-compose -f infra/docker-compose.yml up --build
+docker compose -f infra/docker-compose.yml --env-file infra/.env down
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 ```
 
 ### AWS Production

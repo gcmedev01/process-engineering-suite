@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import { useTheme } from "@mui/material"
-import { TopFloatingToolbar } from "@eng-suite/ui-kit"
+import { SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit"
 import { VesselIcon } from "./VesselIcon";
 import { useColorMode } from "@/app/providers"
 
@@ -26,6 +26,13 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
       homeHref={homeHref}
       onToggleTheme={toggleColorMode}
       isDarkMode={isDark}
+      userAction={
+        <SharedUserMenu
+          homeHref={homeHref}
+          apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
+          backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+        />
+      }
     />
   )
 }

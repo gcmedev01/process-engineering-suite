@@ -8,4 +8,6 @@ export * from './IOSPickerPage';
 export * from './IOSTextInputPage';
 export * from './IOSNumberInputPage';
 export * from './TopFloatingToolbar';
+export * from './QuickAccessMenu';
 export * from './storage';
+export * from './auth';

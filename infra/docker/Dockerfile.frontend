@@ -1,6 +1,7 @@
 # Multi-stage build for Next.js frontends (AWS ECS/Fargate)
-# Supports building: web, docs, network-editor, psv,
-#   venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation
+# Supports building: web, docs, network-editor, psv, venting-calculation,
+#   vessels-calculation, pump-calculation, heat-transfer-calculation,
+#   control-valve-calculation
 # Usage: docker build --build-arg APP_NAME=psv --build-arg BASE_PATH=/psv -f Dockerfile.frontend .
 #
 # NEXT_PUBLIC_* and proxy targets are baked at BUILD time (Next.js inlines them),
@@ -36,8 +37,28 @@ ENV APP_NAME=${APP_NAME}
 # Build-time API/proxy targets (Next.js inlines these at build time)
 ARG NEXT_PUBLIC_API_URL
 ARG API_PROXY_TARGET
+ARG NEXT_PUBLIC_AUTH_API_URL
+ARG DOCS_URL
+ARG NETWORK_EDITOR_URL
+ARG PSV_URL
+ARG DESIGN_AGENTS_URL
+ARG VENTING_URL
+ARG VESSELS_CALCULATION_URL
+ARG PUMP_URL
+ARG HEAT_TRANSFER_URL
+ARG CONTROL_VALVE_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV API_PROXY_TARGET=${API_PROXY_TARGET}
+ENV NEXT_PUBLIC_AUTH_API_URL=${NEXT_PUBLIC_AUTH_API_URL}
+ENV DOCS_URL=${DOCS_URL}
+ENV NETWORK_EDITOR_URL=${NETWORK_EDITOR_URL}
+ENV PSV_URL=${PSV_URL}
+ENV DESIGN_AGENTS_URL=${DESIGN_AGENTS_URL}
+ENV VENTING_URL=${VENTING_URL}
+ENV VESSELS_CALCULATION_URL=${VESSELS_CALCULATION_URL}
+ENV PUMP_URL=${PUMP_URL}
+ENV HEAT_TRANSFER_URL=${HEAT_TRANSFER_URL}
+ENV CONTROL_VALVE_URL=${CONTROL_VALVE_URL}
 
 # Copy installed dependencies and full workspace sources from deps stage
 COPY --from=deps /app/node_modules ./node_modules

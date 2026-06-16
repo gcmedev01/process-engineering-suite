@@ -24,6 +24,8 @@ RUN bun turbo run build --filter="./packages/*"
 
 # Build the Vite app (vite only — tsc type check runs in CI, not here)
 WORKDIR /app/apps/design-agents
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 RUN bunx vite build
 
 # ============================================================================

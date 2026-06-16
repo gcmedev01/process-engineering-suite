@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useForm, FormProvider, useWatch } from "react-hook-form"
+import { AuthInteractionGuard } from "@eng-suite/ui-kit"
 import type {
   CalculationMetadata,
   HeatTransferCalculationInput,
@@ -125,25 +126,27 @@ export default function PipeCalculator() {
             />
           )}
         />
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <div>
-              <PipeInputPanel
-                tag={tag}
-                onTagChange={setTag}
-                description={description}
-                onDescriptionChange={setDescription}
-                metadata={calculationMetadata}
-                onMetadataChange={setCalculationMetadata}
-                revisionHistory={revisionHistory}
-                onRevisionHistoryChange={setRevisionHistory}
-              />
-            </div>
-            <div>
-              <PipeResultsPanel result={result} />
+        <AuthInteractionGuard notice>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <div>
+                <PipeInputPanel
+                  tag={tag}
+                  onTagChange={setTag}
+                  description={description}
+                  onDescriptionChange={setDescription}
+                  metadata={calculationMetadata}
+                  onMetadataChange={setCalculationMetadata}
+                  revisionHistory={revisionHistory}
+                  onRevisionHistoryChange={setRevisionHistory}
+                />
+              </div>
+              <div>
+                <PipeResultsPanel result={result} />
+              </div>
             </div>
           </div>
-        </div>
+        </AuthInteractionGuard>
       </main>
     </FormProvider>
   )

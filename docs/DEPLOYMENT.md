@@ -32,8 +32,8 @@ cd process-engineering-suite
 2. **Configure environment**
 
 ```bash
-# Copy the example environment file
-cp infra/.env.local.example infra/.env.local
+# Copy the example environment file used by docker-compose.yml
+cp infra/.env.example infra/.env
 
 # Edit the file and set your PostgreSQL password
 # Minimum required: POSTGRES_PASSWORD
@@ -43,7 +43,7 @@ cp infra/.env.local.example infra/.env.local
 
 ```bash
 # From the project root
-docker-compose -f infra/docker-compose.yml up
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 ```
 
 This will start:
@@ -82,9 +82,11 @@ open http://localhost:3009/control-valve-calculation  # Control Valve Sizing
 
 - **Hot Reload**: Code changes are automatically reflected (via volumes)
 - **Database**: PostgreSQL data persists in Docker volume
-- **Logs**: View with `docker-compose -f infra/docker-compose.yml logs -f [service]`
-- **Stop**: `docker-compose -f infra/docker-compose.yml down`
-- **Clean Restart**: `docker-compose -f infra/docker-compose.yml down -v && docker-compose -f infra/docker-compose.yml up`
+- **Logs**: View with `docker compose -f infra/docker-compose.yml --env-file infra/.env logs -f [service]`
+- **Stop**: `docker compose -f infra/docker-compose.yml --env-file infra/.env down`
+- **Clean Restart**: `docker compose -f infra/docker-compose.yml --env-file infra/.env down -v && docker compose -f infra/docker-compose.yml --env-file infra/.env up --build`
+
+For detailed Docker development procedures, see [DOCKER_DEVELOPMENT.md](./DOCKER_DEVELOPMENT.md).
 
 ---
 
@@ -107,6 +109,8 @@ Internet → ALB (HTTPS) → ECS Fargate Services → RDS PostgreSQL
                             ├─ PSV (3000)
                             └─ Design Agents (80)
 ```
+
+The local AWS-image smoke stack in `infra/docker-compose.aws-local.yml` also builds docs and calculator app images. The current ECR push script and ECS task definitions cover the core AWS services above unless additional repositories and task definitions are added.
 
 ### Cost Estimate
 
@@ -310,12 +314,16 @@ See [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) for complete referenc
 - `DEPLOYMENT_ENV=local`
 - `DATABASE_URL=postgresql+asyncpg://postgres:PASSWORD@postgres:5432/engsuite`
 - `NEXT_PUBLIC_API_URL=http://localhost:8000`
+- `NEXT_PUBLIC_AUTH_API_URL=http://localhost:8000`
+- `API_PROXY_TARGET=http://api:8000`
+- `VITE_API_URL=http://localhost:8000`
 
 **AWS Production:**
 - `DEPLOYMENT_ENV=aws`
 - `DATABASE_URL=<from-secrets-manager>` (RDS endpoint)
-- `ALLOWED_ORIGINS=https://your-alb.com,https://yourdomain.com`
-- `NEXT_PUBLIC_API_URL=http://api:8000` (ECS service discovery)
+- `CORS_ALLOWED_ORIGINS=https://your-alb.com,https://yourdomain.com`
+- `NEXT_PUBLIC_API_URL=https://api.your-domain.com` (browser-facing API URL, baked at build time)
+- `API_PROXY_TARGET=https://api.your-domain.com` (server-side rewrite target, baked at build time)
 
 ---
 
@@ -335,7 +343,7 @@ fetch('http://localhost:8000/health')
 # Expected: No CORS errors
 
 # Database connectivity
-docker-compose -f infra/docker-compose.yml exec postgres psql -U postgres -d engsuite -c "\dt"
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec postgres psql -U postgres -d engsuite -c "\dt"
 # Expected: List of tables
 ```
 
@@ -367,28 +375,28 @@ aws ecs execute-command \
 **Issue: API can't connect to database**
 ```bash
 # Check if postgres is running
-docker-compose -f infra/docker-compose.yml ps postgres
+docker compose -f infra/docker-compose.yml --env-file infra/.env ps postgres
 
 # Check logs
-docker-compose -f infra/docker-compose.yml logs postgres
+docker compose -f infra/docker-compose.yml --env-file infra/.env logs postgres
 
 # Verify DATABASE_URL environment variable
-docker-compose -f infra/docker-compose.yml exec api env | grep DATABASE_URL
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec api env | grep DATABASE_URL
 ```
 
 **Issue: CORS errors in browser**
 ```bash
-# Verify DEPLOYMENT_ENV is set to "local"
-docker-compose -f infra/docker-compose.yml exec api env | grep DEPLOYMENT_ENV
+# Verify CORS env if you overrode it
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec api env | grep CORS_ALLOWED_ORIGINS
 
 # Check API logs for CORS configuration
-docker-compose -f infra/docker-compose.yml logs api | grep -i cors
+docker compose -f infra/docker-compose.yml --env-file infra/.env logs api | grep -i cors
 ```
 
 **Issue: Frontend can't reach API**
 ```bash
 # Verify NEXT_PUBLIC_API_URL
-docker-compose -f infra/docker-compose.yml exec apps env | grep NEXT_PUBLIC_API_URL
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec apps env | grep NEXT_PUBLIC_API_URL
 
 # Check API is responding
 curl http://localhost:8000/health
@@ -422,7 +430,7 @@ aws ecs execute-command --cluster process-engineering-cluster --task TASK_ID --c
 
 **Issue: CORS errors from ALB domain**
 ```bash
-# Verify ALLOWED_ORIGINS includes ALB domain
+# Verify CORS_ALLOWED_ORIGINS includes ALB domain
 aws secretsmanager get-secret-value --secret-id process-engineering/allowed-origins --region us-east-1
 
 # Update if needed
@@ -445,7 +453,7 @@ aws ecs update-service --cluster process-engineering-cluster --service api --for
 ```bash
 # Code changes are reflected immediately via volumes
 # Restart services if needed
-docker-compose -f infra/docker-compose.yml restart
+docker compose -f infra/docker-compose.yml --env-file infra/.env restart
 ```
 
 **AWS:**
@@ -467,7 +475,7 @@ aws ecs update-service \
 ```bash
 # Migrations run automatically on startup
 # Manual run:
-docker-compose -f infra/docker-compose.yml exec api alembic upgrade head
+docker compose -f infra/docker-compose.yml --env-file infra/.env exec api alembic upgrade head
 ```
 
 **AWS:**

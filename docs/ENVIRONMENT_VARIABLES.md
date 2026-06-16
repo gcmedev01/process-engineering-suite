@@ -19,6 +19,7 @@ These variables apply to the entire suite or multiple applications.
 - `POSTGRES_PASSWORD`: PostgreSQL database password (required for production)
 - `POSTGRES_USER`: PostgreSQL database user (default: postgres)
 - `POSTGRES_DB`: PostgreSQL database name (default: engsuite)
+- `POSTGRES_PORT`: Host port used by local Postgres compose services (default: 5432)
 - `DATABASE_URL`: Full PostgreSQL connection string (optional, auto-built if not provided)
   - Format: `postgresql+asyncpg://user:password@host:port/database`
 
@@ -26,8 +27,12 @@ These variables apply to the entire suite or multiple applications.
 
 - `NEXT_PUBLIC_API_URL`: Backend API base URL (default: http://localhost:8000)
   - Used by all frontend applications
+- `NEXT_PUBLIC_AUTH_API_URL`: Browser-facing authentication API base URL
+  - Defaults to `NEXT_PUBLIC_API_URL` in shared auth clients when unset
 - `API_PROXY_TARGET`: server-side rewrite target for PSV `/api/*` routes
   - Default: `NEXT_PUBLIC_API_URL` if set, otherwise `http://localhost:8000`
+- `CORS_ALLOWED_ORIGINS`: comma-separated browser origins accepted by the FastAPI CORS middleware
+- `SEED_FROM_MOCK`: when `true`, API startup seed script loads `services/api/mock_data.json` if the database is empty
 
 ### Cross-App Routing (Web Dashboard)
 
@@ -58,6 +63,8 @@ These variables apply to the entire suite or multiple applications.
   - Default: `false`
 - `SECRET_KEY`: Secret key for JWT tokens and security
   - Required for production authentication
+- `DATABASE_URL`: PostgreSQL URL used by SQLAlchemy and Alembic
+- `CORS_ALLOWED_ORIGINS`: FastAPI CORS allow-list; prefer this name over legacy `ALLOWED_ORIGINS`
 
 ### Venting Calculation (apps/venting-calculation)
 
@@ -98,7 +105,35 @@ bun run dev
 NEXT_PUBLIC_API_URL=http://localhost:8000 bun run dev
 ```
 
-### Production - Docker
+### Development - Docker
+
+```bash
+cp infra/.env.example infra/.env
+# edit infra/.env and set POSTGRES_PASSWORD
+
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
+```
+
+The dev compose sets these automatically for containers:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_AUTH_API_URL=http://localhost:8000
+API_PROXY_TARGET=http://api:8000
+VITE_API_URL=http://localhost:8000
+SEED_FROM_MOCK=true
+```
+
+### Production-Image Smoke Test - Docker
+
+```bash
+cp infra/.env.aws-local.example infra/.env.aws-local
+# edit infra/.env.aws-local and set local secrets
+
+docker compose -f infra/docker-compose.aws-local.yml --env-file infra/.env.aws-local up -d --build
+```
+
+### Production - Docker / AWS
 
 ```bash
 # Environment file
@@ -109,6 +144,7 @@ POSTGRES_USER=postgres
 POSTGRES_DB=engsuite
 DATABASE_URL=postgresql+asyncpg://postgres:secure-password@postgres:5432/engsuite
 NEXT_PUBLIC_API_URL=https://api.your-domain.com
+NEXT_PUBLIC_AUTH_API_URL=https://api.your-domain.com
 API_PROXY_TARGET=https://api.your-domain.com
 DOCS_URL=https://docs.your-domain.com
 NETWORK_EDITOR_URL=https://network-editor.your-domain.com
@@ -121,8 +157,8 @@ HEAT_TRANSFER_URL=https://heat-transfer.your-domain.com
 CONTROL_VALVE_URL=https://control-valve.your-domain.com
 EOF
 
-# Run with docker-compose
-docker-compose -f infra/docker-compose.yml --env-file .env up -d
+# Run with Docker Compose
+docker compose -f infra/docker-compose.yml --env-file .env up -d
 ```
 
 ### Production - Direct Deployment
@@ -146,6 +182,7 @@ Set these in each Vercel project:
 ```bash
 DEPLOY_TARGET=vercel
 NEXT_PUBLIC_API_URL=https://api.your-domain.com
+NEXT_PUBLIC_AUTH_API_URL=https://api.your-domain.com
 ```
 
 For `apps/web`, also set:
@@ -210,5 +247,6 @@ bun run check:deploy:matrix
 
 ## Related Documentation
 
-- `DEPLOYMENT_GUIDE.md` - Main deployment instructions (see infra/docker-compose.yml)
+- `docs/DOCKER_DEVELOPMENT.md` - Docker development and AWS-local smoke testing
+- `docs/DEPLOYMENT.md` - Deployment instructions
 - `TROUBLESHOOTING.md` - Issue resolution guides

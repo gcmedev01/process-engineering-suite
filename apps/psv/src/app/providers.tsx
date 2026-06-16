@@ -5,6 +5,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ReactNode, useState, useMemo, useEffect } from "react";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
 import { SessionGuard } from "@/hooks/useSessionGuard";
+import { SharedAuthBridge } from "@/components/SharedAuthBridge";
 import { Toaster } from 'sonner';
 
 const getDesignTokens = (mode: 'light' | 'dark') => {
@@ -205,6 +206,7 @@ export function Providers({ children }: { children: ReactNode }) {
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
                     <Toaster theme={mode} position="top-right" closeButton />
+                    <SharedAuthBridge />
                     <SessionGuard>
                         {children}
                     </SessionGuard>

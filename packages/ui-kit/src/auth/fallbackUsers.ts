@@ -1,0 +1,113 @@
+import type { SharedCredential, SharedUser } from './types';
+
+export const fallbackUsers: SharedUser[] = [
+    {
+        id: 'f6c289ac-fabe-4d2e-a635-127e5b9045ad',
+        username: 'maetee',
+        name: 'Maetee',
+        initials: 'MTL',
+        email: 'maetee@eng-suite.com',
+        role: 'admin',
+        status: 'active',
+    },
+    {
+        id: 'c34f5c40-8193-4e39-a628-e684361c2b67',
+        username: 'sjohnson',
+        name: 'Sarah Johnson',
+        initials: 'SJ',
+        email: 'sarah.johnson@acme.com',
+        role: 'lead',
+        status: 'active',
+    },
+    {
+        id: '22ee3f22-898a-461b-85ec-83f84d250810',
+        username: 'mchen',
+        name: 'Mike Chen',
+        initials: 'MC',
+        email: 'mike.chen@acme.com',
+        role: 'approver',
+        status: 'active',
+    },
+    {
+        id: '890a53e4-85d9-4399-85bb-68af0aa179d1',
+        username: 'edavis',
+        name: 'Emily Davis',
+        initials: 'ED',
+        email: 'emily.davis@gep.com',
+        role: 'engineer',
+        status: 'active',
+    },
+    {
+        id: 'ab20b042-c519-423b-82e0-1dadf6f29fe0',
+        username: 'jsmith',
+        name: 'John Smith',
+        initials: 'JS',
+        email: 'john.smith@acme.com',
+        role: 'engineer',
+        status: 'active',
+    },
+    {
+        id: '1b9de640-0851-4ed5-941c-411efa30585c',
+        username: 'lead',
+        name: 'Test Lead',
+        initials: 'TL',
+        email: 'lead@eng-suite.com',
+        role: 'lead',
+        status: 'active',
+    },
+    {
+        id: 'f97ba14f-1fe6-4ad8-8c6e-241c12efcc27',
+        username: 'approver',
+        name: 'Test Approver',
+        initials: 'TA',
+        email: 'approver@eng-suite.com',
+        role: 'approver',
+        status: 'active',
+    },
+    {
+        id: '2252f300-f2f3-4911-863d-40a5baa25346',
+        username: 'engineer',
+        name: 'Test Engineer',
+        initials: 'TE',
+        email: 'engineer@eng-suite.com',
+        role: 'engineer',
+        status: 'active',
+    },
+    {
+        id: 'd1a2b3c4-e5f6-47a8-b9c0-d1e2f3a4b5c6',
+        username: 'dm',
+        name: 'Division Manager',
+        initials: 'DM',
+        email: 'dm@eng-suite.com',
+        role: 'division_manager',
+        status: 'active',
+    },
+];
+
+export const fallbackCredentials: SharedCredential[] = [
+    {
+        userId: 'f6c289ac-fabe-4d2e-a635-127e5b9045ad',
+        username: 'maetee',
+        password: 'f46daca7eb795765f476243ee233a9c3fa03bd49e71121bb5aebad24a0b5d015',
+    },
+    {
+        userId: '1b9de640-0851-4ed5-941c-411efa30585c',
+        username: 'lead',
+        password: 'aae210703bf75e57a8531be04328d6f1aca6e299d97f4956300fe6568c93a8b5',
+    },
+    {
+        userId: 'f97ba14f-1fe6-4ad8-8c6e-241c12efcc27',
+        username: 'approver',
+        password: '0a406e57b23ca636fd559f6cca9e9ca5068312f00b896722483e4d09ccfafa41',
+    },
+    {
+        userId: '2252f300-f2f3-4911-863d-40a5baa25346',
+        username: 'engineer',
+        password: '162bf45d4f836003000411a54bd96455e08986f2e1c8010bf9e6eb1fb7c5891a',
+    },
+    {
+        userId: 'd1a2b3c4-e5f6-47a8-b9c0-d1e2f3a4b5c6',
+        username: 'dm',
+        password: 'a4243deb4e4fd5d3c764f8df3b8911264bf6b908f496fd54acd7100b57776f57',
+    },
+];

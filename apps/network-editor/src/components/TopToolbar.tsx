@@ -3,7 +3,7 @@
 import { Assignment, Timeline, MoreVert as MoreVertIcon, FileUpload as ImportIcon, Refresh as RefreshIcon, CloudUpload as CloudSaveIcon, CloudDownload as CloudLoadIcon } from "@mui/icons-material";
 import { Button, ButtonGroup, Tooltip, IconButton, useTheme, Menu, MenuItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemButton, ListItemText as MuiListItemText, Typography, CircularProgress, Box } from "@mui/material";
 import { useState } from "react";
-import { TopFloatingToolbar } from "@eng-suite/ui-kit";
+import { SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit";
 import { useColorMode } from "@/contexts/ColorModeContext";
 import { NetworkState, ProjectDetails } from "@/lib/types";
 import { ProjectDetailsDialog } from "./ProjectDetailsDialog";
@@ -166,6 +166,13 @@ export function TopToolbar({
                 }
                 onToggleTheme={toggleColorMode}
                 isDarkMode={isDark}
+                userAction={
+                    <SharedUserMenu
+                        homeHref={homeHref}
+                        apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
+                        backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+                    />
+                }
             />
 
             <ProjectDetailsDialog

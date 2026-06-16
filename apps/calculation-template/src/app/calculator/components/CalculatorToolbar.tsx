@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Box } from "@mui/material";
+import { AuthInteractionGuard } from "@eng-suite/ui-kit";
 import { TopToolbar } from "@/components/TopToolbar";
 
 interface CalculatorToolbarProps {
@@ -24,7 +25,10 @@ export function CalculatorToolbar({
         "@media print": { display: "none" },
       }}
     >
-      <TopToolbar actions={actions} homeHref={homeHref} />
+      <TopToolbar
+        actions={<AuthInteractionGuard>{actions}</AuthInteractionGuard>}
+        homeHref={homeHref}
+      />
     </Box>
   );
 }

@@ -39,32 +39,32 @@ bun run dev
 ### Docker — dev stack (hot reload, local DB)
 
 ```bash
-cd infra
-echo "POSTGRES_PASSWORD=change-me" > .env
-docker compose up -d --build
+cp infra/.env.example infra/.env
+# edit infra/.env and set POSTGRES_PASSWORD
+
+docker compose -f infra/docker-compose.yml --env-file infra/.env up -d --build
 open http://localhost:3000       # Dashboard
 open http://localhost:8000/docs  # API docs
 ```
 
+See [docs/DOCKER_DEVELOPMENT.md](docs/DOCKER_DEVELOPMENT.md) for logs, health checks, rebuilds, and database reset commands.
+
 ### Docker — AWS production images (local smoke test)
 
-Builds the same images that ship to ECS/Fargate and runs them against a local Postgres:
+Builds production-style images locally and runs them against a local Postgres:
 
 ```bash
-# 1. Build all five production images (from repo root)
-API_URL=http://localhost:8000 \
-  docker compose -f infra/docker-compose.aws-local.yml build
-
-# 2. Create env file for secrets
+# 1. Create env file for secrets and build-time URLs
 cp infra/.env.aws-local.example infra/.env.aws-local
 # edit infra/.env.aws-local — set POSTGRES_PASSWORD etc.
 
-# 3. Start the stack
+# 2. Build and start the stack
 docker compose -f infra/docker-compose.aws-local.yml \
-  --env-file infra/.env.aws-local up -d
+  --env-file infra/.env.aws-local up -d --build
 
-# 4. Open in browser
+# 3. Open in browser
 open http://localhost:3000                            # Web dashboard
+open http://localhost:3001/docs                       # Docs
 open http://localhost:3002/network-editor             # Network editor
 open http://localhost:3003/psv                        # PSV sizing
 open http://localhost:3004/design-agents/             # Design agents (Vite/Nginx)
@@ -143,6 +143,7 @@ docs/           # Architecture documentation
 ## Documentation
 
 - [DEVELOPING.md](DEVELOPING.md) - Setup guides
+- [docs/DOCKER_DEVELOPMENT.md](docs/DOCKER_DEVELOPMENT.md) - Docker development and AWS-local smoke testing
 - [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) - Environment variables
 - [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) - Database schema
 - [docs/ENGINEERING_OBJECTS_MIGRATION_20260306.md](docs/ENGINEERING_OBJECTS_MIGRATION_20260306.md) - Engineering object and equipment migration notes

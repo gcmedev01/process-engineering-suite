@@ -25,9 +25,9 @@ import {
 } from "@mui/icons-material";
 import { useColorMode } from "@/contexts/ColorModeContext";
 import { PsvIcon } from "./PsvIcon";
-import { TopFloatingToolbar } from "@eng-suite/ui-kit";
+import { SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit";
 import { useRouter } from "next/navigation";
-import { UserMenu } from "@/components/UserMenu";
+import { API_BASE_URL } from "@/lib/api";
 import { usePsvStore } from "@/store/usePsvStore";
 import { StatusIndicator } from "@/components/StatusIndicator";
 
@@ -461,15 +461,21 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
                         </IconButton>
                     )}
 
-                    {/* Status Indicator */}
                     <StatusIndicator />
-
-                    {/* User Menu */}
-                    <UserMenu />
                 </Box>
             }
             onToggleTheme={toggleColorMode}
             isDarkMode={isDark}
+            userAction={
+                <SharedUserMenu
+                    apiBaseUrl={API_BASE_URL}
+                    homeHref={process.env.NEXT_PUBLIC_WEB_URL?.trim() || "http://localhost:3000"}
+                    showAccountSettings
+                    onAccountSettings={() => {
+                        setCurrentPage('account');
+                    }}
+                />
+            }
         />
     );
 }

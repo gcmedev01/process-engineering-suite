@@ -28,12 +28,36 @@ bun turbo run dev --parallel --filter='./apps/*' --filter=!calculation-template
 bun run check:deploy:matrix
 ```
 
+## Docker Development
+
+Use `infra/docker-compose.yml` for daily development with hot reload, the FastAPI API, and local Postgres:
+
+```bash
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
+```
+
+Use `infra/docker-compose.aws-local.yml` only when smoke-testing production-style Docker images locally:
+
+```bash
+docker compose -f infra/docker-compose.aws-local.yml --env-file infra/.env.aws-local up -d --build
+```
+
+Development stack services:
+
+- `postgres`: PostgreSQL 17 on host port `5432`
+- `api`: FastAPI on host port `8000`; runs Alembic migrations and mock seed before uvicorn
+- `apps`: Bun/Turbo dev servers for apps on host ports `3000-3009`
+
+API containers must run Python 3.11+. Do not downgrade `services/api/Dockerfile` or `infra/docker/Dockerfile.api` to Python 3.10; API code uses Python 3.11 standard-library features.
+
+For the full procedure, see `docs/DOCKER_DEVELOPMENT.md`.
+
 ## Deployment Lanes (Vercel + AWS)
 
 - Treat deployment config as lane-based. Use `DEPLOY_TARGET=vercel` on Vercel and `DEPLOY_TARGET=aws` on AWS.
 - Keep platform differences in environment variables and infra files (`infra/**`, root `Dockerfile`), not in shared hardcoded app behavior.
 - Do not hardcode production `localhost` in rewrites or API targets.
-- Use `API_PROXY_TARGET` (PSV rewrite target), `NEXT_PUBLIC_API_URL` (browser API URL), and `DOCS_URL` / `NETWORK_EDITOR_URL` / `PSV_URL` / `DESIGN_AGENTS_URL` (web cross-app rewrites).
+- Use `API_PROXY_TARGET` (container/server-side API target), `NEXT_PUBLIC_API_URL` (browser API URL), `NEXT_PUBLIC_AUTH_API_URL` (browser auth API URL), `VITE_API_URL` (Design Agents API URL), and `DOCS_URL` / `NETWORK_EDITOR_URL` / `PSV_URL` / `DESIGN_AGENTS_URL` / `VENTING_URL` / `VESSELS_CALCULATION_URL` / `PUMP_URL` / `HEAT_TRANSFER_URL` / `CONTROL_VALVE_URL` (web cross-app rewrites).
 - For any deployment-related change, run `bun run check:deploy:matrix` before merging.
 
 ### TypeScript/Next.js Apps (apps/psv, apps/network-editor, apps/docs)
@@ -121,7 +145,7 @@ pytest -k "pattern"       # Run tests matching pattern
   - Functions/Variables/Modules: `snake_case`
   - Constants: `ALL_CAPS_WITH_UNDERSCORES`
   - Private: `_leading_underscore`
-- **Type Annotations**: Required for all public APIs. Use Python 3.10+ type syntax
+- **Type Annotations**: Required for all public APIs. Use Python 3.11+ type syntax for API/runtime code
 - **Exceptions**: Never use bare `except:`. Use specific exceptions
 - **Docstrings**: Triple double quotes `"""` with one-line summary, `Args:`, `Returns:`, `Raises:` sections
 - **No comments**: Do not add comments unless explicitly requested
@@ -384,6 +408,22 @@ bun turbo run dev --parallel --filter='./apps/*' --filter=!calculation-template
 bun run check:deploy:matrix
 ```
 
+## Docker Development
+
+Daily Docker development:
+
+```bash
+docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
+```
+
+Production-image local smoke test:
+
+```bash
+docker compose -f infra/docker-compose.aws-local.yml --env-file infra/.env.aws-local up -d --build
+```
+
+The dev stack exposes Postgres on `5432`, API on `8000`, and frontend apps on `3000-3009`. The API Docker runtime is Python 3.11+. See `docs/DOCKER_DEVELOPMENT.md` for rebuild, health check, reset, and troubleshooting procedures.
+
 ## Deployment Lanes (Vercel + AWS)
 
 - Always preserve both deployment lanes. Configure lane intent via `DEPLOY_TARGET`:
@@ -392,8 +432,11 @@ bun run check:deploy:matrix
   - `local` for local development
 - Avoid lane regressions by keeping platform targets env-driven:
   - `NEXT_PUBLIC_API_URL`
+  - `NEXT_PUBLIC_AUTH_API_URL`
   - `API_PROXY_TARGET`
+  - `VITE_API_URL`
   - `DOCS_URL`, `NETWORK_EDITOR_URL`, `PSV_URL`, `DESIGN_AGENTS_URL`
+  - `VENTING_URL`, `VESSELS_CALCULATION_URL`, `PUMP_URL`, `HEAT_TRANSFER_URL`, `CONTROL_VALVE_URL`
 - Before shipping deployment changes, run `bun run check:deploy:vercel` and `bun run check:deploy:aws` (or `bun run check:deploy:matrix`).
 
 ---

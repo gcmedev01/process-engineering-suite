@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { AuthInteractionGuard } from "@eng-suite/ui-kit"
 import type { Resolver } from "react-hook-form"
 import { calculationInputSchema } from "@/lib/validation/inputSchema"
 import { computePumpResult } from "@/lib/calculations"
@@ -130,18 +131,20 @@ export default function PumpCalculatorPage() {
           )}
         />
 
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <InputPanel
-              metadata={metadata}
-              onMetadataChange={setMetadata}
-              revisionHistory={revisionHistory}
-              onRevisionHistoryChange={setRevisionHistory}
-              result={calculationResult}
-            />
-            <ResultsPanel result={calculationResult} validationIssues={validationIssues} />
+        <AuthInteractionGuard notice>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <InputPanel
+                metadata={metadata}
+                onMetadataChange={setMetadata}
+                revisionHistory={revisionHistory}
+                onRevisionHistoryChange={setRevisionHistory}
+                result={calculationResult}
+              />
+              <ResultsPanel result={calculationResult} validationIssues={validationIssues} />
+            </div>
           </div>
-        </div>
+        </AuthInteractionGuard>
       </main>
     </FormProvider>
   )

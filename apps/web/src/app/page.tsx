@@ -14,6 +14,7 @@ import { PumpIcon } from "../components/PumpIcon";
 import { VesselIcon } from "../components/VesselIcon";
 import { HeatIcon } from "../components/HeatIcon";
 import { PsvIcon } from "../components/PsvIcon";
+import { LandingLoginGate } from "../components/LandingLoginGate";
 
 const tools = [
   {
@@ -117,60 +118,62 @@ const itemVariants: Variants = {
 
 export default function Dashboard() {
   return (
-    <Box sx={{ py: 8, minHeight: "100vh" }}>
-      <Container maxWidth="lg">
-        <Box sx={{ mb: 8, textAlign: "center" }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-          >
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 700,
-                background: "linear-gradient(to right, #053a7bff, #00C4F9)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                mb: 2,
-              }}
+    <LandingLoginGate>
+      <Box sx={{ py: 8, minHeight: "100vh" }}>
+        <Container maxWidth="lg">
+          <Box sx={{ mb: 8, textAlign: "center" }}>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
             >
-              Engineering Suite
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                color: "text.secondary",
-                maxWidth: "600px",
-                mx: "auto",
-              }}
-            >
-              A unified platform for process design, hydraulic analysis, and
-              equipment sizing.
-            </Typography>
-          </motion.div>
-        </Box>
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 700,
+                  background: "linear-gradient(to right, #053a7bff, #00C4F9)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  mb: 2,
+                }}
+              >
+                Engineering Suite
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "text.secondary",
+                  maxWidth: "600px",
+                  mx: "auto",
+                }}
+              >
+                A unified platform for process design, hydraulic analysis, and
+                equipment sizing.
+              </Typography>
+            </motion.div>
+          </Box>
 
-        <Grid
-          container
-          spacing={3}
-          component={motion.div}
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {tools.map((tool, index) => (
-            <Grid
-              key={index}
-              size={{ xs: 12, md: 6, lg: 4 }}
-              component={motion.div}
-              variants={itemVariants}
-            >
-              <AppCard {...tool} />
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
+          <Grid
+            container
+            spacing={3}
+            component={motion.div}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {tools.map((tool, index) => (
+              <Grid
+                key={index}
+                size={{ xs: 12, md: 6, lg: 4 }}
+                component={motion.div}
+                variants={itemVariants}
+              >
+                <AppCard {...tool} />
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+    </LandingLoginGate>
   );
 }

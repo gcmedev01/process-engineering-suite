@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useForm, FormProvider, useWatch } from "react-hook-form"
+import { AuthInteractionGuard } from "@eng-suite/ui-kit"
 import type {
   CalculationMetadata,
   HeatTransferCalculationInput,
@@ -89,21 +90,23 @@ export default function HorizontalCalculatorPage() {
             />
           )}
         />
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <HorizontalInputPanel
-              tag={tag}
-              onTagChange={setTag}
-              desc={desc}
-              onDescChange={setDesc}
-              metadata={calculationMetadata}
-              onMetadataChange={setCalculationMetadata}
-              revisionHistory={revisionHistory}
-              onRevisionHistoryChange={setRevisionHistory}
-            />
-            <HorizontalResultsPanel result={result} />
+        <AuthInteractionGuard notice>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <HorizontalInputPanel
+                tag={tag}
+                onTagChange={setTag}
+                desc={desc}
+                onDescChange={setDesc}
+                metadata={calculationMetadata}
+                onMetadataChange={setCalculationMetadata}
+                revisionHistory={revisionHistory}
+                onRevisionHistoryChange={setRevisionHistory}
+              />
+              <HorizontalResultsPanel result={result} />
+            </div>
           </div>
-        </div>
+        </AuthInteractionGuard>
       </main>
     </FormProvider>
   )

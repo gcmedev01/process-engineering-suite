@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { AuthInteractionGuard } from "@eng-suite/ui-kit"
 import { calculationInputSchema } from "@/lib/validation/inputSchema"
 import { useCalculation } from "@/lib/hooks/useCalculation"
 import type { CalculationInput, CalculationMetadata, RevisionRecord } from "@/types"
@@ -63,28 +64,29 @@ export default function CalculatorPage() {
           )}
         />
 
-        {/* Two-column layout */}
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-            <div>
-              <InputPanel
-                metadata={calculationMetadata}
-                onMetadataChange={setCalculationMetadata}
-                revisionHistory={revisionHistory}
-                onRevisionHistoryChange={setRevisionHistory}
-                derivedGeometry={derivedGeometry}
-              />
-            </div>
+        <AuthInteractionGuard notice>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <div>
+                <InputPanel
+                  metadata={calculationMetadata}
+                  onMetadataChange={setCalculationMetadata}
+                  revisionHistory={revisionHistory}
+                  onRevisionHistoryChange={setRevisionHistory}
+                  derivedGeometry={derivedGeometry}
+                />
+              </div>
 
-            <div>
-              <ResultsPanel
-                calculationResult={calculationResult}
-                validationIssues={validationIssues}
-                derivedGeometry={derivedGeometry}
-              />
+              <div>
+                <ResultsPanel
+                  calculationResult={calculationResult}
+                  validationIssues={validationIssues}
+                  derivedGeometry={derivedGeometry}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </AuthInteractionGuard>
       </main>
     </FormProvider>
   )

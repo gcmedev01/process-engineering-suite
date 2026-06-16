@@ -13,6 +13,8 @@ export interface TopFloatingToolbarProps {
     homeHref?: string;
     onToggleTheme?: () => void;
     isDarkMode?: boolean;
+    userAction?: ReactNode;
+    quickAccess?: ReactNode;
 }
 
 export const TopFloatingToolbar = ({
@@ -24,6 +26,8 @@ export const TopFloatingToolbar = ({
     homeHref,
     onToggleTheme,
     isDarkMode = false,
+    userAction,
+    quickAccess,
 }: TopFloatingToolbarProps) => {
     const theme = useTheme();
 
@@ -100,7 +104,7 @@ export const TopFloatingToolbar = ({
             {/* Right Side: Actions */}
             <Stack direction="row" alignItems="center" spacing={1.5}>
                 {actions}
-                {onToggleTheme && (
+                {quickAccess ?? (onToggleTheme && (
                     <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}>
                         <IconButton
                             onClick={onToggleTheme}
@@ -123,7 +127,8 @@ export const TopFloatingToolbar = ({
                             {isDarkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
                         </IconButton>
                     </Tooltip>
-                )}
+                ))}
+                {userAction}
             </Stack>
         </Box>
     );

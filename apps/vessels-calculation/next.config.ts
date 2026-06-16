@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   transpilePackages: ["@eng-suite/physics", "@eng-suite/engineering-units", "@eng-suite/ui-kit"],
   basePath: "/vessels-calculation",
   env: {

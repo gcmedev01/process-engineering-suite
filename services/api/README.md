@@ -177,7 +177,7 @@ alembic -c alembic.local.ini history
 
 ## Related Documentation
 
-- [Deployment Guide](../../docs/DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [Deployment Guide](../../docs/DEPLOYMENT.md) - Complete deployment instructions
 - [Environment Variables](../../docs/ENVIRONMENT_VARIABLES.md) - Configuration reference
-- [Docker Deployment](../../docs/DOCKER_DEPLOYMENT.md) - Container operations
+- [Docker Development](../../docs/DOCKER_DEVELOPMENT.md) - Container operations
 - [Backup & Restore](../../docs/BACKUP_RESTORE.md) - Data management

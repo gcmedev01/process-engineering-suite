@@ -18,6 +18,7 @@ import {
     Tooltip,
     Dialog,
 } from '@mui/material';
+import { BackendStatusDot } from '@eng-suite/ui-kit';
 import {
     Dashboard,
     Settings,
@@ -34,6 +35,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { usePsvStore } from '@/store/usePsvStore';
 import { useColorMode } from '@/contexts/ColorModeContext';
 import { LoginPage } from '@/components/LoginPage';
+import { API_BASE_URL } from '@/lib/api';
 
 export function UserMenu() {
     const theme = useTheme();
@@ -111,22 +113,25 @@ export function UserMenu() {
 
     return (
         <>
-            <Tooltip title={isAuthenticated ? currentUser?.name || 'User' : 'Guest (View Only)'}>
-                <IconButton onClick={handleClick} size="small">
-                    <Avatar
-                        src={currentUser?.avatarUrl}
-                        sx={{
-                            width: 40,
-                            height: 40,
-                            bgcolor: isAuthenticated ? getRoleColor(currentUser?.role) : theme.palette.grey[500],
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
-                        }}
-                    >
-                        {isAuthenticated ? getInitials(currentUser ?? undefined) : <Person />}
-                    </Avatar>
-                </IconButton>
-            </Tooltip>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                <Tooltip title={isAuthenticated ? currentUser?.name || 'User' : 'Guest (View Only)'}>
+                    <IconButton onClick={handleClick} size="small">
+                        <Avatar
+                            src={currentUser?.avatarUrl}
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: isAuthenticated ? getRoleColor(currentUser?.role) : theme.palette.grey[500],
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                            }}
+                        >
+                            {isAuthenticated ? getInitials(currentUser ?? undefined) : <Person />}
+                        </Avatar>
+                    </IconButton>
+                </Tooltip>
+                <BackendStatusDot apiBaseUrl={API_BASE_URL} />
+            </Box>
 
             <Menu
                 anchorEl={anchorEl}

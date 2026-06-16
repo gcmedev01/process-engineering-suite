@@ -257,7 +257,31 @@ export const useAuthStore = create<AuthState>()(
             },
         }),
         {
-            name: 'psv-auth-storage', // localStorage key
+            name: 'psv-auth-storage',
+            onRehydrateStorage: () => (state, error) => {
+                if (error) return;
+                // If PSV already has a valid session, keep it
+                if (state?.isAuthenticated && state.sessionExpiresAt && Date.now() < state.sessionExpiresAt) return;
+                // Otherwise try to inherit the shared session from the landing page
+                if (typeof window === 'undefined') return;
+                try {
+                    const raw = window.localStorage.getItem('pes-shared-auth-storage');
+                    if (!raw) return;
+                    const shared = JSON.parse(raw) as { user: User; sessionExpiresAt: number };
+                    if (shared?.user && shared.sessionExpiresAt && Date.now() < shared.sessionExpiresAt) {
+                        // Run after Zustand finishes applying the rehydrated state
+                        setTimeout(() => {
+                            useAuthStore.setState({
+                                currentUser: shared.user,
+                                isAuthenticated: true,
+                                sessionExpiresAt: shared.sessionExpiresAt,
+                            });
+                        }, 0);
+                    }
+                } catch {
+                    // ignore malformed data
+                }
+            },
         }
     )
 );

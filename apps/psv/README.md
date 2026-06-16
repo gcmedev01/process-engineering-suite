@@ -76,7 +76,7 @@ docker run -p 3003:3003 \
 curl http://localhost:3003/api/health
 ```
 
-For complete deployment instructions, see the main [Deployment Guide](../../docs/DEPLOYMENT_GUIDE.md).
+For complete deployment instructions, see the main [Deployment Guide](../../docs/DEPLOYMENT.md).
 
 ## Current Status
 
@@ -126,7 +126,6 @@ Add `NEXT_PUBLIC_USE_LOCAL_STORAGE=true` in Vercel project settings → Environm
 
 All demo users can login with their username as password:
 
-- `maetee` / `linkinpark` (admin)
 - `lead` / `lead` (lead)
 - `approver` / `password` (approver)
 - `engineer` / `engineer` (engineer)
@@ -159,9 +158,9 @@ The application includes comprehensive tests covering:
 
 ## Related Documentation
 
-- [Deployment Guide](../../docs/DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [Deployment Guide](../../docs/DEPLOYMENT.md) - Complete deployment instructions
 - [Environment Variables](../../docs/ENVIRONMENT_VARIABLES.md) - Configuration reference
-- [Docker Deployment](../../docs/DOCKER_DEPLOYMENT.md) - Container operations
+- [Docker Development](../../docs/DOCKER_DEVELOPMENT.md) - Container operations
 - [Backup & Restore](../../docs/BACKUP_RESTORE.md) - Data management
 - [Troubleshooting](../../docs/TROUBLESHOOTING.md) - Issue resolution
 - [DEVELOPING.md](./DEVELOPING.md) - Development guide and architecture

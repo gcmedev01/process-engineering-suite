@@ -88,11 +88,11 @@ docker run -p 3002:3002 \
 curl http://localhost:3002/api/health
 ```
 
-For complete deployment instructions, see the main [Deployment Guide](../../docs/DEPLOYMENT_GUIDE.md).
+For complete deployment instructions, see the main [Deployment Guide](../../docs/DEPLOYMENT.md).
 
 ## Related Documentation
 
-- [Deployment Guide](../../docs/DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [Deployment Guide](../../docs/DEPLOYMENT.md) - Complete deployment instructions
 - [Environment Variables](../../docs/ENVIRONMENT_VARIABLES.md) - Configuration reference
-- [Docker Deployment](../../docs/DOCKER_DEPLOYMENT.md) - Container operations
+- [Docker Development](../../docs/DOCKER_DEVELOPMENT.md) - Container operations
 - [Troubleshooting](../../docs/TROUBLESHOOTING.md) - Issue resolution

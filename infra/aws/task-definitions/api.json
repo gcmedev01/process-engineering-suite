@@ -49,7 +49,7 @@
           "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:process-engineering/secret-key"
         },
         {
-          "name": "ALLOWED_ORIGINS",
+          "name": "CORS_ALLOWED_ORIGINS",
           "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:process-engineering/allowed-origins"
         }
       ],
