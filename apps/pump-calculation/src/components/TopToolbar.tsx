@@ -16,7 +16,6 @@ import {
     Tune,
 } from "@mui/icons-material";
 import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit";
-import { PumpIcon } from "./PumpIcon";
 import { useColorMode } from "@/contexts/ColorModeContext";
 
 const APP_ITEMS = [
@@ -47,7 +46,16 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
     <TopFloatingToolbar
       title="Pump Calculator"
       subtitle="Head · NPSHa · Motor Sizing"
-      icon={<PumpIcon width={24} height={24} />}
+      logo={
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={isDark
+            ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-dark.png`
+            : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-light.png`}
+          alt="GCME"
+          style={{ height: 36, width: "auto", display: "block" }}
+        />
+      }
       actions={actions}
       homeHref={homeHref}
       quickAccess={<QuickAccessMenu items={APP_ITEMS} onToggleTheme={toggleColorMode} isDarkMode={isDark} />}
@@ -56,6 +64,8 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
           homeHref={homeHref}
           apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
           backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+          accountSettingsHref="/account-settings"
+          docsHref="/docs"
         />
       }
     />

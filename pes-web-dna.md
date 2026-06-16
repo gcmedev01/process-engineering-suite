@@ -155,6 +155,8 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
                     homeHref={homeHref}
                     apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
                     backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+                    accountSettingsHref="/account-settings"
+                    docsHref="/docs"
                 />
             }
         />
@@ -191,6 +193,16 @@ interface QuickAccessItem {
 - When `isRestored && !isAuthenticated` → component returns `null` (button hidden).
 - The `isRestored` guard prevents a flash during SSR hydration before the stored session is read.
 - Items with `requiresAuth: true` document intent for future locked-item UI; they are currently only reachable when the user is authenticated (button is hidden otherwise).
+
+**`SharedUserMenu` states:**
+
+| Auth state | Trigger | Menu contents |
+|------------|---------|---------------|
+| Not authenticated | `MoreVert` ("⋯") icon button | Docs link only |
+| Authenticated (engineer/lead/approver) | Avatar with initials | Account Settings, Log Out |
+| Authenticated (admin) | Avatar with initials | Account Settings, User Management, Log Out |
+
+Props: `accountSettingsHref` (default `"/account-settings"`), `docsHref` (default `"/docs"`), `apiBaseUrl`, `backendStatusApiBaseUrl`, `homeHref`.
 
 **Hiding other toolbar elements for unauthenticated users:**
 
@@ -1446,14 +1458,15 @@ Each app is deployed on its **own Vercel domain**. The `QuickAccessMenu` navigat
         { "source": "/pump-calculation/calculator",          "destination": "https://pes-pump-calculation.vercel.app/pump-calculation/calculator",                   "permanent": false },
         { "source": "/heat-transfer-calculation/calculator", "destination": "https://pes-heat-transfer-calculation.vercel.app/heat-transfer-calculation/calculator", "permanent": false },
         { "source": "/control-valve-calculation/calculator", "destination": "https://pes-control-valve-calculation.vercel.app/control-valve-calculation/calculator", "permanent": false },
-        { "source": "/docs",                                 "destination": "https://process-engineering-suite-docs.vercel.app/docs",                                "permanent": false }
+        { "source": "/docs",                                 "destination": "https://process-engineering-suite-docs.vercel.app/docs",                                "permanent": false },
+        { "source": "/account-settings",                     "destination": "https://process-engineering-suite-web.vercel.app/account-settings",                      "permanent": false }
     ]
 }
 ```
 
 > **For `apps/venting-calculation`:** omit the `/venting-calculation/calculator` entry (self-redirect). Each app omits its own path.
 >
-> **For `apps/web`:** omit the `/` entry. Web IS the landing page — a root redirect would loop infinitely.
+> **For `apps/web`:** omit the `/` entry AND the `/account-settings` entry. Web IS the landing page and hosts `/account-settings` — redirecting either would loop.
 
 **⚠️ Self-redirect = infinite redirect loop.** Vercel processes `vercel.json` edge rules BEFORE Next.js serves pages. If an app redirects its own path back to itself, Vercel fires the redirect again on landing, looping forever. Always exclude your own path from your own `vercel.json`.
 

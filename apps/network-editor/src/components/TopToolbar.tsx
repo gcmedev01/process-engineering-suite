@@ -103,7 +103,16 @@ export function TopToolbar({
                 //         </IconButton>
                 //     </Tooltip>
                 // }
-                icon={<Timeline />}
+                logo={
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={isDark
+                            ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-dark.png`
+                            : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-light.png`}
+                        alt="GCME"
+                        style={{ height: 36, width: "auto", display: "block" }}
+                    />
+                }
                 homeHref={homeHref}
                 actions={
                     isMobile ? (
@@ -184,6 +193,8 @@ export function TopToolbar({
                         homeHref={homeHref}
                         apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
                         backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+                        accountSettingsHref="/account-settings"
+                        docsHref="/docs"
                     />
                 }
             />

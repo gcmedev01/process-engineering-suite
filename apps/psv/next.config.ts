@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
     "@eng-suite/ui-kit",
   ],
   basePath: "/psv",
+  env: {
+    NEXT_PUBLIC_BASE_PATH: "/psv",
+  },
   async redirects() {
     return [
       {

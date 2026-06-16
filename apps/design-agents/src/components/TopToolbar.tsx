@@ -216,20 +216,13 @@ export const TopToolbar = ({ onToggleTheme, isDarkMode, onMenuClick }: TopToolba
                 },
               }}
             >
-              <Box
-                sx={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 2,
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: `linear-gradient(160deg, ${alpha(theme.palette.primary.main, 0.3)} 0%, ${alpha(theme.palette.secondary.main, 0.35)} 100%)`,
-                  border: `1px solid ${alpha(theme.palette.primary.light, 0.35)}`,
-                  flexShrink: 0,
-                }}
-              >
-                <AgentIcon sx={{ color: '#38bdf8', fontSize: 24 }} />
-              </Box>
+              <img
+                src={theme.palette.mode === 'dark'
+                  ? `${import.meta.env.BASE_URL}icons/GCME-dark.png`
+                  : `${import.meta.env.BASE_URL}icons/GCME-light.png`}
+                alt="GCME"
+                style={{ height: 36, width: 'auto', display: 'block', flexShrink: 0 }}
+              />
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="subtitle1" sx={{ lineHeight: 1.1, fontWeight: 700 }}>
                   Process Design Agents
@@ -322,6 +315,8 @@ export const TopToolbar = ({ onToggleTheme, isDarkMode, onMenuClick }: TopToolba
               homeHref={HOME_HREF}
               apiBaseUrl={import.meta.env.VITE_AUTH_API_URL}
               backendStatusApiBaseUrl={import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}
+              accountSettingsHref="/account-settings"
+              docsHref="/docs"
             />
           </Stack>
         </Stack>

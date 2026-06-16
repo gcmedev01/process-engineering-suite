@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ["@eng-suite/physics", "@eng-suite/ui-kit"],
   basePath: "/network-editor",
+  env: {
+    NEXT_PUBLIC_BASE_PATH: "/network-editor",
+  },
   async redirects() {
     return [
       {

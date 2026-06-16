@@ -44,6 +44,11 @@
             "source": "/control-valve-calculation/calculator",
             "destination": "https://pes-control-valve-calculation.vercel.app/control-valve-calculation/calculator",
             "permanent": false
+        },
+        {
+            "source": "/account-settings",
+            "destination": "https://process-engineering-suite-web.vercel.app/account-settings",
+            "permanent": false
         }
     ]
 }

@@ -1,5 +1,6 @@
 import {
   Document,
+  Image,
   Page,
   Path,
   Circle,
@@ -12,6 +13,7 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer'
+import { GCME_LIGHT_LOGO_DATA_URI, GCME_LIGHT_LOGO_ASPECT } from '@eng-suite/ui-kit'
 import {
   EquipmentType,
   PumpType,
@@ -451,8 +453,8 @@ function TitleBlock({
 
       <View style={{ flexDirection: 'row' }}>
         <View style={{ flex: 3, flexDirection: 'row', borderRightWidth: HB, borderRightColor: BLACK }}>
-          <View style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRightWidth: BW, borderRightColor: BLACK, backgroundColor: '#e5e7eb', padding: 4 }}>
-            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>GCME</Text>
+          <View style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRightWidth: BW, borderRightColor: BLACK, backgroundColor: WHITE, padding: 4 }}>
+            <Image src={GCME_LIGHT_LOGO_DATA_URI} style={{ width: 36, height: 36 / GCME_LIGHT_LOGO_ASPECT }} />
           </View>
           <View style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 4, justifyContent: 'center' }}>
             <Text style={{ fontSize: 6.5, fontFamily: 'Helvetica-Bold' }}>GC MAINTENANCE &amp; ENGINEERING COMPANY LIMITED</Text>

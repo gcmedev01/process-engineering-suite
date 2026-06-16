@@ -16,7 +16,14 @@ import {
     Typography,
     useTheme,
 } from '@mui/material';
-import { Home, Login, Logout, Person, Settings } from '@mui/icons-material';
+import {
+    AccountCircle,
+    AdminPanelSettings,
+    Login,
+    Logout,
+    MoreVert,
+    Settings,
+} from '@mui/icons-material';
 import { BackendStatusDot } from './BackendStatusDot';
 import { LoginPanel } from './LoginPanel';
 import { useSharedAuth } from './useSharedAuthStore';
@@ -26,8 +33,10 @@ interface SharedUserMenuProps {
     homeHref?: string;
     apiBaseUrl?: string;
     backendStatusApiBaseUrl?: string;
-    showAccountSettings?: boolean;
-    onAccountSettings?: () => void;
+    /** Link to the /account-settings page (relative or absolute). */
+    accountSettingsHref?: string;
+    /** Link to the /docs page (relative, resolved by vercel.json redirects). */
+    docsHref?: string;
 }
 
 function getRoleColor(role: SharedUserRole | undefined, fallback: string): string {
@@ -81,8 +90,8 @@ export function SharedUserMenu({
     homeHref = '/',
     apiBaseUrl,
     backendStatusApiBaseUrl,
-    showAccountSettings = false,
-    onAccountSettings,
+    accountSettingsHref = '/account-settings',
+    docsHref = '/docs',
 }: SharedUserMenuProps) {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
@@ -91,27 +100,73 @@ export function SharedUserMenu({
     const [showLogin, setShowLogin] = useState(false);
     const open = Boolean(anchorEl);
     const roleColor = getRoleColor(currentUser?.role, theme.palette.primary.main);
+    const isAdmin = currentUser?.role === 'admin';
 
     useEffect(() => {
         restoreSession();
     }, [restoreSession]);
 
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
+    const handleClose = () => setAnchorEl(null);
 
     const handleLogout = () => {
         void logout(apiBaseUrl);
         handleClose();
     };
 
+    const paperSx = {
+        minWidth: 280,
+        mt: 1.5,
+        borderRadius: '14px',
+        background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+        boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.15)',
+    };
+
+    // ----- NOT AUTHENTICATED — show ⋯ button -----
+    if (!isAuthenticated) {
+        return (
+            <>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    <Tooltip title="More options">
+                        <IconButton
+                            aria-label="More options"
+                            onClick={(e) => setAnchorEl(e.currentTarget)}
+                            size="small"
+                        >
+                            <MoreVert />
+                        </IconButton>
+                    </Tooltip>
+                    <BackendStatusDot apiBaseUrl={backendStatusApiBaseUrl ?? apiBaseUrl} />
+                </Box>
+
+                <Menu
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    slotProps={{ paper: { elevation: 0, sx: paperSx } }}
+                >
+                    <MenuItem component="a" href={docsHref} onClick={handleClose}>
+                        <ListItemIcon>
+                            <AccountCircle fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Documentation</ListItemText>
+                    </MenuItem>
+                </Menu>
+            </>
+        );
+    }
+
+    // ----- AUTHENTICATED — show avatar icon -----
     return (
         <>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                <Tooltip title={isAuthenticated ? currentUser?.name || 'User' : 'Sign in'}>
+                <Tooltip title={currentUser?.name || 'Account'}>
                     <IconButton
-                        aria-label="User menu"
-                        onClick={(event) => setAnchorEl(event.currentTarget)}
+                        aria-label="Account menu"
+                        onClick={(e) => setAnchorEl(e.currentTarget)}
                         size="small"
                     >
                         <Avatar
@@ -119,13 +174,9 @@ export function SharedUserMenu({
                             sx={{
                                 width: 40,
                                 height: 40,
-                                bgcolor: isAuthenticated ? roleColor : theme.palette.grey[500],
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
+                                bgcolor: roleColor,
                             }}
-                        >
-                            {isAuthenticated ? getInitials(currentUser ?? undefined) : <Person fontSize="small" />}
-                        </Avatar>
+                        />
                     </IconButton>
                 </Tooltip>
                 <BackendStatusDot apiBaseUrl={backendStatusApiBaseUrl ?? apiBaseUrl} />
@@ -137,34 +188,12 @@ export function SharedUserMenu({
                 onClose={handleClose}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                slotProps={{
-                    paper: {
-                        elevation: 0,
-                        sx: {
-                            minWidth: 280,
-                            mt: 1.5,
-                            borderRadius: '14px',
-                            background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                            backdropFilter: 'blur(20px)',
-                            border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-                            boxShadow: isDark
-                                ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-                                : '0 8px 32px rgba(0, 0, 0, 0.15)',
-                        },
-                    },
-                }}
+                slotProps={{ paper: { elevation: 0, sx: paperSx } }}
             >
-                {isAuthenticated && currentUser && (
+                {currentUser && (
                     <Box sx={{ px: 2, py: 1.5, pb: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                            <Avatar
-                                src={currentUser.avatarUrl}
-                                sx={{
-                                    width: 42,
-                                    height: 42,
-                                    bgcolor: roleColor,
-                                }}
-                            >
+                            <Avatar src={currentUser.avatarUrl} sx={{ width: 42, height: 42, bgcolor: roleColor }}>
                                 {getInitials(currentUser)}
                             </Avatar>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -191,49 +220,30 @@ export function SharedUserMenu({
                     </Box>
                 )}
 
-                <MenuItem component="a" href={homeHref} onClick={handleClose}>
+                <MenuItem component="a" href={accountSettingsHref} onClick={handleClose}>
                     <ListItemIcon>
-                        <Home fontSize="small" />
+                        <Settings fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Home Page</ListItemText>
+                    <ListItemText>Account Settings</ListItemText>
                 </MenuItem>
 
-                {isAuthenticated && showAccountSettings && (
-                    <MenuItem
-                        onClick={() => {
-                            onAccountSettings?.();
-                            handleClose();
-                        }}
-                    >
+                {isAdmin && (
+                    <MenuItem component="a" href={`${accountSettingsHref}?tab=admin`} onClick={handleClose}>
                         <ListItemIcon>
-                            <Settings fontSize="small" />
+                            <AdminPanelSettings fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Account Settings</ListItemText>
+                        <ListItemText>User Management</ListItemText>
                     </MenuItem>
                 )}
 
                 <Divider />
 
-                {!isAuthenticated ? (
-                    <MenuItem
-                        onClick={() => {
-                            handleClose();
-                            setShowLogin(true);
-                        }}
-                    >
-                        <ListItemIcon>
-                            <Login fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Log In</ListItemText>
-                    </MenuItem>
-                ) : (
-                    <MenuItem onClick={handleLogout}>
-                        <ListItemIcon>
-                            <Logout fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Log Out</ListItemText>
-                    </MenuItem>
-                )}
+                <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                        <Logout fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Log Out</ListItemText>
+                </MenuItem>
             </Menu>
 
             <Dialog
@@ -242,11 +252,7 @@ export function SharedUserMenu({
                 maxWidth="sm"
                 fullWidth
                 PaperProps={{
-                    sx: {
-                        background: 'transparent',
-                        boxShadow: 'none',
-                        overflow: 'visible',
-                    },
+                    sx: { background: 'transparent', boxShadow: 'none', overflow: 'visible' },
                 }}
             >
                 <LoginPanel apiBaseUrl={apiBaseUrl} onSuccess={() => setShowLogin(false)} />

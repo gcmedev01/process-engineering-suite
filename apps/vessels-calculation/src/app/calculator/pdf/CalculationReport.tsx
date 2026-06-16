@@ -5,6 +5,7 @@
 
 import {
   Document,
+  Image,
   Page,
   View,
   Text,
@@ -20,6 +21,7 @@ import {
   ClipPath,
 } from '@react-pdf/renderer'
 import { convertUnit } from '@eng-suite/physics'
+import { GCME_LIGHT_LOGO_DATA_URI, GCME_LIGHT_LOGO_ASPECT } from '@eng-suite/ui-kit'
 import { BASE_UNITS, UOM_LABEL, type VesselUomCategory } from '@/lib/uom'
 import {
   buildTankSchematicModel,
@@ -435,8 +437,8 @@ function TitleBlock({
       {/* Row 2: logo + company | project / doc / page / of */}
       <View style={{ flexDirection: 'row' }}>
         <View style={{ flex: 3, flexDirection: 'row', borderRightWidth: HB, borderRightColor: BLACK }}>
-          <View style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRightWidth: BW, borderRightColor: BLACK, backgroundColor: '#e5e7eb', padding: 4 }}>
-            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: GUIDE, textAlign: 'center' }}>GCME</Text>
+          <View style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRightWidth: BW, borderRightColor: BLACK, backgroundColor: WHITE, padding: 4 }}>
+            <Image src={GCME_LIGHT_LOGO_DATA_URI} style={{ width: 36, height: 36 / GCME_LIGHT_LOGO_ASPECT }} />
           </View>
           <View style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 4, justifyContent: 'center' }}>
             <Text style={{ fontSize: 6.5, fontFamily: 'Helvetica-Bold' }}>GC MAINTENANCE &amp; ENGINEERING COMPANY LIMITED</Text>

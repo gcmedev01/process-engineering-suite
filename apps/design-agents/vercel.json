@@ -44,6 +44,11 @@
             "source": "/docs",
             "destination": "https://process-engineering-suite-docs.vercel.app/docs",
             "permanent": false
+        },
+        {
+            "source": "/account-settings",
+            "destination": "https://process-engineering-suite-web.vercel.app/account-settings",
+            "permanent": false
         }
     ]
 }

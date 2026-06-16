@@ -22,6 +22,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { RowConfig } from "./tableConfig";
 import { ProjectDetails } from "@/lib/types";
+import { GCME_LIGHT_LOGO_DATA_URI } from "@eng-suite/ui-kit";
 
 type Props<T> = {
     data: T[];
@@ -548,7 +549,8 @@ export function GenericTable<T>({
                             <div style={{ flex: 1, display: 'flex', borderRight: '1px solid black', borderBottom: 'none' }}>
                                 <div className="footer-cell" style={{ width: '60px', justifyContent: 'center', borderRight: '1px solid black', borderBottom: 'none', padding: '2px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                                        <span style={{ fontWeight: 'bold', fontStyle: 'italic', color: '#0070c0', fontSize: '10pt' }}>GCME</span>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={GCME_LIGHT_LOGO_DATA_URI} alt="GCME" style={{ width: '52px', height: 'auto', objectFit: 'contain' }} />
                                     </div>
                                 </div>
                                 <div className="footer-cell" style={{ flex: 1, justifyContent: 'center', fontWeight: 'bold', textAlign: 'center', borderBottom: 'none' }}>

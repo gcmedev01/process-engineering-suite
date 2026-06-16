@@ -11,3 +11,4 @@ export * from './TopFloatingToolbar';
 export * from './QuickAccessMenu';
 export * from './storage';
 export * from './auth';
+export * from './assets/gcmeLogo';

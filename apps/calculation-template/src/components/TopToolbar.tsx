@@ -55,6 +55,8 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
           homeHref={homeHref}
           apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
           backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+          accountSettingsHref="/account-settings"
+          docsHref="/docs"
         />
       }
     />

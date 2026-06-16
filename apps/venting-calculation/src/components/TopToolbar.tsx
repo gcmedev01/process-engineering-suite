@@ -46,7 +46,16 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
     <TopFloatingToolbar
       title="Tank Venting"
       subtitle="API 2000 Venting Calculator"
-      icon={<AirIcon fontSize="medium" />}
+      logo={
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={isDark
+            ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-dark.png`
+            : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-light.png`}
+          alt="GCME"
+          style={{ height: 36, width: "auto", display: "block" }}
+        />
+      }
       actions={actions}
       homeHref={homeHref}
       quickAccess={<QuickAccessMenu items={APP_ITEMS} onToggleTheme={toggleColorMode} isDarkMode={isDark} />}
@@ -55,6 +64,8 @@ export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
           homeHref={homeHref}
           apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
           backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+          accountSettingsHref="/account-settings"
+          docsHref="/docs"
         />
       }
     />

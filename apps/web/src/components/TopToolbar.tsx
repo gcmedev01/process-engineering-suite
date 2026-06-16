@@ -113,6 +113,7 @@ export const TopToolbar = () => {
         <TopFloatingToolbar
             title="E-PT"
             subtitle="process engineering suite"
+            homeHref="/"
             logo={
                 <Image
                     src={isDark ? "/icons/GCME-dark.png" : "/icons/GCME-light.png"}
@@ -199,6 +200,8 @@ export const TopToolbar = () => {
                 <SharedUserMenu
                     apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
                     backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+                    accountSettingsHref="/account-settings"
+                    docsHref="/docs"
                 />
             }
         />

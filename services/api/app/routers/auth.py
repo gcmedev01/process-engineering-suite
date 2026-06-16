@@ -4,17 +4,15 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import bcrypt
-import jwt
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from ..config import get_settings
 from ..dependencies import DAL
+from ..auth_deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
-security = HTTPBearer()
 
 
 # --- Schemas ---
@@ -55,31 +53,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: str, role: str) -> tuple[str, int]:
     """Create a JWT access token."""
+    import jwt
     settings = get_settings()
     expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     expire = datetime.utcnow() + expires_delta
-    
+
     payload = {
         "sub": user_id,
         "role": role,
         "exp": expire,
         "iat": datetime.utcnow(),
     }
-    
+
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
     return token, settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-
-
-def decode_token(token: str) -> dict:
-    """Decode and validate a JWT token."""
-    settings = get_settings()
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 # --- Endpoints ---
@@ -170,22 +157,15 @@ async def login(data: LoginRequest, dal: DAL):
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    dal: DAL = None
-):
+async def me(user=Depends(get_current_user)):
     """Get current authenticated user."""
-    # This is a simplified version - the DAL needs to be injected properly
-    # For now, just decode the token
-    payload = decode_token(credentials.credentials)
-    return {
-        "id": payload["sub"],
-        "name": "Authenticated User",
-        "initials": None,
-        "email": "",
-        "role": payload["role"],
-        "status": "active",
-    }
+    name = user.name if hasattr(user, "name") else user.get("name", "")
+    initials = user.initials if hasattr(user, "initials") else user.get("initials")
+    email = user.email if hasattr(user, "email") else user.get("email", "")
+    role = user.role if hasattr(user, "role") else user.get("role", "engineer")
+    status = user.status if hasattr(user, "status") else user.get("status", "active")
+    uid = user.id if hasattr(user, "id") else user.get("id", "")
+    return {"id": uid, "name": name, "initials": initials, "email": email, "role": role, "status": status}
 
 
 @router.post("/logout")

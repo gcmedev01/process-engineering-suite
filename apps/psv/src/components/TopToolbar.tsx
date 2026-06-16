@@ -35,7 +35,6 @@ import {
 } from "@mui/icons-material";
 import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar, useSharedAuth } from "@eng-suite/ui-kit";
 import { useColorMode } from "@/contexts/ColorModeContext";
-import { PsvIcon } from "./PsvIcon";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { usePsvStore } from "@/store/usePsvStore";
@@ -353,7 +352,16 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
         <TopFloatingToolbar
             title={title}
             subtitle={title === "PSV Sizing" ? "Pressure Safety Valve Sizing" : undefined}
-            icon={<PsvIcon width={24} height={24} />}
+            logo={
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={isDark
+                        ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-dark.png`
+                        : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/GCME-light.png`}
+                    alt="GCME"
+                    style={{ height: 36, width: "auto", display: "block" }}
+                />
+            }
             homeHref={homeHref}
             actions={
                 <Box
@@ -495,10 +503,8 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
                 <SharedUserMenu
                     apiBaseUrl={API_BASE_URL}
                     homeHref={process.env.NEXT_PUBLIC_WEB_URL?.trim() || "http://localhost:3000"}
-                    showAccountSettings
-                    onAccountSettings={() => {
-                        setCurrentPage('account');
-                    }}
+                    accountSettingsHref="/account-settings"
+                    docsHref="/docs"
                 />
             }
         />

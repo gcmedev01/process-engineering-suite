@@ -69,6 +69,7 @@ from services.api.app.routers import (
     network_router,
     engineering_objects_router,
     instrument_links_router,
+    users_router,
 )
 
 app.include_router(hierarchy_router)
@@ -86,6 +87,7 @@ app.include_router(venting_router)
 app.include_router(network_router)
 app.include_router(engineering_objects_router)
 app.include_router(instrument_links_router)
+app.include_router(users_router)
 
 
 # Configure CORS (local + Docker host bridge + env overrides)

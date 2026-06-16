@@ -52,6 +52,11 @@ function getSnapshot(): SharedAuthSnapshot {
     return snapshot;
 }
 
+/** Read the current auth snapshot outside of React (e.g. in fetch helpers). */
+export function getSharedAuthSnapshot(): SharedAuthSnapshot {
+    return snapshot;
+}
+
 function getServerSnapshot(): SharedAuthSnapshot {
     return emptySnapshot;
 }
