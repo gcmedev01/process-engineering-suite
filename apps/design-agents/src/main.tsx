@@ -8,7 +8,7 @@ import 'katex/dist/katex.min.css'; // Import KaTeX CSS globally
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeContextProvider>
-      <AuthGuard>
+      <AuthGuard apiBaseUrl={import.meta.env.VITE_API_URL}>
         <App />
       </AuthGuard>
     </ThemeContextProvider>

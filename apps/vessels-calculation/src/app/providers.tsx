@@ -126,7 +126,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
           <CssBaseline enableColorScheme />
-          <AuthGuard>{children}</AuthGuard>
+          <AuthGuard apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}>{children}</AuthGuard>
         </ThemeProvider>
       </ColorModeContext.Provider>
     </AppRouterCacheProvider>

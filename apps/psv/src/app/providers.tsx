@@ -208,7 +208,7 @@ export function Providers({ children }: { children: ReactNode }) {
                     <CssBaseline />
                     <Toaster theme={mode} position="top-right" closeButton />
                     <SharedAuthBridge />
-                    <AuthGuard>
+                    <AuthGuard apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}>
                         <SessionGuard>
                             {children}
                         </SessionGuard>
