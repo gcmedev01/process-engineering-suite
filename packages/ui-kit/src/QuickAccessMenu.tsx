@@ -12,6 +12,7 @@ import {
     useTheme,
 } from '@mui/material';
 import { Apps as AppsIcon, DarkMode, LightMode } from '@mui/icons-material';
+import { useSharedAuth } from './auth/useSharedAuthStore';
 
 export interface QuickAccessItem {
     title: string;
@@ -20,6 +21,7 @@ export interface QuickAccessItem {
     onClick?: () => void;
     color?: string;
     status?: 'active' | 'coming_soon';
+    requiresAuth?: boolean;
 }
 
 export interface QuickAccessMenuProps {
@@ -31,8 +33,11 @@ export interface QuickAccessMenuProps {
 export function QuickAccessMenu({ items, onToggleTheme, isDarkMode }: QuickAccessMenuProps) {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
+    const { isAuthenticated, isRestored } = useSharedAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+
+    if (isRestored && !isAuthenticated) return null;
 
     const activeItems = items.filter((i) => i.status !== 'coming_soon');
     const soonItems = items.filter((i) => i.status === 'coming_soon');
@@ -73,7 +78,7 @@ export function QuickAccessMenu({ items, onToggleTheme, isDarkMode }: QuickAcces
                         elevation: 0,
                         sx: {
                             mt: 1.5,
-                            width: 300,
+                            width: 320,
                             borderRadius: '20px',
                             background: isDark
                                 ? 'rgba(15, 23, 42, 0.92)'
@@ -103,7 +108,6 @@ export function QuickAccessMenu({ items, onToggleTheme, isDarkMode }: QuickAcces
                             display: 'grid',
                             gridTemplateColumns: 'repeat(4, 1fr)',
                             gap: 0.5,
-                            mx: -1,
                         }}
                     >
                         {activeItems.map((item) => (
@@ -130,7 +134,6 @@ export function QuickAccessMenu({ items, onToggleTheme, isDarkMode }: QuickAcces
                                     display: 'grid',
                                     gridTemplateColumns: 'repeat(4, 1fr)',
                                     gap: 0.5,
-                                    mx: -1,
                                 }}
                             >
                                 {soonItems.map((item) => (

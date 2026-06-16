@@ -1,17 +1,17 @@
 "use client";
 
-import { Box, InputBase, Button, useTheme, useMediaQuery, IconButton } from "@mui/material";
+import { Box, InputBase, useTheme, useMediaQuery, IconButton } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import DescriptionIcon from '@mui/icons-material/Description';
-import HubIcon from '@mui/icons-material/Hub';
 import CalculateIcon from "@mui/icons-material/Calculate";
 import ScienceIcon from "@mui/icons-material/Science";
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import AirIcon from '@mui/icons-material/Air';
 import { Timeline } from "@mui/icons-material";
+import Image from "next/image";
 import { useColorMode } from "@/contexts/ColorModeContext";
-import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit";
+import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar, useSharedAuth } from "@eng-suite/ui-kit";
 import { useState } from "react";
 import { ControlValveIcon } from "./ControlValveIcon";
 import { PumpIcon } from "./PumpIcon";
@@ -26,6 +26,7 @@ const APP_ITEMS = [
         href: "/network-editor",
         color: "linear-gradient(135deg, #0ea5e9, #0284c7)",
         status: "active" as const,
+        requiresAuth: true,
     },
     {
         title: "PSV Sizing",
@@ -40,6 +41,7 @@ const APP_ITEMS = [
         href: "/design-agents",
         color: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
         status: "active" as const,
+        requiresAuth: true,
     },
     {
         title: "Tank Venting",
@@ -104,16 +106,28 @@ export const TopToolbar = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchText, setSearchText] = useState("");
+    const { isAuthenticated, isRestored } = useSharedAuth();
+    const showSearch = !isRestored || isAuthenticated;
 
     return (
         <TopFloatingToolbar
             title="E-PT"
             subtitle="process engineering suite"
-            icon={<HubIcon />}
+            logo={
+                <Image
+                    src={isDark ? "/icons/GCME-dark.png" : "/icons/GCME-light.png"}
+                    alt="GCME"
+                    width={2076}
+                    height={674}
+                    sizes="200px"
+                    style={{ height: 36, width: "auto", display: "block" }}
+                    priority
+                />
+            }
             actions={
                 <>
                     {/* Search Box */}
-                    {(!isMobile || isSearchOpen) && (
+                    {showSearch && (!isMobile || isSearchOpen) && (
                         <Box
                             sx={{
                                 display: 'flex',
@@ -157,7 +171,7 @@ export const TopToolbar = () => {
                         </Box>
                     )}
 
-                    {isMobile && !isSearchOpen && (
+                    {showSearch && isMobile && !isSearchOpen && (
                         <IconButton
                             size="small"
                             onClick={() => setIsSearchOpen(true)}

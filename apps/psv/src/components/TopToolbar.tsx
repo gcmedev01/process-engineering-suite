@@ -12,24 +12,48 @@ import {
     Tooltip,
 } from "@mui/material";
 import {
+    Air,
     Apartment,
-    Business,
-    Domain,
-    FolderSpecial,
-    Search,
-    Shield,
     ArrowRightAlt,
+    AutoFixHigh,
+    Business,
+    Calculate,
     Category,
-    Settings,
     Close,
+    Description,
+    Domain,
+    ElectricBolt,
+    FolderSpecial,
+    Science,
+    Search,
+    Settings,
+    Shield,
+    Storage,
+    Thermostat,
+    Timeline,
+    Tune,
 } from "@mui/icons-material";
+import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar, useSharedAuth } from "@eng-suite/ui-kit";
 import { useColorMode } from "@/contexts/ColorModeContext";
 import { PsvIcon } from "./PsvIcon";
-import { SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { usePsvStore } from "@/store/usePsvStore";
 import { StatusIndicator } from "@/components/StatusIndicator";
+
+const APP_ITEMS = [
+    { title: "Network Editor", icon: <Timeline />, href: "/network-editor", color: "linear-gradient(135deg, #0ea5e9, #0284c7)", status: "active" as const, requiresAuth: true },
+    { title: "PSV Sizing", icon: <Shield />, href: "/psv", color: "linear-gradient(135deg, #ef4444, #b91c1c)", status: "active" as const },
+    { title: "Design Agents", icon: <AutoFixHigh />, href: "/design-agents", color: "linear-gradient(135deg, #8b5cf6, #6d28d9)", status: "active" as const, requiresAuth: true },
+    { title: "Tank Venting", icon: <Air />, href: "/venting-calculation/calculator", color: "linear-gradient(135deg, #14b8a6, #0d9488)", status: "active" as const },
+    { title: "Vessel Sizing", icon: <Storage />, href: "/vessels-calculation/calculator", color: "linear-gradient(135deg, #64748b, #334155)", status: "active" as const },
+    { title: "Pump Sizing", icon: <ElectricBolt />, href: "/pump-calculation/calculator", color: "linear-gradient(135deg, #3b82f6, #1d4ed8)", status: "active" as const },
+    { title: "Heat Transfer", icon: <Thermostat />, href: "/heat-transfer-calculation/calculator", color: "linear-gradient(135deg, #f97316, #c2410c)", status: "active" as const },
+    { title: "Control Valve", icon: <Tune />, href: "/control-valve-calculation/calculator", color: "linear-gradient(135deg, #22c55e, #15803d)", status: "active" as const },
+    { title: "Docs", icon: <Description />, href: "/docs", color: "linear-gradient(135deg, #94a3b8, #475569)", status: "active" as const },
+    { title: "Orifice Calc", icon: <Calculate />, color: "linear-gradient(135deg, #cbd5e1, #94a3b8)", status: "coming_soon" as const },
+    { title: "Fluid Props", icon: <Science />, color: "linear-gradient(135deg, #cbd5e1, #94a3b8)", status: "coming_soon" as const },
+];
 
 interface TopToolbarProps {
     title?: string;
@@ -49,6 +73,8 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
     const theme = useTheme();
     const { toggleColorMode } = useColorMode();
     const isDark = theme.palette.mode === 'dark';
+    const { isAuthenticated, isRestored } = useSharedAuth();
+    const showSearch = !isRestored || isAuthenticated;
     // Treat tablet and below as "mobile" for the compact search UX.
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const router = useRouter();
@@ -338,7 +364,7 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
                     }}
                 >
                     {/* Search */}
-                    {(!isMobile || isSearchOpen) && (
+                    {showSearch && (!isMobile || isSearchOpen) && (
                         <Box
                             sx={{
                                 display: 'flex',
@@ -445,7 +471,7 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
                         </Box>
                     )}
 
-                    {isMobile && !isSearchOpen && (
+                    {showSearch && isMobile && !isSearchOpen && (
                         <IconButton
                             size="small"
                             onClick={() => setIsSearchOpen(true)}
@@ -464,8 +490,7 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
                     <StatusIndicator />
                 </Box>
             }
-            onToggleTheme={toggleColorMode}
-            isDarkMode={isDark}
+            quickAccess={<QuickAccessMenu items={APP_ITEMS} onToggleTheme={toggleColorMode} isDarkMode={isDark} />}
             userAction={
                 <SharedUserMenu
                     apiBaseUrl={API_BASE_URL}

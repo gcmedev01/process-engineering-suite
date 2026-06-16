@@ -1,7 +1,49 @@
 {
-  "git": {
-    "deploymentEnabled": {
-      "dev": false
-    }
-  }
+    "redirects": [
+        {
+            "source": "/",
+            "destination": "https://process-engineering-suite-web.vercel.app/",
+            "permanent": false
+        },
+        {
+            "source": "/network-editor",
+            "destination": "https://pes-network-editor.vercel.app/network-editor",
+            "permanent": false
+        },
+        {
+            "source": "/design-agents",
+            "destination": "https://process-engineering-suite-design-agents.vercel.app/design-agents",
+            "permanent": false
+        },
+        {
+            "source": "/venting-calculation/calculator",
+            "destination": "https://pes-venting-calculation.vercel.app/venting-calculation/calculator",
+            "permanent": false
+        },
+        {
+            "source": "/vessels-calculation/calculator",
+            "destination": "https://pes-vessels-calculation.vercel.app/vessels-calculation/calculator",
+            "permanent": false
+        },
+        {
+            "source": "/pump-calculation/calculator",
+            "destination": "https://pes-pump-calculation.vercel.app/pump-calculation/calculator",
+            "permanent": false
+        },
+        {
+            "source": "/heat-transfer-calculation/calculator",
+            "destination": "https://pes-heat-transfer-calculation.vercel.app/heat-transfer-calculation/calculator",
+            "permanent": false
+        },
+        {
+            "source": "/control-valve-calculation/calculator",
+            "destination": "https://pes-control-valve-calculation.vercel.app/control-valve-calculation/calculator",
+            "permanent": false
+        },
+        {
+            "source": "/docs",
+            "destination": "https://process-engineering-suite-docs.vercel.app/docs",
+            "permanent": false
+        }
+    ]
 }

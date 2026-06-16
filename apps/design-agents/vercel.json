@@ -1,6 +1,11 @@
 {
     "redirects": [
         {
+            "source": "/",
+            "destination": "https://process-engineering-suite-web.vercel.app/",
+            "permanent": false
+        },
+        {
             "source": "/network-editor",
             "destination": "https://pes-network-editor.vercel.app/network-editor",
             "permanent": false
@@ -8,11 +13,6 @@
         {
             "source": "/psv",
             "destination": "https://pes-psv-suite.vercel.app/psv",
-            "permanent": false
-        },
-        {
-            "source": "/design-agents",
-            "destination": "https://process-engineering-suite-design-agents.vercel.app/design-agents",
             "permanent": false
         },
         {

@@ -8,6 +8,7 @@ export interface TopFloatingToolbarProps {
     title?: string;
     subtitle?: string;
     icon?: ReactNode;
+    logo?: ReactNode;
     leadingAction?: ReactNode;
     actions?: ReactNode;
     homeHref?: string;
@@ -21,6 +22,7 @@ export const TopFloatingToolbar = ({
     title = "E-PT",
     subtitle,
     icon,
+    logo,
     leadingAction,
     actions,
     homeHref,
@@ -48,7 +50,7 @@ export const TopFloatingToolbar = ({
                 },
             }}
         >
-            {icon && (
+            {logo ?? (icon && (
                 <Box
                     sx={{
                         width: 40,
@@ -64,7 +66,7 @@ export const TopFloatingToolbar = ({
                 >
                     {icon}
                 </Box>
-            )}
+            ))}
             <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                     {title}

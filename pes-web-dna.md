@@ -1,4 +1,5 @@
 # PSE Web DNA
+
 > Design & architecture reference for all `apps/` in the process-engineering-suite monorepo.
 > Derived from `apps/venting-calculation`. Follow these patterns when building new apps.
 > **Template:** Use `apps/calculation-template` as the foundation for all new calculator-style web apps.
@@ -8,16 +9,16 @@
 
 ## 1. Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (App Router, `'use client'` where needed) |
-| UI library | shadcn/ui (Radix primitives + Tailwind) |
-| Styling | Tailwind CSS v4, CSS custom properties, utility-first |
-| Forms | React Hook Form + Zod resolver |
-| State | Zustand + `persist` middleware (localStorage) |
+| Layer           | Technology                                            |
+| --------------- | ----------------------------------------------------- |
+| Framework       | Next.js 15 (App Router, `'use client'` where needed)  |
+| UI library      | shadcn/ui (Radix primitives + Tailwind)               |
+| Styling         | Tailwind CSS v4, CSS custom properties, utility-first |
+| Forms           | React Hook Form + Zod resolver                        |
+| State           | Zustand + `persist` middleware (localStorage)         |
 | Unit conversion | `@eng-suite/physics` → `convertUnit(value, from, to)` |
-| Icons | `lucide-react` |
-| Types | TypeScript strict, inferred from Zod schemas |
+| Icons           | `lucide-react`                                        |
+| Types           | TypeScript strict, inferred from Zod schemas          |
 
 ---
 
@@ -40,24 +41,24 @@ Every calculator app uses a **two-tier layout**:
 ```
 
 **layout.tsx** — root providers only:
+
 ```tsx
 // app/layout.tsx
-import { Providers } from "./providers"
+import { Providers } from "./providers";
 
 export default function RootLayout({ children }) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <Providers>
-          {children}
-        </Providers>
-      </body>
-    </html>
-  )
+    return (
+        <html lang="en" suppressHydrationWarning>
+            <body>
+                <Providers>{children}</Providers>
+            </body>
+        </html>
+    );
 }
 ```
 
 **page.tsx** — floating toolbar with actions + two-column grid:
+
 ```tsx
 // calculator/page.tsx
 <FormProvider {...form}>
@@ -76,6 +77,7 @@ export default function RootLayout({ children }) {
 ```
 
 **Rules:**
+
 - `layout.tsx` contains providers only; do not render `TopToolbar` globally from layout
 - `calculator/page.tsx` renders `CalculatorToolbar` inside `FormProvider` so `<ActionMenu>` can access form context
 - `CalculatorToolbar` owns the sticky MUI `Box`; `TopToolbar` only renders `<TopFloatingToolbar />`
@@ -89,52 +91,126 @@ export default function RootLayout({ children }) {
 
 ## 3. Core Components
 
-### 3.0 `TopToolbar` — Sticky branding + theme toggle
+### 3.0 `TopToolbar` — Sticky branding + Quick Access + user menu
 
 `TopToolbar.tsx` renders `<TopFloatingToolbar />` directly — **no wrapper div**. The sticky Box lives in `calculator/components/CalculatorToolbar.tsx` so page-level actions can be passed while the toolbar remains inside `FormProvider`.
 
 `TopFloatingToolbar` (from `@eng-suite/ui-kit`) provides the visual spec built-in:
+
 - Left — gradient icon box (40×40, `border-radius: 12px`, `linear-gradient(#00C4F9, #0076F0)`)
 - Left — title (`h6`, `fontWeight: 700`) + subtitle (`caption`, `text.secondary`)
-- Right — app actions slot + glassmorphism theme toggle button
+- Right — app actions slot + `quickAccess` (iCloud-style app switcher with theme toggle) + `userAction` (login/user menu)
 - Bottom border + `boxShadow` + `backdropFilter: blur(10px)`
 
 ```tsx
 // src/components/TopToolbar.tsx
-"use client"
-import type { ReactNode } from "react"
-import { useTheme } from "@mui/material"
-import { TopFloatingToolbar } from "@eng-suite/ui-kit"
-import CalculateIcon from "@mui/icons-material/Calculate"  // TODO: replace per app
-import { useColorMode } from "@/contexts/ColorModeContext"
+"use client";
+import type { ReactNode } from "react";
+import { useTheme } from "@mui/material";
+import {
+    Air, AutoFixHigh, Calculate, Description, ElectricBolt,
+    Science, Shield, Storage, Thermostat, Timeline, Tune,
+} from "@mui/icons-material";
+import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar } from "@eng-suite/ui-kit";
+import CalculateIcon from "@mui/icons-material/Calculate"; // TODO: replace per app
+import { useColorMode } from "@/contexts/ColorModeContext";
+
+// Shared across all apps — keep in sync with §3.0a
+const APP_ITEMS = [
+    { title: "Network Editor", icon: <Timeline />, href: "/network-editor", color: "linear-gradient(135deg, #0ea5e9, #0284c7)", status: "active" as const, requiresAuth: true },
+    { title: "PSV Sizing",     icon: <Shield />,   href: "/psv",            color: "linear-gradient(135deg, #ef4444, #b91c1c)", status: "active" as const },
+    { title: "Design Agents",  icon: <AutoFixHigh />, href: "/design-agents", color: "linear-gradient(135deg, #8b5cf6, #6d28d9)", status: "active" as const, requiresAuth: true },
+    { title: "Tank Venting",   icon: <Air />,       href: "/venting-calculation/calculator",       color: "linear-gradient(135deg, #14b8a6, #0d9488)", status: "active" as const },
+    { title: "Vessel Sizing",  icon: <Storage />,   href: "/vessels-calculation/calculator",       color: "linear-gradient(135deg, #64748b, #334155)", status: "active" as const },
+    { title: "Pump Sizing",    icon: <ElectricBolt />, href: "/pump-calculation/calculator",       color: "linear-gradient(135deg, #3b82f6, #1d4ed8)", status: "active" as const },
+    { title: "Heat Transfer",  icon: <Thermostat />, href: "/heat-transfer-calculation/calculator", color: "linear-gradient(135deg, #f97316, #c2410c)", status: "active" as const },
+    { title: "Control Valve",  icon: <Tune />,      href: "/control-valve-calculation/calculator", color: "linear-gradient(135deg, #22c55e, #15803d)", status: "active" as const },
+    { title: "Docs",           icon: <Description />, href: "/docs",         color: "linear-gradient(135deg, #94a3b8, #475569)", status: "active" as const },
+    { title: "Orifice Calc",   icon: <Calculate />, color: "linear-gradient(135deg, #cbd5e1, #94a3b8)", status: "coming_soon" as const },
+    { title: "Fluid Props",    icon: <Science />,   color: "linear-gradient(135deg, #cbd5e1, #94a3b8)", status: "coming_soon" as const },
+];
 
 interface TopToolbarProps {
-  actions?: ReactNode
-  homeHref?: string
+    actions?: ReactNode;
+    homeHref?: string;
 }
 
 export function TopToolbar({ actions, homeHref }: TopToolbarProps) {
-  const theme = useTheme()
-  const { toggleColorMode } = useColorMode()
-  const isDark = theme.palette.mode === "dark"
+    const theme = useTheme();
+    const { toggleColorMode } = useColorMode();
+    const isDark = theme.palette.mode === "dark";
 
-  return (
-    <TopFloatingToolbar
-      title="App Title"    // TODO: replace per app
-      subtitle="Subtitle"  // TODO: replace per app
-      icon={<CalculateIcon fontSize="medium" />}  // TODO: replace per app
-      actions={actions}
-      homeHref={homeHref}
-      onToggleTheme={toggleColorMode}
-      isDarkMode={isDark}
-    />
-  )
+    return (
+        <TopFloatingToolbar
+            title="App Title"   // TODO: replace per app
+            subtitle="Subtitle" // TODO: replace per app
+            icon={<CalculateIcon fontSize="medium" />} // TODO: replace per app
+            actions={actions}
+            homeHref={homeHref}
+            quickAccess={
+                <QuickAccessMenu items={APP_ITEMS} onToggleTheme={toggleColorMode} isDarkMode={isDark} />
+            }
+            userAction={
+                <SharedUserMenu
+                    homeHref={homeHref}
+                    apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}
+                    backendStatusApiBaseUrl={process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+                />
+            }
+        />
+    );
 }
 ```
 
 **Per-app TODO:** replace icon, title, subtitle. Do **not** add a wrapper div — sticky/print/shadow are owned by `calculator/components/CalculatorToolbar.tsx`.
 
 `CalculatorToolbar` defaults the left branding link to `process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3000"` so the app icon, app name, and subtitle return to the `apps/web` landing page. Configure `NEXT_PUBLIC_WEB_URL` in deployed calculator apps.
+
+---
+
+### 3.0a `QuickAccessMenu` — App switcher with theme toggle
+
+`QuickAccessMenu` (from `@eng-suite/ui-kit`) renders a 9-dot grid button that opens an iCloud-style popup with all apps and a theme toggle. It **self-hides** when the user is not authenticated — no conditional rendering needed at the call site.
+
+**`QuickAccessItem` shape:**
+
+```ts
+interface QuickAccessItem {
+    title: string;
+    icon: ReactNode;
+    href?: string;              // navigation target (relative path, handled by vercel.json redirects)
+    color?: string;             // gradient for the icon tile
+    status?: 'active' | 'coming_soon';
+    requiresAuth?: boolean;     // marks items that need login (Network Editor, Design Agents)
+}
+```
+
+**Auth behaviour:**
+
+- `QuickAccessMenu` internally calls `useSharedAuth()` from `@eng-suite/ui-kit`.
+- When `isRestored && !isAuthenticated` → component returns `null` (button hidden).
+- The `isRestored` guard prevents a flash during SSR hydration before the stored session is read.
+- Items with `requiresAuth: true` document intent for future locked-item UI; they are currently only reachable when the user is authenticated (button is hidden otherwise).
+
+**Hiding other toolbar elements for unauthenticated users:**
+
+Apply the same `isRestored` guard anywhere a toolbar feature queries the database (e.g., PSV global search, web landing-page search):
+
+```tsx
+import { useSharedAuth } from "@eng-suite/ui-kit";
+
+const { isAuthenticated, isRestored } = useSharedAuth();
+const showSearch = !isRestored || isAuthenticated; // show during SSR/loading, hide once confirmed unauthenticated
+
+{showSearch && <SearchBox ... />}
+```
+
+**`APP_ITEMS` maintenance:**
+
+The `APP_ITEMS` constant is currently **duplicated in every app's `TopToolbar.tsx`**. When adding a new app:
+1. Add an entry to `APP_ITEMS` in **all** existing app `TopToolbar.tsx` files.
+2. Add the corresponding `vercel.json` redirect for the new path in all apps (see §14).
+3. Mark `requiresAuth: true` if the app requires login to be useful.
 
 ---
 
@@ -175,23 +251,26 @@ export function Providers({ children }) {
 Displays project/document metadata and revision history. Editing happens via two dialogs ("Edit Revisions", "Edit Metadata") opened from buttons in the `SectionCard` `action` slot.
 
 **Props:**
+
 ```ts
 interface Props {
-  metadata: CalculationMetadata          // { projectNumber, documentNumber, title, projectName, client }
-  onMetadataChange: (m: CalculationMetadata) => void
-  revisionHistory: RevisionRecord[]      // max 3, each: { rev, by, byDate, checkedBy, checkedDate, approvedBy, approvedDate }
-  onRevisionHistoryChange: (r: RevisionRecord[]) => void
+    metadata: CalculationMetadata; // { projectNumber, documentNumber, title, projectName, client }
+    onMetadataChange: (m: CalculationMetadata) => void;
+    revisionHistory: RevisionRecord[]; // max 3, each: { rev, by, byDate, checkedBy, checkedDate, approvedBy, approvedDate }
+    onRevisionHistoryChange: (r: RevisionRecord[]) => void;
 }
 ```
 
 **State lives in `page.tsx`** (not in the form):
+
 ```tsx
-const [calculationMetadata, setCalculationMetadata] = useState<CalculationMetadata>(EMPTY_METADATA)
-const [revisionHistory, setRevisionHistory] = useState<RevisionRecord[]>([])
+const [calculationMetadata, setCalculationMetadata] = useState<CalculationMetadata>(EMPTY_METADATA);
+const [revisionHistory, setRevisionHistory] = useState<RevisionRecord[]>([]);
 // passed down: InputPanel → CalculationMetadataSection
 ```
 
 **Display layout:**
+
 - 2-column grid: Project Number, Document Number, Title, Project Name, Client, Revision Records count
 - Revision history table (Rev, By, Date, Checked, Date, Approved, Date) — read-only
 - `Metadata completeness: n/5 fields` footer
@@ -210,28 +289,27 @@ Every major form group and result group lives in a SectionCard.
 
 ```tsx
 interface SectionCardProps {
-  title: string
-  children: React.ReactNode
-  action?: React.ReactNode   // right-aligned element in header (Badge, button, Select…)
-  className?: string
+    title: string;
+    children: React.ReactNode;
+    action?: React.ReactNode; // right-aligned element in header (Badge, button, Select…)
+    className?: string;
 }
 
 // Rendered structure
 <Card className="shadow-sm">
-  <CardHeader className="pb-3">
-    <div className="flex items-center justify-between gap-2">
-      <CardTitle className="text-base font-semibold">{title}</CardTitle>
-      {action}
-    </div>
-    <Separator />
-  </CardHeader>
-  <CardContent className="space-y-4">
-    {children}
-  </CardContent>
-</Card>
+    <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base font-semibold">{title}</CardTitle>
+            {action}
+        </div>
+        <Separator />
+    </CardHeader>
+    <CardContent className="space-y-4">{children}</CardContent>
+</Card>;
 ```
 
 **Key:**
+
 - `shadow-sm` always present on Cards
 - `space-y-4` for content spacing
 - Separator after every header
@@ -242,13 +320,13 @@ After `CalculationMetadataSection`, the first domain-specific input `SectionCard
 
 Use the specific equipment family in the card title:
 
-| App/domain | SectionCard title | Tag field label | Example |
-|---|---|---|---|
-| Tank / venting / heat transfer tank | `Tank Details` | `Tag / Equipment No.` | `T-101` |
-| Vessel / separator / drum | `Vessel Details` | `Tag / Equipment No.` | `V-101` |
-| Pump / rotating equipment | `Pump Details` | `Tag / Equipment No.` | `P-101A` |
-| Pipe / line calculation | `Pipe Details` or `Line Details` | `Line No.` | `6"-P-10101-A1A` |
-| Control valve / instrument | `Valve Details` | `Tag / Instrument No.` | `FCV-101` |
+| App/domain                          | SectionCard title                | Tag field label        | Example          |
+| ----------------------------------- | -------------------------------- | ---------------------- | ---------------- |
+| Tank / venting / heat transfer tank | `Tank Details`                   | `Tag / Equipment No.`  | `T-101`          |
+| Vessel / separator / drum           | `Vessel Details`                 | `Tag / Equipment No.`  | `V-101`          |
+| Pump / rotating equipment           | `Pump Details`                   | `Tag / Equipment No.`  | `P-101A`         |
+| Pipe / line calculation             | `Pipe Details` or `Line Details` | `Line No.`             | `6"-P-10101-A1A` |
+| Control valve / instrument          | `Valve Details`                  | `Tag / Instrument No.` | `FCV-101`        |
 
 The details card owns the tag number and description/service fields. Put this card before geometry, process, fluid, or operating-condition sections. Validation schemas and types may still group these fields internally as identification, but visible UI labels should follow the details naming above.
 
@@ -260,31 +338,29 @@ Wraps every single input field. Handles label, unit badge, hint, error.
 
 ```tsx
 interface FieldRowProps {
-  label: string
-  htmlFor?: string
-  required?: boolean
-  unit?: React.ReactNode      // static unit badge, e.g. "°" or "g/mol"
-  hint?: string               // shown below input when no error
-  error?: string              // shown below input in red
-  children: React.ReactNode
-  className?: string
+    label: string;
+    htmlFor?: string;
+    required?: boolean;
+    unit?: React.ReactNode; // static unit badge, e.g. "°" or "g/mol"
+    hint?: string; // shown below input when no error
+    error?: string; // shown below input in red
+    children: React.ReactNode;
+    className?: string;
 }
 
 // Rendered structure
 <div className={cn("space-y-1", className)}>
-  <Label htmlFor={htmlFor} className="text-sm font-medium leading-none">
-    {label}
-    {required && <span className="text-destructive ml-0.5">*</span>}
-  </Label>
-  <div className="flex items-center gap-2">
-    <div className="flex-1">{children}</div>
-    {unit && (
-      <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{unit}</span>
-    )}
-  </div>
-  {error  && <p className="text-xs text-destructive">{error}</p>}
-  {!error && hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-</div>
+    <Label htmlFor={htmlFor} className="text-sm font-medium leading-none">
+        {label}
+        {required && <span className="text-destructive ml-0.5">*</span>}
+    </Label>
+    <div className="flex items-center gap-2">
+        <div className="flex-1">{children}</div>
+        {unit && <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{unit}</span>}
+    </div>
+    {error && <p className="text-xs text-destructive">{error}</p>}
+    {!error && hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+</div>;
 ```
 
 ---
@@ -295,16 +371,16 @@ Use for every numeric field that has a physical unit. The form **always stores b
 
 ```tsx
 interface UomInputProps {
-  name: keyof CalculationInput  // React Hook Form field name
-  category: UomCategory         // 'length' | 'temperature' | etc.
-  id?: string
-  placeholder?: string
-  disabled?: boolean
+    name: keyof CalculationInput; // React Hook Form field name
+    category: UomCategory; // 'length' | 'temperature' | etc.
+    id?: string;
+    placeholder?: string;
+    disabled?: boolean;
 }
 
 // Internal logic
-const { units, setUnit } = useUomStore()
-const displayUnit = units[category]
+const { units, setUnit } = useUomStore();
+const displayUnit = units[category];
 
 // On render: baseValue → convertUnit(base, baseUnit, displayUnit) → shown
 // On change: rawInput → convertUnit(raw, displayUnit, baseUnit) → stored
@@ -313,34 +389,35 @@ const displayUnit = units[category]
 ```tsx
 // Rendered structure
 <div className="flex items-center gap-1.5">
-  <Input
-    className="flex-1"
-    type="number"
-    step="any"
-    value={Number.isFinite(field.value) ? convertUnit(field.value, BASE_UNITS[category], displayUnit).toFixed(6) : ""}
-    onChange={(e) => {
-      const raw = parseFloat(e.target.value)
-      // Pass NaN (not undefined) when cleared — RHF reverts the field to its
-      // defaultValues when it receives undefined, causing the input to snap back.
-      field.onChange(Number.isNaN(raw) ? NaN : convertUnit(raw, displayUnit, BASE_UNITS[category]))
-    }}
-  />
-  <Select value={displayUnit} onValueChange={u => setUnit(category, u)}>
-    <SelectTrigger className="h-8 min-w-fit px-2 border-muted bg-muted/40 text-xs whitespace-nowrap">
-      <SelectValue>{UOM_LABEL[displayUnit] ?? displayUnit}</SelectValue>
-    </SelectTrigger>
-    <SelectContent>
-      {UOM_OPTIONS[category].map(u => (
-        <SelectItem key={u} value={u} className="text-xs">
-          {UOM_LABEL[u] ?? u}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
+    <Input
+        className="flex-1"
+        type="number"
+        step="any"
+        value={Number.isFinite(field.value) ? convertUnit(field.value, BASE_UNITS[category], displayUnit).toFixed(6) : ""}
+        onChange={(e) => {
+            const raw = parseFloat(e.target.value);
+            // Pass NaN (not undefined) when cleared — RHF reverts the field to its
+            // defaultValues when it receives undefined, causing the input to snap back.
+            field.onChange(Number.isNaN(raw) ? NaN : convertUnit(raw, displayUnit, BASE_UNITS[category]));
+        }}
+    />
+    <Select value={displayUnit} onValueChange={(u) => setUnit(category, u)}>
+        <SelectTrigger className="h-8 min-w-fit px-2 border-muted bg-muted/40 text-xs whitespace-nowrap">
+            <SelectValue>{UOM_LABEL[displayUnit] ?? displayUnit}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+            {UOM_OPTIONS[category].map((u) => (
+                <SelectItem key={u} value={u} className="text-xs">
+                    {UOM_LABEL[u] ?? u}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
 </div>
 ```
 
 **Rules:**
+
 - SelectTrigger: `h-8 min-w-fit px-2 border-muted bg-muted/40 text-xs whitespace-nowrap`
 - SelectItem: `text-xs`
 - Input precision displayed: `toFixed(6)` prevents rounding artifacts
@@ -355,51 +432,63 @@ const displayUnit = units[category]
 ```ts
 // lib/uom.ts
 export const BASE_UNITS: Record<UomCategory, string> = {
-  length:              'mm',
-  gaugePressure:       'kPag',
-  absolutePressure:    'kPa',
-  temperature:         'C',
-  volumeFlow:          'm3/h',
-  ventRate:            'Nm3/h',
-  energy:              'kJ/kg',
-  thermalConductivity: 'W/(m·K)',
-  heatTransferCoeff:   'W/(m²·K)',
-  time:                'hour', 
-  // add new categories here
-}
+    length: "mm",
+    gaugePressure: "kPag",
+    absolutePressure: "kPa",
+    temperature: "C",
+    volumeFlow: "m3/h",
+    ventRate: "Nm3/h",
+    energy: "kJ/kg",
+    thermalConductivity: "W/(m·K)",
+    heatTransferCoeff: "W/(m²·K)",
+    time: "hour",
+    // add new categories here
+};
 ```
 
 ### 4.2 Available units per category
 
 ```ts
 export const UOM_OPTIONS: Record<UomCategory, string[]> = {
-  length:              ['mm', 'in', 'm', 'cm', 'ft'],
-  gaugePressure:       ['kPag', 'barg', 'psig', 'kg/cm2g'],
-  absolutePressure:    ['kPa', 'bar', 'psi', 'atm'],
-  temperature:         ['C', 'F', 'K'],
-  volumeFlow:          ['m3/h', 'ft3/h'],
-  ventRate:            ['Nm3/h', 'MSCFD', 'ft3/h'],
-  energy:              ['kJ/kg', 'kcal/kg', 'Btu/lb'],
-  thermalConductivity: ['W/(m·K)', 'Btu/(h·ft·°F)', 'kcal/(h·m·K)'],
-  heatTransferCoeff:   ['W/(m²·K)', 'Btu/(h·ft²·°F)', 'kcal/(h·m²·K)'],
-  // …add more as needed
-}
+    length: ["mm", "in", "m", "cm", "ft"],
+    gaugePressure: ["kPag", "barg", "psig", "kg/cm2g"],
+    absolutePressure: ["kPa", "bar", "psi", "atm"],
+    temperature: ["C", "F", "K"],
+    volumeFlow: ["m3/h", "ft3/h"],
+    ventRate: ["Nm3/h", "MSCFD", "ft3/h"],
+    energy: ["kJ/kg", "kcal/kg", "Btu/lb"],
+    thermalConductivity: ["W/(m·K)", "Btu/(h·ft·°F)", "kcal/(h·m·K)"],
+    heatTransferCoeff: ["W/(m²·K)", "Btu/(h·ft²·°F)", "kcal/(h·m²·K)"],
+    // …add more as needed
+};
 ```
 
 ### 4.3 Display labels (ASCII → unicode)
 
 ```ts
 export const UOM_LABEL: Record<string, string> = {
-  'mm': 'mm',   'in': 'in',   'm': 'm',   'cm': 'cm',   'ft': 'ft',
-  'C': '°C',    'F': '°F',    'K': 'K',
-  'kPag': 'kPag', 'barg': 'barg', 'psig': 'psig',
-  'm3/h': 'm³/h',  'ft3/h': 'ft³/h',
-  'Nm3/h': 'Nm³/h',  'MSCFD': 'MSCFD',
-  'kJ/kg': 'kJ/kg', 'kcal/kg': 'kcal/kg', 'Btu/lb': 'Btu/lb',
-  'W/(m·K)': 'W/(m·K)',
-  'W/(m²·K)': 'W/(m²·K)',
-  // …add more as needed
-}
+    mm: "mm",
+    in: "in",
+    m: "m",
+    cm: "cm",
+    ft: "ft",
+    C: "°C",
+    F: "°F",
+    K: "K",
+    kPag: "kPag",
+    barg: "barg",
+    psig: "psig",
+    "m3/h": "m³/h",
+    "ft3/h": "ft³/h",
+    "Nm3/h": "Nm³/h",
+    MSCFD: "MSCFD",
+    "kJ/kg": "kJ/kg",
+    "kcal/kg": "kcal/kg",
+    "Btu/lb": "Btu/lb",
+    "W/(m·K)": "W/(m·K)",
+    "W/(m²·K)": "W/(m²·K)",
+    // …add more as needed
+};
 ```
 
 ### 4.4 uomStore
@@ -407,24 +496,23 @@ export const UOM_LABEL: Record<string, string> = {
 ```ts
 // lib/store/uomStore.ts
 export const useUomStore = create<UomState>()(
-  persist(
-    (set) => ({
-      units: { ...BASE_UNITS },
-      setUnit: (category, unit) =>
-        set(s => ({ units: { ...s.units, [category]: unit } })),
-    }),
-    {
-      name: 'APP_NAME-uom-prefs',   // ← change per app
-      migrate: (persistedState: any) => {
-        // always merge — adds missing categories on schema evolution
-        if (persistedState?.state?.units) {
-          persistedState.state.units = { ...BASE_UNITS, ...persistedState.state.units }
-        }
-        return persistedState
-      },
-    }
-  )
-)
+    persist(
+        (set) => ({
+            units: { ...BASE_UNITS },
+            setUnit: (category, unit) => set((s) => ({ units: { ...s.units, [category]: unit } })),
+        }),
+        {
+            name: "APP_NAME-uom-prefs", // ← change per app
+            migrate: (persistedState: any) => {
+                // always merge — adds missing categories on schema evolution
+                if (persistedState?.state?.units) {
+                    persistedState.state.units = { ...BASE_UNITS, ...persistedState.state.units };
+                }
+                return persistedState;
+            },
+        },
+    ),
+);
 ```
 
 **Critical:** always include `migrate` so new categories don't silently drop.
@@ -454,13 +542,13 @@ return (
 
 ### 5.2 Field patterns
 
-| Scenario | Pattern |
-|---|---|
-| Simple text / number | `{...register("fieldName", { valueAsNumber: true })}` |
-| Unit-convertible number | `<Controller name="…"> → <UomInput />` |
-| Enum / select | `<Controller name="…"> → <Select />` |
-| Dynamic list | `useFieldArray` + `fields.map(…)` |
-| Conditional fields | `const value = watch("field")` → conditional render |
+| Scenario                | Pattern                                               |
+| ----------------------- | ----------------------------------------------------- |
+| Simple text / number    | `{...register("fieldName", { valueAsNumber: true })}` |
+| Unit-convertible number | `<Controller name="…"> → <UomInput />`                |
+| Enum / select           | `<Controller name="…"> → <Select />`                  |
+| Dynamic list            | `useFieldArray` + `fields.map(…)`                     |
+| Conditional fields      | `const value = watch("field")` → conditional render   |
 
 ### 5.3 Validation schema (`inputSchema.ts`)
 
@@ -474,28 +562,29 @@ return (
 // helpers. The preprocess converts NaN → undefined so Zod shows "Required".
 
 // Required numeric field (no range constraint):
-const reqNum = z.preprocess(
-  (v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v),
-  z.number({ message: "Required" }),
-)
+const reqNum = z.preprocess((v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v), z.number({ message: "Required" }));
 
 // Required positive numeric field:
-const posNum = (msg: string) => z.preprocess(
-  (v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v),
-  z.number({ message: "Required" }).positive(msg),
-)
+const posNum = (msg: string) => z.preprocess((v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v), z.number({ message: "Required" }).positive(msg));
 
-export const calculationInputSchema = z.object({
-  // always in base units
-  diameter: posNum("Diameter must be > 0"),
-  // NaN-tolerant optional pattern (field is optional — NaN means "left blank")
-  latentHeat: z.number().positive().optional().or(z.nan().transform(() => undefined)),
-}).superRefine((data, ctx) => {
-  // cross-field validations here
-})
+export const calculationInputSchema = z
+    .object({
+        // always in base units
+        diameter: posNum("Diameter must be > 0"),
+        // NaN-tolerant optional pattern (field is optional — NaN means "left blank")
+        latentHeat: z
+            .number()
+            .positive()
+            .optional()
+            .or(z.nan().transform(() => undefined)),
+    })
+    .superRefine((data, ctx) => {
+        // cross-field validations here
+    });
 ```
 
 **Rules:**
+
 - All numeric fields validated in **base units**
 - `UomInput` stores `NaN` (not `undefined`) when cleared — prevents RHF defaultValues revert
 - **Required number fields**: use `reqNum` / `posNum` helpers (preprocess `NaN → undefined`, then `z.number({ message: "Required" })`)
@@ -528,13 +617,13 @@ calculationResult !== null
 ```tsx
 // 3 KPIs in a row, centred
 <div className="grid grid-cols-3 gap-4 text-center">
-  {metrics.map(m => (
-    <div key={m.label}>
-      <p className="text-xs text-muted-foreground">{m.label}</p>
-      <p className="text-xl font-bold font-mono tabular-nums">{m.value}</p>
-      <p className="text-xs text-muted-foreground">{m.unit}</p>
-    </div>
-  ))}
+    {metrics.map((m) => (
+        <div key={m.label}>
+            <p className="text-xs text-muted-foreground">{m.label}</p>
+            <p className="text-xl font-bold font-mono tabular-nums">{m.value}</p>
+            <p className="text-xs text-muted-foreground">{m.unit}</p>
+        </div>
+    ))}
 </div>
 ```
 
@@ -545,58 +634,52 @@ Container card: `border-primary/30 bg-primary/5`
 Every schematic `SectionCard` **must** include a "View larger" button in its `action` slot that opens the same SVG in a full-viewport dialog. Extract the SVG into a local `renderSvg(className)` function to avoid duplication.
 
 ```tsx
-import { useState } from "react"
-import { Expand } from "lucide-react"
-import {
-  Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { SectionCard } from "./SectionCard"
+import { useState } from "react";
+import { Expand } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { SectionCard } from "./SectionCard";
 
 export function MySchematic() {
-  const [isOpen, setIsOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(false);
 
-  // ... compute SVG geometry from form values ...
+    // ... compute SVG geometry from form values ...
 
-  const renderSvg = (svgClassName: string) => (
-    <svg viewBox="0 0 420 420" className={svgClassName} aria-hidden="true">
-      {/* SVG content — closes over all computed geometry variables */}
-    </svg>
-  )
+    const renderSvg = (svgClassName: string) => (
+        <svg viewBox="0 0 420 420" className={svgClassName} aria-hidden="true">
+            {/* SVG content — closes over all computed geometry variables */}
+        </svg>
+    );
 
-  return (
-    <SectionCard
-      title="System Schematic"
-      action={
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" aria-label="Open larger schematic">
-              <Expand />
-              View larger
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="grid h-[78vh] w-[88vw] max-w-[88vw] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-4 sm:h-[82vh] sm:w-[84vw] sm:max-w-[84vw] xl:w-[1240px] xl:max-w-[1240px]">
-            <DialogHeader>
-              <DialogTitle>Expanded System Schematic</DialogTitle>
-              <DialogDescription>Larger view of the live system schematic.</DialogDescription>
-            </DialogHeader>
-            <div className="flex-1 overflow-auto rounded-xl border bg-card/40 p-3">
-              {renderSvg("h-auto w-full min-w-[480px] text-foreground")}
-            </div>
-          </DialogContent>
-        </Dialog>
-      }
-    >
-      <div className="flex flex-col items-center gap-3 py-2">
-        {renderSvg("w-full max-w-[340px] h-auto text-foreground")}
-      </div>
-    </SectionCard>
-  )
+    return (
+        <SectionCard
+            title="System Schematic"
+            action={
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" aria-label="Open larger schematic">
+                            <Expand />
+                            View larger
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="grid h-[78vh] w-[88vw] max-w-[88vw] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-4 sm:h-[82vh] sm:w-[84vw] sm:max-w-[84vw] xl:w-[1240px] xl:max-w-[1240px]">
+                        <DialogHeader>
+                            <DialogTitle>Expanded System Schematic</DialogTitle>
+                            <DialogDescription>Larger view of the live system schematic.</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex-1 overflow-auto rounded-xl border bg-card/40 p-3">{renderSvg("h-auto w-full min-w-[480px] text-foreground")}</div>
+                    </DialogContent>
+                </Dialog>
+            }
+        >
+            <div className="flex flex-col items-center gap-3 py-2">{renderSvg("w-full max-w-[340px] h-auto text-foreground")}</div>
+        </SectionCard>
+    );
 }
 ```
 
 **Rules:**
+
 - `useState(false)` for dialog must be placed **before** any early `return null` guards
 - Normal card SVG: `w-full max-w-[340px] h-auto text-foreground`
 - Dialog SVG: `h-auto w-full min-w-[480px] text-foreground` (no max-width so it fills the dialog)
@@ -608,23 +691,22 @@ export function MySchematic() {
 ```tsx
 // Divided rows pattern
 <div className="rounded-md border overflow-hidden divide-y text-xs">
-  {/* Section header */}
-  <div className="px-3 py-1.5 bg-muted/50 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-    {sectionTitle}
-  </div>
-  {/* Data rows */}
-  <div className="flex justify-between items-center px-3 py-1.5">
-    <span>{label}</span>
-    <span className="font-mono tabular-nums">{value} <span className="text-muted-foreground">{unit}</span></span>
-  </div>
-  {/* Total / emphasis row */}
-  <div className="flex justify-between items-center px-3 py-1.5 bg-muted/30 font-semibold">
-    …
-  </div>
+    {/* Section header */}
+    <div className="px-3 py-1.5 bg-muted/50 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{sectionTitle}</div>
+    {/* Data rows */}
+    <div className="flex justify-between items-center px-3 py-1.5">
+        <span>{label}</span>
+        <span className="font-mono tabular-nums">
+            {value} <span className="text-muted-foreground">{unit}</span>
+        </span>
+    </div>
+    {/* Total / emphasis row */}
+    <div className="flex justify-between items-center px-3 py-1.5 bg-muted/30 font-semibold">…</div>
 </div>
 ```
 
 **Rules:**
+
 - All numeric result values: `font-mono tabular-nums`
 - Units inline: `text-muted-foreground` (lighter weight than value)
 - Total/design rows: `bg-muted/30 font-semibold`
@@ -633,10 +715,10 @@ export function MySchematic() {
 ### 6.6 Unit conversion in outputs
 
 ```tsx
-const { units } = useUomStore()
-const displayUnit = units.ventRate   // or whatever category
+const { units } = useUomStore();
+const displayUnit = units.ventRate; // or whatever category
 
-const displayValue = convertUnit(baseValue, BASE_UNITS.ventRate, displayUnit)
+const displayValue = convertUnit(baseValue, BASE_UNITS.ventRate, displayUnit);
 // render: {displayValue.toFixed(2)} {UOM_LABEL[displayUnit] ?? displayUnit}
 ```
 
@@ -645,38 +727,54 @@ const displayValue = convertUnit(baseValue, BASE_UNITS.ventRate, displayUnit)
 ## 7. Empty States & Loading
 
 ### 7.1 No-data placeholder (tables, lists)
+
 ```tsx
 <div className="rounded-md border border-dashed py-3 text-center">
-  <p className="text-xs text-muted-foreground">No items — add one if applicable</p>
+    <p className="text-xs text-muted-foreground">No items — add one if applicable</p>
 </div>
 ```
 
 ### 7.2 Pending calculated value
+
 ```tsx
-<p className="text-sm italic text-muted-foreground text-center py-4">
-  Enter valid inputs to see results.
-</p>
+<p className="text-sm italic text-muted-foreground text-center py-4">Enter valid inputs to see results.</p>
 ```
 
 ### 7.3 Loading / saving button states
+
 ```tsx
 // Three states: idle → loading → success (auto-resets after ~1.8 s)
-{isSaving ? (
-  <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
-) : saved ? (
-  <><Check className="h-4 w-4 text-green-500" />Saved!</>
-) : (
-  <><Save className="h-4 w-4" />Save</>
-)}
+{
+    isSaving ? (
+        <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Saving…
+        </>
+    ) : saved ? (
+        <>
+            <Check className="h-4 w-4 text-green-500" />
+            Saved!
+        </>
+    ) : (
+        <>
+            <Save className="h-4 w-4" />
+            Save
+        </>
+    );
+}
 ```
 
 ### 7.4 Error state
+
 ```tsx
-{error && <p className="text-xs text-destructive mt-1">{error}</p>}
+{
+    error && <p className="text-xs text-destructive mt-1">{error}</p>;
+}
 // auto-dismiss pattern: setTimeout(() => setError(null), 4000)
 ```
 
 ### 7.5 Collapsible optional section
+
 ```tsx
 const [open, setOpen] = useState(false)
 
@@ -689,6 +787,7 @@ const [open, setOpen] = useState(false)
 ```
 
 ### 7.6 Status badge in section header
+
 ```tsx
 // Live (has data)
 <Badge variant="secondary" className="text-xs">Live</Badge>
@@ -778,6 +877,7 @@ import { Menu, Database, HardDriveDownload, Save, FolderOpen, FileDown, RotateCc
 ```
 
 ### 8.2 Dialog sizing
+
 ```tsx
 <DialogContent className="sm:max-w-md">  // narrow (save, rename)
 <DialogContent className="sm:max-w-lg">  // medium (load list)
@@ -789,6 +889,7 @@ import { Menu, Database, HardDriveDownload, Save, FolderOpen, FileDown, RotateCc
 Calculator apps must use the shared database save/load model as the primary persistence path, and may also support file-based export/import of calculation state.
 
 **Database save/load rule:**
+
 - Use the shared `/calculations` API as the primary save/load path
 - Treat `calculations` as the latest-state projection
 - Treat `calculation_versions` as immutable audit and restore history
@@ -796,14 +897,16 @@ Calculator apps must use the shared database save/load model as the primary pers
 - Route file imports through the same canonical payload shape used by DB-backed save/load
 
 **Scope of file-based save/load:**
+
 - Restore only:
-  - `inputs`
-  - `metadata`
-  - `revisionHistory`
+    - `inputs`
+    - `metadata`
+    - `revisionHistory`
 - Do **not** restore equipment links from file imports
 - Do **not** trust imported `results`; recompute results from restored inputs
 
 **Preferred file envelope:**
+
 ```ts
 {
   kind: 'pes-calculation-file',
@@ -818,6 +921,7 @@ Calculator apps must use the shared database save/load model as the primary pers
 ```
 
 **Rules:**
+
 - Add `Save to File` as a secondary action in the save flow
 - Add `Load from File` in the load dialog
 - Validate `kind`, `schemaVersion`, and `app` before import
@@ -825,10 +929,11 @@ Calculator apps must use the shared database save/load model as the primary pers
 - Show a clear error when the file belongs to a different app or is malformed
 
 **Testing expectations:**
+
 - Add helper-level tests for:
-  - valid envelope round-trip
-  - wrong-app rejection
-  - malformed JSON rejection
+    - valid envelope round-trip
+    - wrong-app rejection
+    - malformed JSON rejection
 - Keep app suites green after wiring file import/export into dialogs
 
 ### 8.4 PDF export pattern
@@ -836,6 +941,7 @@ Calculator apps must use the shared database save/load model as the primary pers
 Calculator apps should ship PDF export as a first-class top-bar action, using `@react-pdf/renderer` and a dedicated report component under `src/app/calculator/pdf/`.
 
 **Preferred architecture:**
+
 - Trigger export from `ActionMenu`
 - Dynamically import both `@react-pdf/renderer` and the report component inside the click handler
 - Build the PDF from current form values plus calculation metadata and revision history
@@ -843,39 +949,29 @@ Calculator apps should ship PDF export as a first-class top-bar action, using `@
 
 ```tsx
 const handleExportPdf = async () => {
-  if (!calculationResult) return
+    if (!calculationResult) return;
 
-  setPdfLoading(true)
-  try {
-    const [{ pdf }, { CalculationReport }] = await Promise.all([
-      import('@react-pdf/renderer'),
-      import('../pdf/CalculationReport'),
-    ])
+    setPdfLoading(true);
+    try {
+        const [{ pdf }, { CalculationReport }] = await Promise.all([import("@react-pdf/renderer"), import("../pdf/CalculationReport")]);
 
-    const input = getValues()
-    const blob = await pdf(
-      <CalculationReport
-        input={input}
-        result={calculationResult}
-        metadata={calculationMetadata}
-        revisions={revisionHistory}
-        units={units}
-      />,
-    ).toBlob()
+        const input = getValues();
+        const blob = await pdf(<CalculationReport input={input} result={calculationResult} metadata={calculationMetadata} revisions={revisionHistory} units={units} />).toBlob();
 
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `calculation-${(input.tag?.trim() || 'report').replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`
-    a.click()
-    URL.revokeObjectURL(url)
-  } finally {
-    setPdfLoading(false)
-  }
-}
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `calculation-${(input.tag?.trim() || "report").replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } finally {
+        setPdfLoading(false);
+    }
+};
 ```
 
 **Report file placement:**
+
 ```text
 src/app/calculator/
   components/ActionMenu.tsx
@@ -883,22 +979,23 @@ src/app/calculator/
 ```
 
 **Report design rules:**
+
 - Use a dedicated `CalculationReport` React PDF document, not DOM-to-image capture
 - Keep PDF layout deterministic and page-size aware from the start
 - Use the confirmed GCME sheet structure:
-  - top report title and type/tag row
-  - two-column calculation body with input sections on the left and output/result sections on the right
-  - allow long input lists to continue into the right panel only when the right panel is not needed for outputs
-  - full-width `SKETCH` section below the calculation body, spanning both columns
-  - bottom title/revision/GCME block anchored at the page bottom
-  - bottom navy ID bar with left document code and right validation/report label
+    - top report title and type/tag row
+    - two-column calculation body with input sections on the left and output/result sections on the right
+    - allow long input lists to continue into the right panel only when the right panel is not needed for outputs
+    - full-width `SKETCH` section below the calculation body, spanning both columns
+    - bottom title/revision/GCME block anchored at the page bottom
+    - bottom navy ID bar with left document code and right validation/report label
 - Put title block, metadata, input sections, output sections, and sketch/schematic in explicit containers
 - If the app renders a live SVG schematic, share the geometry/model layer between web and PDF renderers instead of maintaining two separate calculations
 - Make the PDF schematic renderer mirror the web SVG draw order:
-  - same model dimensions and padding
-  - same clipped fills and liquid fills
-  - same guide lines, outlines, annotation arrows, labels, colors, and subtitle
-  - no PDF-only sketch legend/caption unless the web schematic also has it
+    - same model dimensions and padding
+    - same clipped fills and liquid fills
+    - same guide lines, outlines, annotation arrows, labels, colors, and subtitle
+    - no PDF-only sketch legend/caption unless the web schematic also has it
 - Keep title/revision blocks anchored at the page bottom; center sketches inside the remaining space
 - Prefer one-page output for normal calculator cases, but design overflow behavior intentionally
 - Standardize the left-side GCME disclaimer strip, section headers, row alternation, page frame, and bottom blue report bar with these settings:
@@ -999,6 +1096,7 @@ bottomReportBar: {
 ```
 
 **Key differences from the old spec:**
+
 - Input/output layout: use data panels first, then full-width sketch; do not put the sketch in the right panel
 - PDF sketch source: reuse the same schematic model as the web SVG and match the web renderer as closely as React PDF supports
 - Disclaimer text color: `#dc2626` red
@@ -1008,6 +1106,7 @@ bottomReportBar: {
 - Footer: do not add a separate floating footer; the bottom title/revision block and navy ID bar are the footer
 
 **Testing expectations:**
+
 - Mock `@react-pdf/renderer` in `ActionMenu` tests
 - Assert blob download behavior, not popup-window behavior
 - Add targeted report layout tests for any print/PDF helper views
@@ -1020,42 +1119,42 @@ bottomReportBar: {
 
 ### 9.1 Color tokens (CSS variables)
 
-| Token | Light | Dark | Usage |
-|---|---|---|---|
-| `--background` | Slate 50 | Slate 900 | Page background |
-| `--foreground` | Slate 900 | Slate 100 | Body text |
-| `--card` | White 80% | Slate 800 70% | Card surfaces (glass) |
-| `--primary` | Sky 600 | Sky 400 | Actions, links, focus rings |
-| `--secondary` | Amber 500 | Amber 400 | Accent badges |
-| `--muted` | Slate 100 | Slate 800 | Subtle backgrounds |
-| `--muted-foreground` | Slate 600 | Slate 400 | Labels, hints, captions |
-| `--destructive` | Red 500 | Red 400 | Errors, delete actions |
-| `--border` | Black 8% | White 8% | All borders & dividers |
+| Token                | Light     | Dark          | Usage                       |
+| -------------------- | --------- | ------------- | --------------------------- |
+| `--background`       | Slate 50  | Slate 900     | Page background             |
+| `--foreground`       | Slate 900 | Slate 100     | Body text                   |
+| `--card`             | White 80% | Slate 800 70% | Card surfaces (glass)       |
+| `--primary`          | Sky 600   | Sky 400       | Actions, links, focus rings |
+| `--secondary`        | Amber 500 | Amber 400     | Accent badges               |
+| `--muted`            | Slate 100 | Slate 800     | Subtle backgrounds          |
+| `--muted-foreground` | Slate 600 | Slate 400     | Labels, hints, captions     |
+| `--destructive`      | Red 500   | Red 400       | Errors, delete actions      |
+| `--border`           | Black 8%  | White 8%      | All borders & dividers      |
 
 ### 9.2 Typography
 
-| Class | Size | Usage |
-|---|---|---|
-| `text-xs` | 12 px | Field hints, table headers, badges, unit labels |
-| `text-sm` | 14 px | Descriptions, secondary text, dialog body |
-| `text-base` | 16 px | Section titles (`CardTitle`), form labels |
-| `text-xl` | 20 px | KPI values in summary cards |
-| `font-medium` | 500 | Field labels, FieldRow labels |
-| `font-semibold` | 600 | Section headings, total rows |
-| `font-bold` | 700 | Large KPI numbers |
-| `font-mono tabular-nums` | mono | All numeric result values |
+| Class                    | Size  | Usage                                           |
+| ------------------------ | ----- | ----------------------------------------------- |
+| `text-xs`                | 12 px | Field hints, table headers, badges, unit labels |
+| `text-sm`                | 14 px | Descriptions, secondary text, dialog body       |
+| `text-base`              | 16 px | Section titles (`CardTitle`), form labels       |
+| `text-xl`                | 20 px | KPI values in summary cards                     |
+| `font-medium`            | 500   | Field labels, FieldRow labels                   |
+| `font-semibold`          | 600   | Section headings, total rows                    |
+| `font-bold`              | 700   | Large KPI numbers                               |
+| `font-mono tabular-nums` | mono  | All numeric result values                       |
 
 ### 9.3 Spacing
 
-| Pattern | Class | Use |
-|---|---|---|
-| Form field internal | `space-y-1` | Label → input → hint/error |
-| Form grid columns | `gap-3` | Side-by-side fields |
-| Section content | `space-y-4` | Rows within a SectionCard |
-| Inter-section | `space-y-4` | Between SectionCards in InputPanel |
-| Page columns | `gap-6` | Between left and right panels |
-| Inline icon+text | `gap-2` | Buttons, badges, row labels |
-| Compact inline | `gap-1.5` | UomInput gap between field and selector |
+| Pattern             | Class       | Use                                     |
+| ------------------- | ----------- | --------------------------------------- |
+| Form field internal | `space-y-1` | Label → input → hint/error              |
+| Form grid columns   | `gap-3`     | Side-by-side fields                     |
+| Section content     | `space-y-4` | Rows within a SectionCard               |
+| Inter-section       | `space-y-4` | Between SectionCards in InputPanel      |
+| Page columns        | `gap-6`     | Between left and right panels           |
+| Inline icon+text    | `gap-2`     | Buttons, badges, row labels             |
+| Compact inline      | `gap-1.5`   | UomInput gap between field and selector |
 
 ### 9.4 Component-specific classes
 
@@ -1078,8 +1177,11 @@ Warning banner:  flex items-center gap-2 rounded-md border px-3 py-2 text-xs
 Dark mode is handled entirely through CSS variables — no `dark:` utility classes required on individual elements. The `.dark` class on `<html>` switches all `--*` tokens.
 
 Exception: glass panel overlay shadow uses:
+
 ```css
-.dark .glass-panel { box-shadow: 0 4px 24px 0 rgba(0,0,0,0.4); }
+.dark .glass-panel {
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.4);
+}
 ```
 
 ---
@@ -1092,29 +1194,29 @@ Calculator apps should persist saved cases through `engineering-objects` using `
 
 ```ts
 const items = await apiClient.engineeringObjects.list({
-  objectType: 'VESSEL_CALCULATION',
-  includeInactive: false,
-})
+    objectType: "VESSEL_CALCULATION",
+    includeInactive: false,
+});
 
 await apiClient.engineeringObjects.upsert(tag, {
-  object_type: 'VESSEL_CALCULATION',
-  status: 'In-Design',
-  properties: {
-    inputs,
-    result,
-    linkedEquipmentId,
-    calculationMetadata,
-    revisionHistory,
-    meta: {
-      app: 'vessel',
-      name,
-      description,
-      isActive: true,
-      deletedAt: null,
-      updatedAt: new Date().toISOString(),
+    object_type: "VESSEL_CALCULATION",
+    status: "In-Design",
+    properties: {
+        inputs,
+        result,
+        linkedEquipmentId,
+        calculationMetadata,
+        revisionHistory,
+        meta: {
+            app: "vessel",
+            name,
+            description,
+            isActive: true,
+            deletedAt: null,
+            updatedAt: new Date().toISOString(),
+        },
     },
-  },
-})
+});
 ```
 
 For new apps, define an app-specific `object_type` constant and keep the same `properties.meta` shape.
@@ -1124,15 +1226,15 @@ For new apps, define an app-specific `object_type` constant and keep the same `p
 `getValues()` from React Hook Form captures the current form state. Since all fields store **base units**, the persisted JSON is always unit-agnostic.
 
 ```ts
-const inputs = getValues()
+const inputs = getValues();
 await save({
-  name,
-  inputs,
-  results: calculationResult,
-  equipmentId,
-  calculationMetadata,
-  revisionHistory,
-})
+    name,
+    inputs,
+    results: calculationResult,
+    equipmentId,
+    calculationMetadata,
+    revisionHistory,
+});
 ```
 
 UoM preferences are not saved with calculations. They stay in the app UoM store (`persist` localStorage key).
@@ -1141,13 +1243,14 @@ UoM preferences are not saved with calculations. They stay in the app UoM store 
 
 ```ts
 for (const key of NUMERIC_KEYS) {
-  mutable[key] = toNumberOrUndefined(source[key])
+    mutable[key] = toNumberOrUndefined(source[key]);
 }
 
-reset(normalizedInputs)
+reset(normalizedInputs);
 ```
 
 Loaders should restore:
+
 - form inputs
 - calculation metadata
 - revision history
@@ -1156,10 +1259,12 @@ Loaders should restore:
 ### 10.4 Soft delete / restore
 
 Saved calculations are soft-deleted by toggling:
+
 - `properties.meta.isActive = false`
 - `properties.meta.deletedAt = <ISO timestamp>`
 
 Restore resets:
+
 - `isActive = true`
 - `deletedAt = null`
 
@@ -1170,7 +1275,7 @@ List views should default to active records and expose a `Show deleted` toggle v
 When adding fields to `CalculationInput`, the load normalizer must handle missing keys gracefully:
 
 ```ts
-mutable[newField] = toNumberOrUndefined(source[newField]) ?? DEFAULT_VALUE
+mutable[newField] = toNumberOrUndefined(source[newField]) ?? DEFAULT_VALUE;
 ```
 
 When adding UoM categories, the `migrate` function in `uomStore` fills them in automatically.
@@ -1179,24 +1284,24 @@ When adding UoM categories, the `migrate` function in `uomStore` fills them in a
 
 ## 11. Naming Conventions
 
-| Thing | Convention | Example |
-|---|---|---|
-| Component file | PascalCase `.tsx` | `UomInput.tsx`, `SectionCard.tsx` |
-| Utility / lib file | camelCase `.ts` | `uomStore.ts`, `inputSchema.ts` |
-| Directory | kebab-case | `sections/`, `results/`, `lib/store/` |
-| React component | PascalCase function | `function DesignSummaryCard()` |
-| Props interface | `${Name}Props` | `interface SectionCardProps` |
-| Event handler | `handle*` | `handleClear`, `handleExport` |
-| Boolean check | `is*` / `has*` | `isInsulated`, `hasError` |
-| Derived display value | `*Display` | `inTotalDisplay`, `displayUnit` |
-| Store | `use*Store` | `useUomStore`, `useCalculatorStore` |
-| Zod schema | `*Schema` | `calculationInputSchema`, `streamSchema` |
-| TypeScript type/interface | PascalCase | `CalculationInput`, `UomCategory` |
-| Enum | PascalCase | `TankConfiguration`, `ApiEdition` |
-| Constant object | UPPER_SNAKE | `BASE_UNITS`, `UOM_OPTIONS` |
-| CSS variable | `--kebab-case` | `--muted-foreground`, `--primary` |
-| Unit string (internal) | ASCII | `'m3/h'`, `'kPag'`, `'W/(m·K)'` |
-| localStorage key | `app-name-purpose` | `vent-uom-prefs`, `ept-pes-theme` |
+| Thing                     | Convention          | Example                                  |
+| ------------------------- | ------------------- | ---------------------------------------- |
+| Component file            | PascalCase `.tsx`   | `UomInput.tsx`, `SectionCard.tsx`        |
+| Utility / lib file        | camelCase `.ts`     | `uomStore.ts`, `inputSchema.ts`          |
+| Directory                 | kebab-case          | `sections/`, `results/`, `lib/store/`    |
+| React component           | PascalCase function | `function DesignSummaryCard()`           |
+| Props interface           | `${Name}Props`      | `interface SectionCardProps`             |
+| Event handler             | `handle*`           | `handleClear`, `handleExport`            |
+| Boolean check             | `is*` / `has*`      | `isInsulated`, `hasError`                |
+| Derived display value     | `*Display`          | `inTotalDisplay`, `displayUnit`          |
+| Store                     | `use*Store`         | `useUomStore`, `useCalculatorStore`      |
+| Zod schema                | `*Schema`           | `calculationInputSchema`, `streamSchema` |
+| TypeScript type/interface | PascalCase          | `CalculationInput`, `UomCategory`        |
+| Enum                      | PascalCase          | `TankConfiguration`, `ApiEdition`        |
+| Constant object           | UPPER_SNAKE         | `BASE_UNITS`, `UOM_OPTIONS`              |
+| CSS variable              | `--kebab-case`      | `--muted-foreground`, `--primary`        |
+| Unit string (internal)    | ASCII               | `'m3/h'`, `'kPag'`, `'W/(m·K)'`          |
+| localStorage key          | `app-name-purpose`  | `vent-uom-prefs`, `ept-pes-theme`        |
 
 ---
 
@@ -1230,7 +1335,7 @@ apps/{app-name}/
 │   │           ├── SummaryResult.tsx
 │   │           └── ...
 │   ├── components/
-│   │   └── TopToolbar.tsx        # floating toolbar content with icon, title, actions, theme toggle
+│   │   └── TopToolbar.tsx        # floating toolbar: icon, title, APP_ITEMS, QuickAccessMenu, SharedUserMenu
 │   ├── lib/
 │   │   ├── uom.ts                # BASE_UNITS, UOM_OPTIONS, UOM_LABEL, UomCategory
 │   │   ├── calculations/         # pure calculation functions (no React)
@@ -1255,8 +1360,10 @@ apps/{app-name}/
 
 - [ ] Start from `apps/calculation-template` (already has TopToolbar, CalculatorToolbar, CalculationMetadataSection)
 - [ ] **CRITICAL — basePath in `next.config.ts`:** Replace `/venting-calculation` with your actual app name (e.g., `/heat-transfer-calculation`, `/pipe-sizer`). This is the #1 cause of broken Vercel deployments. The template ships with a placeholder — always verify before deploying.
-- [ ] Update `TopToolbar`: replace icon (lucide), title, subtitle
+- [ ] Update `TopToolbar`: replace icon, title, subtitle; add the new app to `APP_ITEMS` in every other app's `TopToolbar.tsx`
 - [ ] Configure `NEXT_PUBLIC_WEB_URL` for deployed calculator apps so the toolbar branding links back to `apps/web`
+- [ ] Create `apps/{new-app}/vercel.json` with redirects to ALL other apps (exclude own path). Add the new app path to every other app's `vercel.json`. See §14.2.
+- [ ] Mark `requiresAuth: true` in `APP_ITEMS` if the app requires login to function
 - [ ] Update `layout.tsx` metadata: `title`, `description`
 - [ ] Replace the placeholder input section with a domain-specific details card (`Tank Details`, `Vessel Details`, `Pump Details`, `Valve Details`, etc.) immediately after `CalculationMetadataSection`
 - [ ] Use `Tag / Equipment No.` for equipment tags and `Tag / Instrument No.` for control valves/instruments
@@ -1272,27 +1379,31 @@ apps/{app-name}/
 - [ ] Test dark mode (toggle button in TopToolbar)
 - [ ] Test at `xl` breakpoint for two-column layout
 
-## 14. Vercel Deployment — Critical basePath Rule
+## 14. Vercel Deployment
+
+### 14.1 Critical basePath Rule
 
 **Every new app MUST set `basePath` in `next.config.ts` to match its Vercel project URL path.**
 
 The `basePath` in Next.js controls URL routing inside the deployed app. If it doesn't match the Vercel subdomain/path, every route will 404.
 
 **Example — correct for an app deployed at `https://pes-heat-transfer-calculation.vercel.app`:**
+
 ```ts
 // next.config.ts — CORRECT
 const nextConfig: NextConfig = {
-  basePath: "/heat-transfer-calculation",
-  env: { NEXT_PUBLIC_BASE_PATH: "/heat-transfer-calculation" },
-  async redirects() {
-    return [{ source: "/", destination: "/heat-transfer-calculation", permanent: false, basePath: false }];
-  },
-}
+    basePath: "/heat-transfer-calculation",
+    env: { NEXT_PUBLIC_BASE_PATH: "/heat-transfer-calculation" },
+    async redirects() {
+        return [{ source: "/", destination: "/heat-transfer-calculation", permanent: false, basePath: false }];
+    },
+};
 ```
 
 **The template (`apps/calculation-template`) ships with a placeholder `basePath: "/[your-app-name]"`. You MUST replace this before deploying.**
 
 **How to verify before deploying:**
+
 1. Open Vercel project dashboard → Domains → note the deployed URL
 2. If URL is `https://pes-heat-transfer-calculation.vercel.app`, `basePath` must be `/heat-transfer-calculation`
 3. If URL is `https://my-custom-domain.com/`, `basePath` must be `/` (empty string, omit entirely)
@@ -1300,4 +1411,64 @@ const nextConfig: NextConfig = {
 
 **Do not copy `next.config.ts` from another app without changing the `basePath` value.**
 
-**`apps/web/vercel.json`** manages redirects from the root dashboard (`pes-web`) to sub-apps. Sub-apps own their own `next.config.ts` `basePath`. Both must be correct for navigation to work.
+---
+
+### 14.2 Cross-App Navigation — `vercel.json` Redirect Strategy
+
+Each app is deployed on its **own Vercel domain**. The `QuickAccessMenu` navigates using relative paths like `/psv` or `/venting-calculation/calculator`. To make these work from any app, **every app** ships a `vercel.json` that redirects those paths to the correct Vercel domain.
+
+**Authoritative app URL map:**
+
+| App | Vercel Domain | Path |
+|-----|---------------|------|
+| `apps/web` | `process-engineering-suite-web.vercel.app` | `/` |
+| `apps/network-editor` | `pes-network-editor.vercel.app` | `/network-editor` |
+| `apps/psv` | `pes-psv-suite.vercel.app` | `/psv` |
+| `apps/design-agents` | `process-engineering-suite-design-agents.vercel.app` | `/design-agents` |
+| `apps/venting-calculation` | `pes-venting-calculation.vercel.app` | `/venting-calculation/calculator` |
+| `apps/vessels-calculation` | `pes-vessels-calculation.vercel.app` | `/vessels-calculation/calculator` |
+| `apps/pump-calculation` | `pes-pump-calculation.vercel.app` | `/pump-calculation/calculator` |
+| `apps/heat-transfer-calculation` | `pes-heat-transfer-calculation.vercel.app` | `/heat-transfer-calculation/calculator` |
+| `apps/control-valve-calculation` | `pes-control-valve-calculation.vercel.app` | `/control-valve-calculation/calculator` |
+| `apps/docs` | `process-engineering-suite-docs.vercel.app` | `/docs` |
+
+**Pattern — each app's `vercel.json` redirects to all OTHER apps (never itself):**
+
+```json
+{
+    "redirects": [
+        { "source": "/",                                     "destination": "https://process-engineering-suite-web.vercel.app/",                                    "permanent": false },
+        { "source": "/network-editor",                       "destination": "https://pes-network-editor.vercel.app/network-editor",                                  "permanent": false },
+        { "source": "/psv",                                  "destination": "https://pes-psv-suite.vercel.app/psv",                                                  "permanent": false },
+        { "source": "/design-agents",                        "destination": "https://process-engineering-suite-design-agents.vercel.app/design-agents",              "permanent": false },
+        { "source": "/venting-calculation/calculator",       "destination": "https://pes-venting-calculation.vercel.app/venting-calculation/calculator",             "permanent": false },
+        { "source": "/vessels-calculation/calculator",       "destination": "https://pes-vessels-calculation.vercel.app/vessels-calculation/calculator",             "permanent": false },
+        { "source": "/pump-calculation/calculator",          "destination": "https://pes-pump-calculation.vercel.app/pump-calculation/calculator",                   "permanent": false },
+        { "source": "/heat-transfer-calculation/calculator", "destination": "https://pes-heat-transfer-calculation.vercel.app/heat-transfer-calculation/calculator", "permanent": false },
+        { "source": "/control-valve-calculation/calculator", "destination": "https://pes-control-valve-calculation.vercel.app/control-valve-calculation/calculator", "permanent": false },
+        { "source": "/docs",                                 "destination": "https://process-engineering-suite-docs.vercel.app/docs",                                "permanent": false }
+    ]
+}
+```
+
+> **For `apps/venting-calculation`:** omit the `/venting-calculation/calculator` entry (self-redirect). Each app omits its own path.
+>
+> **For `apps/web`:** omit the `/` entry. Web IS the landing page — a root redirect would loop infinitely.
+
+**⚠️ Self-redirect = infinite redirect loop.** Vercel processes `vercel.json` edge rules BEFORE Next.js serves pages. If an app redirects its own path back to itself, Vercel fires the redirect again on landing, looping forever. Always exclude your own path from your own `vercel.json`.
+
+**Use `"permanent": false` (302)** for all cross-app redirects. `permanent: true` (301) gets cached by the browser — if URLs ever change, users will be stuck with the old redirect cached locally.
+
+**When adding a new app:**
+1. Add the new app's path to `vercel.json` in **every existing app** (9+ files to update)
+2. Add all existing app paths to the new app's own `vercel.json` (excluding its own path)
+3. Add the new entry to `APP_ITEMS` in every `TopToolbar.tsx`
+4. Update this table
+
+---
+
+### 14.3 Cross-Domain Auth Limitation
+
+Each Vercel app is on a separate domain, so `localStorage` (used by `pes-shared-auth-storage`) is **per-domain**. Users need to log in separately on each app's domain. The `QuickAccessMenu` button hides on unauthenticated apps, and `requiresAuth: true` items indicate which apps need login.
+
+Workaround: use a custom domain with sub-paths (e.g. `tools.company.com/psv`) to share the same origin and the same `localStorage` key.

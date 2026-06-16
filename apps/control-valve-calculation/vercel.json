@@ -1,6 +1,11 @@
 {
     "redirects": [
         {
+            "source": "/",
+            "destination": "https://process-engineering-suite-web.vercel.app/",
+            "permanent": false
+        },
+        {
             "source": "/network-editor",
             "destination": "https://pes-network-editor.vercel.app/network-editor",
             "permanent": false
@@ -33,11 +38,6 @@
         {
             "source": "/heat-transfer-calculation/calculator",
             "destination": "https://pes-heat-transfer-calculation.vercel.app/heat-transfer-calculation/calculator",
-            "permanent": false
-        },
-        {
-            "source": "/control-valve-calculation/calculator",
-            "destination": "https://pes-control-valve-calculation.vercel.app/control-valve-calculation/calculator",
             "permanent": false
         },
         {

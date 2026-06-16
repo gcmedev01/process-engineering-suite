@@ -22,22 +22,44 @@ import {
   useTheme,
 } from '@mui/material';
 import {
+  Air,
   AutoFixHigh as AgentIcon,
-  Brightness4 as DarkIcon,
-  Brightness7 as LightIcon,
+  Calculate,
   CloudDownload as CloudLoadIcon,
   CloudUpload as CloudSaveIcon,
   DeleteSweep as ClearIcon,
+  Description,
+  ElectricBolt,
   Menu as MenuIcon,
   Save as SaveIcon,
+  Science,
   Settings as SettingsIcon,
+  Shield,
+  Storage,
+  Thermostat,
+  Timeline,
+  Tune,
   UploadFile as LoadIcon,
 } from '@mui/icons-material';
-import { SharedUserMenu } from '@eng-suite/ui-kit';
+import { QuickAccessMenu, SharedUserMenu } from '@eng-suite/ui-kit';
 import { useDesignStore } from '../store/useDesignStore';
 import { DesignState } from '../types';
 import { StatusIndicator } from './common/StatusIndicator';
 import { useSavedSessions } from '../hooks/useSavedSessions';
+
+const APP_ITEMS = [
+  { title: "Network Editor", icon: <Timeline />, href: "/network-editor", color: "linear-gradient(135deg, #0ea5e9, #0284c7)", status: "active" as const, requiresAuth: true },
+  { title: "PSV Sizing", icon: <Shield />, href: "/psv", color: "linear-gradient(135deg, #ef4444, #b91c1c)", status: "active" as const },
+  { title: "Design Agents", icon: <AgentIcon />, href: "/design-agents", color: "linear-gradient(135deg, #8b5cf6, #6d28d9)", status: "active" as const, requiresAuth: true },
+  { title: "Tank Venting", icon: <Air />, href: "/venting-calculation/calculator", color: "linear-gradient(135deg, #14b8a6, #0d9488)", status: "active" as const },
+  { title: "Vessel Sizing", icon: <Storage />, href: "/vessels-calculation/calculator", color: "linear-gradient(135deg, #64748b, #334155)", status: "active" as const },
+  { title: "Pump Sizing", icon: <ElectricBolt />, href: "/pump-calculation/calculator", color: "linear-gradient(135deg, #3b82f6, #1d4ed8)", status: "active" as const },
+  { title: "Heat Transfer", icon: <Thermostat />, href: "/heat-transfer-calculation/calculator", color: "linear-gradient(135deg, #f97316, #c2410c)", status: "active" as const },
+  { title: "Control Valve", icon: <Tune />, href: "/control-valve-calculation/calculator", color: "linear-gradient(135deg, #22c55e, #15803d)", status: "active" as const },
+  { title: "Docs", icon: <Description />, href: "/docs", color: "linear-gradient(135deg, #94a3b8, #475569)", status: "active" as const },
+  { title: "Orifice Calc", icon: <Calculate />, color: "linear-gradient(135deg, #cbd5e1, #94a3b8)", status: "coming_soon" as const },
+  { title: "Fluid Props", icon: <Science />, color: "linear-gradient(135deg, #cbd5e1, #94a3b8)", status: "coming_soon" as const },
+];
 
 interface TopToolbarProps {
   onToggleTheme: () => void;
@@ -295,11 +317,7 @@ export const TopToolbar = ({ onToggleTheme, isDarkMode, onMenuClick }: TopToolba
               </IconButton>
             </Tooltip>
             <StatusIndicator />
-            <Tooltip title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
-              <IconButton onClick={onToggleTheme} size="small">
-                {isDarkMode ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
+            <QuickAccessMenu items={APP_ITEMS} onToggleTheme={onToggleTheme} isDarkMode={isDarkMode} />
             <SharedUserMenu
               homeHref={HOME_HREF}
               apiBaseUrl={import.meta.env.VITE_AUTH_API_URL}

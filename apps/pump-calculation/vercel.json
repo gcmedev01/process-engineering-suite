@@ -1,6 +1,11 @@
 {
     "redirects": [
         {
+            "source": "/",
+            "destination": "https://process-engineering-suite-web.vercel.app/",
+            "permanent": false
+        },
+        {
             "source": "/network-editor",
             "destination": "https://pes-network-editor.vercel.app/network-editor",
             "permanent": false
@@ -23,11 +28,6 @@
         {
             "source": "/vessels-calculation/calculator",
             "destination": "https://pes-vessels-calculation.vercel.app/vessels-calculation/calculator",
-            "permanent": false
-        },
-        {
-            "source": "/pump-calculation/calculator",
-            "destination": "https://pes-pump-calculation.vercel.app/pump-calculation/calculator",
             "permanent": false
         },
         {
