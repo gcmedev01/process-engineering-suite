@@ -25,6 +25,10 @@ These variables apply to the entire suite or multiple applications.
 
 ### API Configuration
 
+- `API_URL`: build-time source for AWS frontend images
+  - Used by `infra/aws/scripts/build-and-push.sh` to populate `NEXT_PUBLIC_API_URL`
+- `AUTH_API_URL`: optional build-time source for browser auth URLs
+  - Defaults to `API_URL` in the AWS build script when unset
 - `NEXT_PUBLIC_API_URL`: Backend API base URL (default: http://localhost:8000)
   - Used by all frontend applications
 - `NEXT_PUBLIC_AUTH_API_URL`: Browser-facing authentication API base URL
@@ -117,6 +121,7 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 The dev compose sets these automatically for containers:
 
 ```env
+API_URL=http://localhost:8000
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_AUTH_API_URL=http://localhost:8000
 API_PROXY_TARGET=http://api:8000
@@ -143,6 +148,8 @@ POSTGRES_PASSWORD=secure-password
 POSTGRES_USER=postgres
 POSTGRES_DB=engsuite
 DATABASE_URL=postgresql+asyncpg://postgres:secure-password@postgres:5432/engsuite
+API_URL=https://api.your-domain.com
+AUTH_API_URL=https://api.your-domain.com
 NEXT_PUBLIC_API_URL=https://api.your-domain.com
 NEXT_PUBLIC_AUTH_API_URL=https://api.your-domain.com
 API_PROXY_TARGET=https://api.your-domain.com
@@ -159,6 +166,30 @@ EOF
 
 # Run with Docker Compose
 docker compose -f infra/docker-compose.yml --env-file .env up -d
+```
+
+### AWS Build Workflow
+
+The AWS image build script requires the dashboard routing URLs at build time:
+
+```bash
+API_URL=https://api.your-domain.com \
+DOCS_URL=https://docs.your-domain.com \
+NETWORK_EDITOR_URL=https://network-editor.your-domain.com \
+PSV_URL=https://psv.your-domain.com \
+DESIGN_AGENTS_URL=https://design-agents.your-domain.com \
+VENTING_URL=https://venting.your-domain.com \
+VESSELS_CALCULATION_URL=https://vessels.your-domain.com \
+PUMP_URL=https://pump.your-domain.com \
+HEAT_TRANSFER_URL=https://heat-transfer.your-domain.com \
+CONTROL_VALVE_URL=https://control-valve.your-domain.com \
+./infra/aws/scripts/build-and-push.sh
+```
+
+Render ECS task definitions from templates before registration:
+
+```bash
+./infra/aws/scripts/render-task-definitions.sh us-east-1 123456789012 testsha
 ```
 
 ### Production - Direct Deployment

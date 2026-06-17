@@ -20,7 +20,7 @@ RUN bun install --frozen-lockfile
 # Pre-build shared packages so Vite/Rollup can resolve their compiled entry points.
 # (Vite uses Node package resolution; it needs dist/ — unlike Turbopack which handles raw TS.)
 WORKDIR /app
-RUN bun turbo run build --filter="./packages/*"
+RUN ./node_modules/.bin/turbo run build --filter="./packages/*"
 
 # Build the Vite app (vite only — tsc type check runs in CI, not here)
 WORKDIR /app/apps/design-agents

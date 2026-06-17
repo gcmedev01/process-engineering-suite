@@ -107,21 +107,27 @@ Internet → ALB (HTTPS) → ECS Fargate Services → RDS PostgreSQL
                             ├─ Web (3000)
                             ├─ Network Editor (3000)
                             ├─ PSV (3000)
-                            └─ Design Agents (80)
+                            ├─ Docs (3000)
+                            ├─ Design Agents (80)
+                            ├─ Venting Calculation (3000)
+                            ├─ Vessels Calculation (3000)
+                            ├─ Pump Calculation (3000)
+                            ├─ Heat Transfer Calculation (3000)
+                            └─ Control Valve Calculation (3000)
 ```
 
-The local AWS-image smoke stack in `infra/docker-compose.aws-local.yml` also builds docs and calculator app images. The current ECR push script and ECS task definitions cover the core AWS services above unless additional repositories and task definitions are added.
+The local AWS-image smoke stack in `infra/docker-compose.aws-local.yml` also builds docs and calculator app images. The AWS build script, ECS task-definition templates, and ALB target-group helper now cover the full suite.
 
 ### Cost Estimate
 
 - **RDS PostgreSQL** (db.t3.medium, Multi-AZ): ~$120/month
-- **ECS Fargate** (5 services): ~$180/month
+- **ECS Fargate** (11 services plus one-off migration task): ~$260/month
 - **ALB**: ~$20/month
 - **ECR**: ~$5/month
 - **Secrets Manager**: ~$2/month
 - **CloudWatch**: ~$10/month
 
-**Total: ~$337/month** (can reduce to ~$150/month with single-AZ RDS and smaller instances)
+**Total: ~$417/month** (can reduce to ~$220/month with single-AZ RDS and smaller instances)
 
 ### Step 1: Create AWS Infrastructure
 
@@ -207,16 +213,7 @@ aws elbv2 create-load-balancer \
   --region us-east-1
 
 # Create target groups for each service
-for service in api web network-editor psv design-agents; do
-  aws elbv2 create-target-group \
-    --name process-engineering-${service} \
-    --protocol HTTP \
-    --port $([ "$service" = "api" ] && echo 8000 || [ "$service" = "design-agents" ] && echo 80 || echo 3000) \
-    --vpc-id vpc-XXXXXXXX \
-    --target-type ip \
-    --health-check-path $([ "$service" = "design-agents" ] && echo "/design-agents/" || echo "/health") \
-    --region us-east-1
-done
+./infra/aws/scripts/create-target-groups.sh us-east-1 vpc-XXXXXXXX
 
 # Create listener rules (HTTPS on port 443)
 # Configure path-based routing to target groups
@@ -229,26 +226,35 @@ done
 cd process-engineering-suite
 
 # Run the build and push script
+API_URL=https://api.your-domain.com \
+DOCS_URL=https://docs.your-domain.com \
+NETWORK_EDITOR_URL=https://network-editor.your-domain.com \
+PSV_URL=https://psv.your-domain.com \
+DESIGN_AGENTS_URL=https://design-agents.your-domain.com \
+VENTING_URL=https://venting.your-domain.com \
+VESSELS_CALCULATION_URL=https://vessels.your-domain.com \
+PUMP_URL=https://pump.your-domain.com \
+HEAT_TRANSFER_URL=https://heat-transfer.your-domain.com \
+CONTROL_VALVE_URL=https://control-valve.your-domain.com \
 ./infra/aws/scripts/build-and-push.sh us-east-1 YOUR_ACCOUNT_ID
 
 # This will:
 # - Authenticate to ECR
 # - Create ECR repositories
 # - Build all Docker images
-# - Push to ECR with :latest tag
+# - Push to ECR with :IMAGE_TAG and :latest tags
 ```
 
 ### Step 3: Register Task Definitions
 
 ```bash
-# Update task definitions with your account ID and region
-sed -i '' 's/ACCOUNT_ID/YOUR_ACCOUNT_ID/g' infra/aws/task-definitions/*.json
-sed -i '' 's/REGION/us-east-1/g' infra/aws/task-definitions/*.json
+# Render task definitions with your account ID, region, and image tag
+./infra/aws/scripts/render-task-definitions.sh us-east-1 YOUR_ACCOUNT_ID GIT_SHA
 
 # Register each task definition
-for service in api web network-editor psv design-agents; do
+for service in api web docs network-editor psv design-agents venting-calculation vessels-calculation pump-calculation heat-transfer-calculation control-valve-calculation api-migration; do
   aws ecs register-task-definition \
-    --cli-input-json file://infra/aws/task-definitions/${service}.json \
+    --cli-input-json file://infra/aws/task-definitions/rendered/${service}.json \
     --region us-east-1
 done
 ```
@@ -267,7 +273,7 @@ aws ecs create-service \
   --load-balancers "targetGroupArn=arn:aws:elasticloadbalancing:...,containerName=api,containerPort=8000" \
   --region us-east-1
 
-# Repeat for other services (web, network-editor, psv, design-agents)
+# Repeat for other services (web, docs, network-editor, psv, design-agents, venting-calculation, vessels-calculation, pump-calculation, heat-transfer-calculation, control-valve-calculation)
 ```
 
 ### Step 5: Configure DNS (Optional)
@@ -289,7 +295,7 @@ aws route53 change-resource-record-sets \
 # Check ECS service status
 aws ecs describe-services \
   --cluster process-engineering-cluster \
-  --services api web network-editor psv design-agents \
+  --services api web docs network-editor psv design-agents venting-calculation vessels-calculation pump-calculation heat-transfer-calculation control-valve-calculation \
   --region us-east-1
 
 # Check task health
@@ -480,9 +486,13 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env exec api alembi
 
 **AWS:**
 ```bash
-# Migrations run automatically when API task starts
-# Monitor logs:
-aws logs tail /ecs/process-engineering-api --follow --region us-east-1 | grep -i alembic
+# Run the one-off migration task before updating the API service
+./infra/aws/scripts/render-task-definitions.sh us-east-1 YOUR_ACCOUNT_ID GIT_SHA
+aws ecs run-task \
+  --cluster process-engineering-cluster \
+  --task-definition process-engineering-api-migration \
+  --launch-type FARGATE \
+  --region us-east-1
 ```
 
 ### Scaling Services
