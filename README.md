@@ -62,6 +62,9 @@ cp infra/.env.aws-local.example infra/.env.aws-local
 docker compose -f infra/docker-compose.aws-local.yml \
   --env-file infra/.env.aws-local up -d --build
 
+# The AWS image build script uses the same build-time URLs and now covers the
+# full suite of AWS-deployed apps. See docs/DEPLOYMENT.md for the render flow.
+
 # 3. Open in browser
 open http://localhost:3000                            # Web dashboard
 open http://localhost:3001/docs                       # Docs

@@ -1,0 +1,103 @@
+name: AWS Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag. Defaults to commit SHA.
+        required: false
+  push:
+    branches: [main]
+    paths:
+      - apps/**
+      - packages/**
+      - services/**
+      - infra/**
+      - .github/workflows/aws-deploy.yml
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build, Push, Migrate, Deploy
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+      ECS_PRIVATE_SUBNETS: ${{ secrets.ECS_PRIVATE_SUBNETS }}
+      ECS_SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }}
+      API_URL: ${{ secrets.API_URL }}
+      DOCS_URL: ${{ secrets.DOCS_URL }}
+      NETWORK_EDITOR_URL: ${{ secrets.NETWORK_EDITOR_URL }}
+      PSV_URL: ${{ secrets.PSV_URL }}
+      DESIGN_AGENTS_URL: ${{ secrets.DESIGN_AGENTS_URL }}
+      VENTING_URL: ${{ secrets.VENTING_URL }}
+      VESSELS_CALCULATION_URL: ${{ secrets.VESSELS_CALCULATION_URL }}
+      PUMP_URL: ${{ secrets.PUMP_URL }}
+      HEAT_TRANSFER_URL: ${{ secrets.HEAT_TRANSFER_URL }}
+      CONTROL_VALVE_URL: ${{ secrets.CONTROL_VALVE_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install and test TypeScript
+        run: |
+          bun install --frozen-lockfile
+          bun run lint
+          bun run check-types
+          bun run build
+
+      - name: Test API
+        working-directory: services/api
+        run: |
+          pip install -r requirements.txt
+          pip install ruff mypy pytest
+          ruff check .
+          ruff format --check .
+          mypy app/ --ignore-missing-imports
+          pytest tests/ -v
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build and push images
+        run: |
+          chmod +x infra/aws/scripts/build-and-push.sh
+          IMAGE_TAG="${IMAGE_TAG}" ./infra/aws/scripts/build-and-push.sh "${AWS_REGION}" "${AWS_ACCOUNT_ID}"
+
+      - name: Render task definitions
+        run: |
+          chmod +x infra/aws/scripts/render-task-definitions.sh
+          ./infra/aws/scripts/render-task-definitions.sh "${AWS_REGION}" "${AWS_ACCOUNT_ID}" "${IMAGE_TAG}"
+
+      - name: Register task definitions
+        run: |
+          for file in infra/aws/task-definitions/rendered/*.json; do
+            aws ecs register-task-definition --cli-input-json "file://${file}" --region "${AWS_REGION}"
+          done
+
+      - name: Run migration task
+        run: |
+          chmod +x infra/aws/scripts/run-migration.sh
+          ./infra/aws/scripts/run-migration.sh "${AWS_REGION}"
+
+      - name: Update ECS services
+        run: |
+          chmod +x infra/aws/scripts/update-services.sh
+          ./infra/aws/scripts/update-services.sh "${AWS_REGION}"

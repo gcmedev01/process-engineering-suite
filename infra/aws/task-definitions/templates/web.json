@@ -9,7 +9,7 @@
   "containerDefinitions": [
     {
       "name": "web",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/process-engineering/web:latest",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/process-engineering/web:IMAGE_TAG",
       "essential": true,
       "portMappings": [
         {
@@ -35,7 +35,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/process-engineering-web",
-          "awslogs-region": "us-east-1",
+          "awslogs-region": "REGION",
           "awslogs-stream-prefix": "ecs"
         }
       },

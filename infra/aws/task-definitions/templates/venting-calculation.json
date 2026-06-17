@@ -1,5 +1,5 @@
 {
-  "family": "process-engineering-psv",
+  "family": "process-engineering-venting-calculation",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
@@ -8,8 +8,8 @@
   "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
   "containerDefinitions": [
     {
-      "name": "psv",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/process-engineering/psv:latest",
+      "name": "venting-calculation",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/process-engineering/venting-calculation:IMAGE_TAG",
       "essential": true,
       "portMappings": [
         {
@@ -34,13 +34,13 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/process-engineering-psv",
-          "awslogs-region": "us-east-1",
+          "awslogs-group": "/ecs/process-engineering-venting-calculation",
+          "awslogs-region": "REGION",
           "awslogs-stream-prefix": "ecs"
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/psv', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))\""],
+        "command": ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/venting-calculation', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))\""],
         "interval": 30,
         "timeout": 5,
         "retries": 3,

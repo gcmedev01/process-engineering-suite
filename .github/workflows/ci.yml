@@ -16,9 +16,9 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
-      - run: bun turbo run lint
-      - run: bun turbo run check-types
-      - run: bun turbo run build
+      - run: bun run lint
+      - run: bun run check-types
+      - run: bun run build
 
   python:
     name: Python — Lint, Type-Check, Test
@@ -35,8 +35,8 @@ jobs:
         run: pip install -e ".[dev]" 2>/dev/null || pip install ruff mypy pytest
       - run: ruff check .
       - run: ruff format --check .
-      - run: mypy pes_calc/ hydraulics/ --ignore-missing-imports || true
-      - run: pytest hydraulics/tests/ -v || true
+      - run: mypy pes_calc/ hydraulics/ --ignore-missing-imports
+      - run: pytest hydraulics/tests/ -v
 
   api-tests:
     name: API — Lint, Type-Check, Test
@@ -53,5 +53,5 @@ jobs:
         run: pip install -e ".[dev]" 2>/dev/null || pip install ruff mypy pytest
       - run: ruff check .
       - run: ruff format --check .
-      - run: mypy app/ --ignore-missing-imports || true
-      - run: pytest tests/ -v || true
+      - run: mypy app/ --ignore-missing-imports
+      - run: pytest tests/ -v

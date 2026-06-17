@@ -137,6 +137,16 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 
 ```bash
 # Build and push images
+API_URL=https://api.your-domain.com \
+DOCS_URL=https://docs.your-domain.com \
+NETWORK_EDITOR_URL=https://network-editor.your-domain.com \
+PSV_URL=https://psv.your-domain.com \
+DESIGN_AGENTS_URL=https://design-agents.your-domain.com \
+VENTING_URL=https://venting.your-domain.com \
+VESSELS_CALCULATION_URL=https://vessels.your-domain.com \
+PUMP_URL=https://pump.your-domain.com \
+HEAT_TRANSFER_URL=https://heat-transfer.your-domain.com \
+CONTROL_VALVE_URL=https://control-valve.your-domain.com \
 ./infra/aws/scripts/build-and-push.sh us-east-1 YOUR_ACCOUNT_ID
 
 # Expected output:
@@ -144,9 +154,15 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env up --build
 # ✓ Repositories created
 # ✓ API image built and pushed
 # ✓ Web image built and pushed
+# ✓ Docs image built and pushed
 # ✓ Network Editor image built and pushed
 # ✓ PSV image built and pushed
 # ✓ Design Agents image built and pushed
+# ✓ Venting Calculation image built and pushed
+# ✓ Vessels Calculation image built and pushed
+# ✓ Pump Calculation image built and pushed
+# ✓ Heat Transfer Calculation image built and pushed
+# ✓ Control Valve Calculation image built and pushed
 ```
 
 **Verify images in ECR:**
@@ -161,14 +177,13 @@ aws ecr describe-images \
 ### Task Definition Registration
 
 ```bash
-# Update placeholders
-sed -i '' 's/ACCOUNT_ID/YOUR_ACCOUNT_ID/g' infra/aws/task-definitions/*.json
-sed -i '' 's/REGION/us-east-1/g' infra/aws/task-definitions/*.json
+# Render templates
+./infra/aws/scripts/render-task-definitions.sh us-east-1 YOUR_ACCOUNT_ID GIT_SHA
 
 # Register all task definitions
-for service in api web network-editor psv design-agents; do
+for service in api web docs network-editor psv design-agents venting-calculation vessels-calculation pump-calculation heat-transfer-calculation control-valve-calculation api-migration; do
   aws ecs register-task-definition \
-    --cli-input-json file://infra/aws/task-definitions/${service}.json \
+    --cli-input-json file://infra/aws/task-definitions/rendered/${service}.json \
     --region us-east-1
 done
 
@@ -182,7 +197,7 @@ aws ecs list-task-definitions --region us-east-1 | grep process-engineering
 ```bash
 aws ecs describe-services \
   --cluster process-engineering-cluster \
-  --services api web network-editor psv design-agents \
+  --services api web docs network-editor psv design-agents venting-calculation vessels-calculation pump-calculation heat-transfer-calculation control-valve-calculation \
   --region us-east-1 \
   --query 'services[*].[serviceName,status,desiredCount,runningCount]' \
   --output table
@@ -432,7 +447,7 @@ aws ce get-cost-and-usage \
   --filter file://cost-filter.json \
   --region us-east-1
 
-# Expected costs: ~$337/month (see DEPLOYMENT.md)
+# Expected costs: roughly full-suite AWS baseline (see DEPLOYMENT.md)
 ```
 
 ---
@@ -451,7 +466,7 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env logs --tail=100
 **AWS:**
 ```bash
 # Recent logs from all services
-for service in api web network-editor psv design-agents; do
+for service in api web docs network-editor psv design-agents venting-calculation vessels-calculation pump-calculation heat-transfer-calculation control-valve-calculation; do
   echo "=== $service ==="
   aws logs tail /ecs/process-engineering-${service} --since 1h --region us-east-1
 done
