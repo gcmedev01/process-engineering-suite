@@ -14,6 +14,12 @@ import { api, USE_LOCAL_STORAGE } from '@/lib/api';
  */
 const USERS_STORAGE_KEY = 'psv_demo_users';
 const CREDENTIALS_STORAGE_KEY = 'psv_demo_credentials';
+const LEGACY_DEMO_PASSWORD_HASHES = new Set([
+    'aae210703bf75e57a8531be04328d6f1aca6e299d97f4956300fe6568c93a8b5',
+    '0a406e57b23ca636fd559f6cca9e9ca5068312f00b896722483e4d09ccfafa41',
+    '162bf45d4f836003000411a54bd96455e08986f2e1c8010bf9e6eb1fb7c5891a',
+    'a4243deb4e4fd5d3c764f8df3b8911264bf6b908f496fd54acd7100b57776f57',
+]);
 
 // Session expires after 8 hours (in milliseconds)
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
@@ -35,11 +41,44 @@ function persistToStorage<T>(key: string, value: T) {
 }
 
 function ensureSeedData() {
-    // Seed demo data once so that newly-created users can also log in.
     const existingUsers = loadFromStorage<User[]>(USERS_STORAGE_KEY, []);
     const existingCreds = loadFromStorage<MockCredential[]>(CREDENTIALS_STORAGE_KEY, []);
     if (existingUsers.length === 0) persistToStorage(USERS_STORAGE_KEY, users);
-    if (existingCreds.length === 0) persistToStorage(CREDENTIALS_STORAGE_KEY, credentials);
+    if (existingCreds.length === 0) {
+        persistToStorage(CREDENTIALS_STORAGE_KEY, credentials);
+        return;
+    }
+
+    let changed = false;
+    const nextCreds = existingCreds.map((storedCred) => {
+        const seedCred = credentials.find(
+            (credential) =>
+                credential.userId === storedCred.userId &&
+                credential.username === storedCred.username,
+        );
+
+        if (!seedCred || !LEGACY_DEMO_PASSWORD_HASHES.has(storedCred.password)) {
+            return storedCred;
+        }
+
+        changed = true;
+        return seedCred;
+    });
+
+    for (const credential of credentials) {
+        const exists = nextCreds.some(
+            (storedCred) =>
+                storedCred.userId === credential.userId &&
+                storedCred.username === credential.username,
+        );
+
+        if (!exists) {
+            nextCreds.push(credential);
+            changed = true;
+        }
+    }
+
+    if (changed) persistToStorage(CREDENTIALS_STORAGE_KEY, nextCreds);
 }
 
 interface AuthState {

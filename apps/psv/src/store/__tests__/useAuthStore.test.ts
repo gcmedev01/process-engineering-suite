@@ -28,13 +28,25 @@ vi.mock("@/data/mockData", () => ({
   users: [
     {
       id: "1",
+      username: "admin",
       name: "Admin",
       role: "admin",
       status: "active",
       email: "admin@example.com",
     },
+    {
+      id: "2",
+      username: "engineer",
+      name: "Engineer",
+      role: "engineer",
+      status: "active",
+      email: "engineer@example.com",
+    },
   ],
-  credentials: [{ userId: "1", username: "admin", password: "hash" }],
+  credentials: [
+    { userId: "1", username: "admin", password: "hash" },
+    { userId: "2", username: "engineer", password: "current-engineer-hash" },
+  ],
 }));
 
 describe("useAuthStore", () => {
@@ -79,6 +91,38 @@ describe("useAuthStore", () => {
       vi.mocked(verifyPassword).mockResolvedValue(false);
       const result = await useAuthStore.getState().login("admin", "wrong");
       expect(result).toBe(false);
+    });
+
+    it("should migrate stale demo credentials before login", async () => {
+      const { verifyPassword } = await import("@/lib/hashPassword");
+      const storage: Record<string, string> = {
+        psv_demo_credentials: JSON.stringify([
+          {
+            userId: "2",
+            username: "engineer",
+            password: "162bf45d4f836003000411a54bd96455e08986f2e1c8010bf9e6eb1fb7c5891a",
+          },
+        ]),
+      };
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        return storage[key] ?? null;
+      });
+      localStorageMock.setItem.mockImplementation((key: string, value: string) => {
+        storage[key] = value;
+      });
+      vi.mocked(verifyPassword).mockImplementation(async (_password, hash) => hash === "current-engineer-hash");
+
+      const result = await useAuthStore.getState().login("engineer", "engineer");
+
+      expect(result).toBe(true);
+      expect(verifyPassword).toHaveBeenCalledWith("engineer", "current-engineer-hash");
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        "psv_demo_credentials",
+        JSON.stringify([
+          { userId: "2", username: "engineer", password: "current-engineer-hash" },
+          { userId: "1", username: "admin", password: "hash" },
+        ]),
+      );
     });
   });
 
