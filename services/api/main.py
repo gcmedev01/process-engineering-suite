@@ -90,6 +90,19 @@ app.include_router(instrument_links_router)
 app.include_router(users_router)
 
 
+@app.on_event("startup")
+async def sync_seeded_mock_data() -> None:
+    if os.getenv("SEED_FROM_MOCK", "false").lower() != "true":
+        return
+
+    try:
+        from services.api.scripts.seed_from_mock import seed_from_mock
+
+        await seed_from_mock()
+    except Exception:
+        logger.exception("Failed to sync mock seed data")
+
+
 # Configure CORS (local + Docker host bridge + env overrides)
 def _load_allowed_origins() -> list[str]:
     defaults = [
