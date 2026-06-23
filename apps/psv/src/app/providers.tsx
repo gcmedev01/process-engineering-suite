@@ -7,6 +7,8 @@ import { ReactNode, useState, useMemo, useEffect } from "react";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
 import { SessionGuard } from "@/hooks/useSessionGuard";
 import { SharedAuthBridge } from "@/components/SharedAuthBridge";
+import { USE_LOCAL_STORAGE } from "@/lib/api";
+import { getSharedAuthApiBaseUrl } from "@/lib/authMode";
 import { Toaster } from 'sonner';
 
 const getDesignTokens = (mode: 'light' | 'dark') => {
@@ -161,6 +163,10 @@ const getDesignTokens = (mode: 'light' | 'dark') => {
 
 export function Providers({ children }: { children: ReactNode }) {
     const [mode, setMode] = useState<'light' | 'dark'>('dark');
+    const sharedAuthApiBaseUrl = getSharedAuthApiBaseUrl(
+        USE_LOCAL_STORAGE,
+        process.env.NEXT_PUBLIC_AUTH_API_URL,
+    );
 
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
@@ -208,7 +214,7 @@ export function Providers({ children }: { children: ReactNode }) {
                     <CssBaseline />
                     <Toaster theme={mode} position="top-right" closeButton />
                     <SharedAuthBridge />
-                    <AuthGuard apiBaseUrl={process.env.NEXT_PUBLIC_AUTH_API_URL}>
+                    <AuthGuard apiBaseUrl={sharedAuthApiBaseUrl}>
                         <SessionGuard>
                             {children}
                         </SessionGuard>
