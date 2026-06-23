@@ -5,10 +5,27 @@ import os
 from pathlib import Path
 
 from sqlalchemy import select
+from sqlalchemy import update
 
 from services.api.app.database import get_db_context
+from services.api.app.models.credential import Credential
 from services.api.app.models.user import User
 from services.api.app.services import DatabaseService
+
+
+async def _sync_mock_credentials(session, data: dict) -> None:
+    for item in data.get("credentials", []):
+        username = item.get("username")
+        password_hash = item.get("passwordHash")
+        if not username or not password_hash:
+            continue
+
+        await session.execute(
+            update(Credential)
+            .where(Credential.username == username)
+            .values(password_hash=password_hash)
+        )
+    await session.commit()
 
 
 async def seed_from_mock() -> None:
@@ -24,6 +41,7 @@ async def seed_from_mock() -> None:
         try:
             existing = await session.execute(select(User.id).limit(1))
             if existing.first() is not None:
+                await _sync_mock_credentials(session, data)
                 return
         except Exception:
             return

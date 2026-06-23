@@ -1,10 +1,12 @@
 """Authentication API router."""
+import hashlib
+import hmac
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
 import bcrypt
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..config import get_settings
@@ -41,14 +43,21 @@ class UserResponse(BaseModel):
 # --- Helper Functions ---
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a bcrypt hash."""
-    try:
-        return bcrypt.checkpw(
-            plain_password.encode('utf-8'),
-            hashed_password.encode('utf-8')
-        )
-    except Exception:
-        return False
+    """Verify a password against a supported stored hash."""
+    if len(hashed_password) == 64 and all(c in "0123456789abcdef" for c in hashed_password):
+        digest = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
+        return hmac.compare_digest(digest, hashed_password)
+
+    if hashed_password.startswith("$2"):
+        try:
+            return bcrypt.checkpw(
+                plain_password.encode('utf-8'),
+                hashed_password.encode('utf-8')
+            )
+        except Exception:
+            return False
+
+    return hmac.compare_digest(plain_password, hashed_password)
 
 
 def create_access_token(user_id: str, role: str) -> tuple[str, int]:
@@ -109,14 +118,7 @@ async def login(data: LoginRequest, dal: DAL):
 
     is_valid = False
     
-    if password_hash.startswith("$2"):
-        # bcrypt hash
-        is_valid = verify_password(data.password, password_hash)
-    else:
-        # Plain text comparison for mock data migration
-        # Also support mock credentials that store plain passwords
-        is_valid = (credential.get("password") == data.password if not hasattr(credential, "password") 
-                   else credential.password == data.password)
+    is_valid = verify_password(data.password, password_hash)
     
     if not is_valid:
         await dal.update_credential_login(credential_id, success=False)
