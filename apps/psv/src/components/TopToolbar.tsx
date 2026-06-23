@@ -36,7 +36,8 @@ import {
 import { QuickAccessMenu, SharedUserMenu, TopFloatingToolbar, useSharedAuth } from "@eng-suite/ui-kit";
 import { useColorMode } from "@/contexts/ColorModeContext";
 import { useRouter } from "next/navigation";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, USE_LOCAL_STORAGE } from "@/lib/api";
+import { getSharedAuthApiBaseUrl } from "@/lib/authMode";
 import { usePsvStore } from "@/store/usePsvStore";
 import { StatusIndicator } from "@/components/StatusIndicator";
 
@@ -69,6 +70,7 @@ type GlobalSearchOption = {
 
 export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
     const homeHref = process.env.NEXT_PUBLIC_WEB_URL?.trim() || "http://localhost:3000";
+    const sharedAuthApiBaseUrl = getSharedAuthApiBaseUrl(USE_LOCAL_STORAGE, API_BASE_URL);
     const theme = useTheme();
     const { toggleColorMode } = useColorMode();
     const isDark = theme.palette.mode === 'dark';
@@ -501,7 +503,7 @@ export function TopToolbar({ title = "PSV Sizing", onBack }: TopToolbarProps) {
             quickAccess={<QuickAccessMenu items={APP_ITEMS} onToggleTheme={toggleColorMode} isDarkMode={isDark} />}
             userAction={
                 <SharedUserMenu
-                    apiBaseUrl={API_BASE_URL}
+                    apiBaseUrl={sharedAuthApiBaseUrl}
                     homeHref={process.env.NEXT_PUBLIC_WEB_URL?.trim() || "http://localhost:3000"}
                     accountSettingsHref="/account-settings"
                     docsHref="/docs"
